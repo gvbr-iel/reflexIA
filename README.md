@@ -37,6 +37,11 @@ El sistema contempla los siguientes requerimientos funcionales organizados por u
   * **Descripción:** Repositorio o biblioteca digital categorizada con filtros de búsqueda para consultar ejemplos de actuaciones mejoradas e innovaciones pedagógicas destacadas.
   * **Prioridad:** Media (Sirve como fuente de inspiración, referencia y apoyo para estandarizar la excelencia).
 
+* **RF-08: Autenticación segura de Estudiantes de Práctica Profesional**
+    * **Rol:** Estudiante de Práctica Profesional
+    * **Descripción:** Aceptar y controlar el acceso de los estudiantes de práctica profesional.
+    * **Prioridad:** Alta (Es el entrypoint del estudiante con la plataforma).
+
 ## 🔒 Requisitos No Funcionales (RNF) y Atributos de Calidad
 
 El proyecto cumple con los siguientes estándares técnicos y de negocio definidos para la plataforma:
