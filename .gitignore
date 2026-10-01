@@ -27,3 +27,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.swp
+
+# Archivos de contexto local para IA
+HU04_DEVELOPMENT.md
