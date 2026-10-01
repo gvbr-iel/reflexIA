@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, NavLink } from 'react-router-dom'
 import {
   BookOpen,
   ClipboardList,
@@ -83,19 +83,22 @@ export default function StudentLayout() {
         >
           <nav className="space-y-1">
             {navItems.map((item) => (
-              <a
+              <NavLink
                 key={item.path}
-                href={item.path}
+                to={item.path}
+                end
                 onClick={() => setSidebarOpen(false)}
-                className="
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                  text-texto/70 hover:bg-accent-ia/5 hover:text-accent-ia
-                  transition-colors
-                "
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-accent-ia/10 text-accent-ia'
+                      : 'text-texto/70 hover:bg-accent-ia/5 hover:text-accent-ia'
+                  }`
+                }
               >
                 {item.icon}
                 {item.label}
-              </a>
+              </NavLink>
             ))}
           </nav>
         </aside>

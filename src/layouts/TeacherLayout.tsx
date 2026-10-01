@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, NavLink } from 'react-router-dom'
 import { FileText, Clock, LayoutDashboard, Menu, X, LogOut } from 'lucide-react'
 
 /* ------------------------------------------------
@@ -74,19 +74,22 @@ export default function TeacherLayout() {
         >
           <nav className="space-y-1">
             {navItems.map((item) => (
-              <a
+              <NavLink
                 key={item.path}
-                href={item.path}
+                to={item.path}
+                end
                 onClick={() => setSidebarOpen(false)}
-                className="
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                  text-texto/70 hover:bg-secondary/5 hover:text-secondary
-                  transition-colors
-                "
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-secondary/10 text-secondary'
+                      : 'text-texto/70 hover:bg-secondary/5 hover:text-secondary'
+                  }`
+                }
               >
                 {item.icon}
                 {item.label}
-              </a>
+              </NavLink>
             ))}
           </nav>
         </aside>
