@@ -1,11 +1,19 @@
 import { type ReactNode, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Users, Menu, X, LogOut } from 'lucide-react'
+import {
+  BookOpen,
+  ClipboardList,
+  Lightbulb,
+  LayoutDashboard,
+  Menu,
+  X,
+  LogOut,
+} from 'lucide-react'
 
 /* ------------------------------------------------
-   AdminLayout — marco visual del Administrador
-   Header + sidebar con navegación + área de contenido.
-   Responsive: sidebar colapsable en móvil.
+   StudentLayout — marco visual del Estudiante
+   Header + sidebar con navegación lineal de talleres
+   + área de contenido. Responsive: sidebar colapsable.
    ------------------------------------------------ */
 
 interface NavItem {
@@ -15,10 +23,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Whitelist', path: '/admin/whitelist', icon: <Users size={20} /> },
+  { label: 'Mi progreso', path: '/estudiante', icon: <LayoutDashboard size={20} /> },
+  { label: 'Marco teórico', path: '/estudiante/marco-teorico', icon: <BookOpen size={20} /> },
+  { label: 'Talleres', path: '/estudiante/talleres', icon: <ClipboardList size={20} /> },
+  { label: 'Innovaciones', path: '/estudiante/innovaciones', icon: <Lightbulb size={20} /> },
 ]
 
-export default function AdminLayout() {
+export default function StudentLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -26,7 +37,6 @@ export default function AdminLayout() {
       {/* ===== Header ===== */}
       <header className="bg-surface border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          {/* Hamburguesa (solo móvil) */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="md:hidden p-1.5 rounded-lg hover:bg-bg transition-colors"
@@ -35,12 +45,11 @@ export default function AdminLayout() {
             {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          {/* Logo */}
           <span className="font-heading font-bold text-xl text-primary">
             Reflex<span className="text-accent-ia">IA</span>
           </span>
-          <span className="hidden sm:inline text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-            Administrador
+          <span className="hidden sm:inline text-xs bg-accent-ia/10 text-accent-ia px-2 py-0.5 rounded-full font-medium">
+            Estudiante
           </span>
         </div>
 
@@ -55,7 +64,6 @@ export default function AdminLayout() {
 
       <div className="flex flex-1">
         {/* ===== Sidebar ===== */}
-        {/* Overlay móvil */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/30 z-30 md:hidden"
@@ -81,7 +89,7 @@ export default function AdminLayout() {
                 onClick={() => setSidebarOpen(false)}
                 className="
                   flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                  text-texto/70 hover:bg-primary/5 hover:text-primary
+                  text-texto/70 hover:bg-accent-ia/5 hover:text-accent-ia
                   transition-colors
                 "
               >
