@@ -1,0 +1,1 @@
+// Table: componente reutilizable global
