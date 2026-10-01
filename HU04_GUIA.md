@@ -42,6 +42,26 @@ Se definieron las interfaces y tipos compartidos que sirven de contrato para tod
 
 > **Nota:** El puntaje mínimo aprobatorio (70% vs 100%) está pendiente de confirmación con la cliente. Se mantiene como constante configurable.
 
+
+### Etapa 2 — Servicio de API (mock local)
+
+**Archivo creado:** `src/services/theoryQuizService.ts`
+
+Se implementó la capa de servicio que encapsula toda la comunicación con el backend. Actualmente usa **mock local con localStorage** para permitir el desarrollo sin backend; cada método incluye un `TODO` con la llamada Axios real lista para conectar.
+
+**Métodos del servicio:**
+
+- **`fetchQuestions()`**: obtiene 10 preguntas aleatorias del banco de 30 para un nuevo intento.
+- **`submitAttempt(payload)`**: envía las respuestas de un intento, las evalúa, persiste el resultado y actualiza el estado de aprobación.
+- **`getApprovalStatus()`**: consulta si el estudiante aprobó la evaluación (contrato que otros módulos consumirán para desbloquear talleres).
+- **`getAttemptHistory()`**: devuelve el historial de intentos realizados.
+- **`getConfig()`**: devuelve la configuración vigente del cuestionario.
+
+**Banco de 30 preguntas** embebido en el servicio, cubriendo los temas del marco teórico de la plataforma: reflexión profesional (Schön, Van Manen), incidentes críticos, ciclo reflexivo, actuación mejorada, retroalimentación formativa, ética docente, anonimización y desbloqueo progresivo.
+
+> **Nota:** En producción, el banco de preguntas vivirá en el backend y el frontend no tendrá acceso al banco completo.
+
 ---
 
 *Las siguientes etapas se irán documentando a medida que se implementen.*
+
