@@ -215,7 +215,37 @@ src/
 
 ---
 
-## 10. Discrepancias y dudas por resolver
+## 10. Convenciones de Git
+
+### Mensajes de commit (*Conventional Commits*)
+
+Formato: `<tipo>: <descripción corta en infinitivo>`
+
+| Tipo | Cuándo usarlo | Ejemplo |
+|---|---|---|
+| `feat` | Agregar una función nueva | `feat: agregar formulario de incidente crítico` |
+| `fix` | Corregir un error o bug | `fix: corregir validación del correo @ucen.cl` |
+| `docs` | Cambios solo en documentación | `docs: actualizar AI_GUIDELINES con convenciones de commit` |
+| `style` | Cambios de estilos/CSS, sin lógica | `style: ajustar colores del token primary en tokens.css` |
+| `refactor` | Reorganizar código sin cambiar comportamiento | `refactor: mover lógica de whitelist a useWhitelist` |
+| `chore` | Configuración, dependencias, estructura | `chore: agregar estructura base compartida (components, models)` |
+
+**Reglas:**
+1. Siempre en **minúsculas** después del tipo.
+2. Describir **qué hace** el commit, no qué hiciste tú (*"agregar vista"*, no *"agregué vista"*).
+3. Máximo **72 caracteres** en la descripción.
+4. **Un commit = un propósito.** No mezclar corrección de bug + función nueva en el mismo commit.
+
+### Estrategia de ramas
+
+- `main`: código estable y compartido. Solo se sube estructura base, componentes globales y código revisado.
+- `feature/hu-XX-nombre`: una rama por Historia de Usuario (ejemplo: `feature/hu-01-admin-whitelist`). Se crea desde `main` y se fusiona de vuelta con Pull Request o merge.
+- Antes de empezar a trabajar: `git pull origin main` para tener la última versión.
+- Antes de fusionar: verificar que `npm run dev` funcione sin errores.
+
+---
+
+## 11. Discrepancias y dudas por resolver
 
 - **Dominio del correo:** el README (RNF-02) dice `@ucen.cl`; la extracción de las reuniones decía `@central.cl`. En este archivo se usa `@ucen.cl` hasta confirmar con la cliente.
 - **Aprobación del cuestionario diagnóstico:** el README habla de "puntaje mínimo aprobatorio"; en las reuniones se mencionó exigir **100% de aciertos**. Confirmar cuál rige y si el umbral es configurable por el profesor (RF-06).

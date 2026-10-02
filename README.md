@@ -102,3 +102,20 @@ src/
 │       └── RepositoryView.tsx
 ├── App.tsx                  # Componente raíz y enrutador principal
 └── main.tsx                 # Punto de entrada de React
+```
+
+## 🗺️ Estructura de Rutas
+
+Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anidadas. Cada rol tiene un layout envolvente que renderiza las vistas hijas a través de `<Outlet />`.
+
+| Ruta | Layout | Vista | Descripción |
+|---|---|---|---|
+| `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | Gestión de correos autorizados |
+| `/docente` | TeacherLayout | TeacherDashboardView | Panel general del docente |
+| `/docente/reflexiones` | TeacherLayout | ReflectionsView | Revisión de reflexiones |
+| `/docente/plazos` | TeacherLayout | DeadlinesView | Configuración de plazos e intentos |
+| `/estudiante` | StudentLayout | StudentDashboardView | Mi progreso (dashboard) |
+| `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | Verificación del marco teórico |
+| `/estudiante/talleres` | StudentLayout | RepositoryView | Repositorio de talleres |
+| `/estudiante/innovaciones` | StudentLayout | CriticalIncidentView | Incidentes críticos e innovaciones |
+| `*` (fallback) | — | — | Redirige a `/estudiante` |
