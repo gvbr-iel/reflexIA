@@ -61,6 +61,27 @@ Se implementó la capa de servicio que encapsula toda la comunicación con el ba
 
 > **Nota:** En producción, el banco de preguntas vivirá en el backend y el frontend no tendrá acceso al banco completo.
 
+
+### Etapa 3 — Hook de lógica y estado
+
+**Archivo creado:** `src/views/theory-verification/hooks/useTheoryQuiz.ts`
+
+Se implementó el hook `useTheoryQuiz()` que encapsula toda la lógica del cuestionario, separando completamente el estado y las acciones del JSX de los componentes.
+
+**Flujo gestionado por el hook:**
+
+1. **Carga inicial**: consulta en paralelo el estado de aprobación, historial de intentos y configuración. Si el estudiante ya aprobó, muestra el resultado directamente.
+2. **Inicio de intento** (`startQuiz`): solicita 10 preguntas aleatorias al service y arranca el temporizador.
+3. **Durante el cuestionario**: el estudiante navega libremente entre preguntas (siguiente, anterior, salto directo) y selecciona respuestas.
+4. **Envío** (`submitQuiz`): detiene el timer, envía las respuestas al service y recibe el resultado con el estado de aprobación actualizado.
+5. **Tiempo agotado**: si el temporizador llega a cero, auto-envía las respuestas acumuladas y marca el intento como expirado.
+6. **Reintento** (`resetToIntro`): limpia el estado y vuelve a la pantalla introductoria si quedan intentos disponibles.
+
+**Estados expuestos** (para que los componentes manejen loading, error y vacío):
+- `isLoading`: operación en curso (carga inicial o envío)
+- `error`: mensaje de error en español, con indicación de cómo corregirlo
+- `phase`: fase actual del flujo (`loading` → `intro` → `quiz` → `result`)
+
 ---
 
 *Las siguientes etapas se irán documentando a medida que se implementen.*
