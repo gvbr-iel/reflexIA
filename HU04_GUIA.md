@@ -127,6 +127,16 @@ Se implementó la vista orquestadora del módulo, que gestiona 4 fases del flujo
 
 Incluye manejo de errores con `role="alert"` para accesibilidad.
 
+
+### Etapa 6 — Integración con la interfaz general
+
+**Archivos integrados:**
+- [ScoreCard.tsx](file:///c:/Users/joaqu/Documents/Github/reflexIA/src/views/theory-verification/components/ScoreCard.tsx): Se conectó el botón *"Continuar a los talleres →"* mediante `useNavigate` hacia `/estudiante/talleres`.
+- [StudentLayout.tsx](file:///c:/Users/joaqu/Documents/Github/reflexIA/src/layouts/StudentLayout.tsx): Se agregaron indicadores de estado en el menú lateral: insignia de estado ("Listo" / "Req.") en *Marco teórico* y candado en *Talleres* mientras el marco teórico esté pendiente.
+- [StudentDashboardView.tsx](file:///c:/Users/joaqu/Documents/Github/reflexIA/src/views/student-dashboard/StudentDashboardView.tsx): Se implementó la vista "Mi progreso" mostrando la ruta lineal del estudiante, el estado del marco teórico en tiempo real (RF-04), KPIs y acceso directo a la evaluación.
+- [RepositoryView.tsx](file:///c:/Users/joaqu/Documents/Github/reflexIA/src/views/repository/RepositoryView.tsx): Se implementó la regla RF-03 / RF-04; si el estudiante no ha aprobado la evaluación, se muestra una pantalla de bloqueo con redirección directa al marco teórico. Al aprobar, se desbloquean los 4 talleres del semestre.
+- [models/index.ts](file:///c:/Users/joaqu/Documents/Github/reflexIA/src/models/index.ts): Se re-exportaron los tipos del cuestionario teórico para consumo global del proyecto.
+
 ## Discrepancias y pendientes del módulo
 
 | Tema | Detalle | Referencia |
