@@ -1,9 +1,9 @@
 import { type ReactNode, useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
-import { Users, Menu, X, LogOut } from 'lucide-react'
+import { FileText, Clock, LayoutDashboard, Menu, X, LogOut } from 'lucide-react'
 
 /* ------------------------------------------------
-   AdminLayout — marco visual del Administrador
+   TeacherLayout — marco visual del Profesor guía
    Header + sidebar con navegación + área de contenido.
    Responsive: sidebar colapsable en móvil.
    ------------------------------------------------ */
@@ -15,10 +15,12 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Whitelist', path: '/admin/whitelist', icon: <Users size={20} /> },
+  { label: 'Panel docente', path: '/docente', icon: <LayoutDashboard size={20} /> },
+  { label: 'Reflexiones', path: '/docente/reflexiones', icon: <FileText size={20} /> },
+  { label: 'Plazos e intentos', path: '/docente/plazos', icon: <Clock size={20} /> },
 ]
 
-export default function AdminLayout() {
+export default function TeacherLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -26,7 +28,6 @@ export default function AdminLayout() {
       {/* ===== Header ===== */}
       <header className="bg-surface border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          {/* Hamburguesa (solo móvil) */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="md:hidden p-1.5 rounded-lg hover:bg-bg transition-colors"
@@ -35,12 +36,11 @@ export default function AdminLayout() {
             {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          {/* Logo */}
           <span className="font-heading font-bold text-xl text-primary">
             Reflex<span className="text-accent-ia">IA</span>
           </span>
-          <span className="hidden sm:inline text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-            Administrador
+          <span className="hidden sm:inline text-xs bg-secondary/10 text-secondary px-2 py-0.5 rounded-full font-medium">
+            Profesor guía
           </span>
         </div>
 
@@ -55,7 +55,6 @@ export default function AdminLayout() {
 
       <div className="flex flex-1">
         {/* ===== Sidebar ===== */}
-        {/* Overlay móvil */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/30 z-30 md:hidden"
@@ -83,8 +82,8 @@ export default function AdminLayout() {
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-texto/70 hover:bg-primary/5 hover:text-primary'
+                      ? 'bg-secondary/10 text-secondary'
+                      : 'text-texto/70 hover:bg-secondary/5 hover:text-secondary'
                   }`
                 }
               >
