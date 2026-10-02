@@ -108,7 +108,31 @@ Se implementaron los tres componentes visuales del cuestionario, todos sin estad
 - Acciones según estado: "Continuar a talleres" (si aprobó), "Reintentar" (si quedan intentos) o "Contactar profesor" (sin intentos)
 - Revisión desplegable de cada pregunta con la respuesta del estudiante, la correcta y una explicación pedagógica
 
----
 
-*Las siguientes etapas se irán documentando a medida que se implementen.*
+### Etapa 5 — Vista principal (TheoryQuizView)
+
+**Archivo creado:** `src/views/theory-verification/TheoryQuizView.tsx`
+
+Se implementó la vista orquestadora del módulo, que gestiona 4 fases del flujo delegando toda la lógica al hook `useTheoryQuiz`:
+
+1. **Carga** — Spinner centrado con mensaje mientras se consulta el estado del estudiante.
+2. **Introducción** — Pantalla de bienvenida con:
+   - Ícono decorativo (libro abierto) y título
+   - Descripción contextual (cambia entre primer intento y reintento)
+   - Tarjeta de instrucciones dinámicas (cantidad de preguntas, tiempo, puntaje mínimo, intentos)
+   - Estado de intentos previos y mejor puntaje (si aplica)
+   - Botón "Comenzar evaluación" / "Reintentar" o mensaje si se agotaron los intentos
+3. **Cuestionario activo** — Renderiza `QuizEngine` con todas las props del hook.
+4. **Resultado** — Renderiza `ScoreCard` con el último intento y estado de aprobación.
+
+Incluye manejo de errores con `role="alert"` para accesibilidad.
+
+## Discrepancias y pendientes del módulo
+
+| Tema | Detalle | Referencia |
+|---|---|---|
+| Puntaje mínimo | ¿70% o 100%? Se usa 70% como valor por defecto configurable. | `AI_GUIDELINES.md` §10 |
+| Umbral configurable | ¿El profesor puede ajustar el `passingScore` por sección? (RF-06) | Por definir con el equipo |
+| Backend | No existe aún; el service usará datos locales/mock temporalmente. | Coordinación con backend |
+| Integración con HU-08 | La autenticación (login) redirige al estudiante a este módulo como primer destino. | Coordinación con compañero de HU-08 |
 
