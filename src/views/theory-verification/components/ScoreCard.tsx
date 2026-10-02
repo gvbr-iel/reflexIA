@@ -12,6 +12,7 @@
  * Textos de interfaz en español (R10).
  */
 
+import { useNavigate } from 'react-router-dom';
 import type { QuizAttempt, TheoryApprovalStatus, QuizConfig } from '../../../models/theoryQuiz';
 
 interface ScoreCardProps {
@@ -31,6 +32,7 @@ export default function ScoreCard({
   config,
   onRetry,
 }: ScoreCardProps) {
+  const navigate = useNavigate();
   const { score, totalQuestions, answers, questions, status } = attempt;
   const percentage = Math.round((score / totalQuestions) * 100);
   const passed = score >= config.passingScore;
@@ -207,6 +209,7 @@ export default function ScoreCard({
         }}>
           {passed ? (
             <button
+              onClick={() => navigate('/estudiante/talleres')}
               style={{
                 padding: '0.875rem 2rem',
                 borderRadius: '0.75rem',
