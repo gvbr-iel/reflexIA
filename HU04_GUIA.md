@@ -82,6 +82,32 @@ Se implementó el hook `useTheoryQuiz()` que encapsula toda la lógica del cuest
 - `error`: mensaje de error en español, con indicación de cómo corregirlo
 - `phase`: fase actual del flujo (`loading` → `intro` → `quiz` → `result`)
 
+
+### Etapa 4 — Componentes del módulo
+
+**Archivos creados:**
+- `src/views/theory-verification/components/QuizTimer.tsx`
+- `src/views/theory-verification/components/QuizEngine.tsx`
+- `src/views/theory-verification/components/ScoreCard.tsx`
+
+Se implementaron los tres componentes visuales del cuestionario, todos sin estado propio (reciben props desde el hook).
+
+**QuizTimer** — Contador regresivo con barra de progreso e ícono de reloj. Cambia de color según el tiempo restante: normal (azul, > 50%), alerta (celeste, 25-50%), crítico (rojo con animación de pulso, < 25%).
+
+**QuizEngine** — Motor interactivo del cuestionario:
+- Navegación rápida por números de pregunta (botones circulares que indican estado: actual, respondida, pendiente)
+- Tarjeta de pregunta con opciones de selección (radio buttons)
+- Controles de navegación: anterior, siguiente, finalizar
+- Integra el QuizTimer en el encabezado
+- Muestra contador de intentos y respuestas completadas
+
+**ScoreCard** — Pantalla de resultados:
+- Indicador circular SVG con porcentaje de puntaje y animación
+- Mensaje contextual: aprobado, reprobado o tiempo agotado
+- Información de intentos usados y puntaje mínimo requerido
+- Acciones según estado: "Continuar a talleres" (si aprobó), "Reintentar" (si quedan intentos) o "Contactar profesor" (sin intentos)
+- Revisión desplegable de cada pregunta con la respuesta del estudiante, la correcta y una explicación pedagógica
+
 ---
 
 *Las siguientes etapas se irán documentando a medida que se implementen.*
