@@ -8,8 +8,11 @@ import type { TheoryReference } from '../../../models/criticalIncident'
    TheoryReferenceSidebar — marco de referencia (RF-03)
    Panel con las referencias bibliográficas pertinentes
    al paso actual, visibles mientras el estudiante escribe.
-   Escritorio: siempre visible. Móvil (360 px): plegable,
-   cerrado por defecto para no empujar el formulario.
+   Pantalla ancha (desde 1280 px): siempre visible, como
+   columna lateral. Móvil y tablet (360 px en adelante):
+   plegable, cerrado por defecto para no empujar el formulario.
+   El breakpoint es xl porque el menú lateral de la app ya
+   ocupa 240 px y a 1024 px el formulario quedaría muy angosto.
    Sin lógica propia (R5): solo el estado del pliegue.
    Incluye estados de carga, error y vacío (R9).
    ------------------------------------------------ */
@@ -98,7 +101,7 @@ export default function TheoryReferenceSidebar({
       className="rounded-xl border border-border bg-surface"
     >
       {/* Botón de pliegue: solo en móvil y tablet */}
-      <div className="p-2 lg:hidden">
+      <div className="p-2 xl:hidden">
         <Button
           variant="ghost"
           fullWidth
@@ -120,12 +123,12 @@ export default function TheoryReferenceSidebar({
       <div
         id={PANEL_ID}
         className={`
-          ${isOpen ? 'block' : 'hidden'} lg:block
-          space-y-4 border-t border-border p-4 md:p-5 lg:border-t-0
+          ${isOpen ? 'block' : 'hidden'} xl:block
+          space-y-4 border-t border-border p-4 md:p-5 xl:border-t-0
         `}
       >
         <div className="space-y-1">
-          <h2 className="hidden font-heading font-semibold text-lg text-texto lg:block">
+          <h2 className="hidden font-heading font-semibold text-lg text-texto xl:block">
             Marco de referencia
           </h2>
           <p className="text-sm text-texto/60">

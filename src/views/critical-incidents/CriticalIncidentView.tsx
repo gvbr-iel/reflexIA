@@ -88,7 +88,7 @@ export default function CriticalIncidentView() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       <header>
         <h1 className="font-heading text-2xl font-bold text-texto mb-2">
           Incidentes críticos
