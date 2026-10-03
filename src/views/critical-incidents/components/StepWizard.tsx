@@ -6,7 +6,10 @@ import type { IncidentStep, IncidentStepInfo } from '../../../models/criticalInc
    StepWizard — indicador de los 4 pasos (RF-03)
    Sin estado propio (R5): recibe todo desde
    useIncidentWizard. En móvil (360 px) muestra solo
-   los números; el título aparece desde `sm`.
+   los números. Desde `sm` agrega el título del paso
+   actual; los títulos de los 4 pasos solo desde `xl`,
+   porque entre `md` y `xl` el menú lateral de la app ya
+   ocupa 240 px y no caben todos sin apretarse.
    ------------------------------------------------ */
 
 interface StepWizardProps {
@@ -69,8 +72,10 @@ export default function StepWizard({
                   )}
                 </span>
                 <span
-                  className={`hidden sm:inline text-sm font-medium ${
-                    isCurrent ? 'text-primary' : 'text-texto/70'
+                  className={`text-sm font-medium ${
+                    isCurrent
+                      ? 'hidden sm:inline text-primary'
+                      : 'hidden xl:inline text-texto/70'
                   }`}
                 >
                   {step.title}

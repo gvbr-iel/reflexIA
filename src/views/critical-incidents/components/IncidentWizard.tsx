@@ -83,7 +83,7 @@ export default function IncidentWizard({ workshopId }: IncidentWizardProps) {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_clamp(20rem,26vw,30rem)] xl:items-start">
       <div className="xl:col-span-2">
         <StepWizard
           steps={wizard.steps}
