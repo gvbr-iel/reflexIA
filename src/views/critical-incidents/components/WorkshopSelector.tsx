@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { CheckCircle2, Circle, Lock, Pencil } from 'lucide-react'
+import { CheckCircle2, Circle, Lock, Pencil, XCircle } from 'lucide-react'
 
 import Button from '../../../components/Button'
 import type { Workshop, WorkshopStatus } from '../../../models/criticalIncident'
@@ -9,6 +9,10 @@ import type { Workshop, WorkshopStatus } from '../../../models/criticalIncident'
    Muestra cada taller con su estado en el flujo lineal
    y permite elegir en cuál trabajar. El estado se indica
    con ícono y texto, no solo con color.
+   Un taller completado se muestra en verde si fue aprobado y
+   en rojo si fue reprobado; el rojo es el color semántico de
+   desempeño reprobatorio (AI_GUIDELINES §4). Ambos resultados
+   desbloquean el siguiente taller.
    Se puede elegir un taller bloqueado: el asistente
    explica por qué no está disponible.
    Sin lógica propia (R5): recibe todo desde useWorkshops.
@@ -31,11 +35,20 @@ interface StatusInfo {
   icon: ReactNode
 }
 
-const STATUS_INFO: Record<WorkshopStatus, StatusInfo> = {
+const STATUS_INFO: Record<Exclude<WorkshopStatus, 'completed'>, StatusInfo> = {
   locked: { label: 'Bloqueado', icon: <Lock size={16} /> },
   available: { label: 'Disponible', icon: <Circle size={16} /> },
   'in-progress': { label: 'En curso', icon: <Pencil size={16} /> },
-  completed: { label: 'Completado', icon: <CheckCircle2 size={16} /> },
+}
+
+/** Texto e ícono del estado; un taller completado muestra su resultado. */
+function getStatusInfo(workshop: Workshop): StatusInfo {
+  if (workshop.status === 'completed') {
+    return workshop.outcome === 'failed'
+      ? { label: 'Reprobado', icon: <XCircle size={16} /> }
+      : { label: 'Aprobado', icon: <CheckCircle2 size={16} /> }
+  }
+  return STATUS_INFO[workshop.status]
 }
 
 export default function WorkshopSelector({
@@ -90,7 +103,8 @@ export default function WorkshopSelector({
         {workshops.map((workshop) => {
           const isSelected = workshop.id === selectedWorkshopId
           const isLocked = workshop.status === 'locked'
-          const status = STATUS_INFO[workshop.status]
+          const status = getStatusInfo(workshop)
+          const outcome = workshop.status === 'completed' ? workshop.outcome : null
 
           return (
             <li key={workshop.id}>
@@ -102,10 +116,15 @@ export default function WorkshopSelector({
                   w-full rounded-xl border p-3 text-left transition-colors
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50
                   ${
-                    isSelected
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-border bg-surface hover:border-primary/50'
+                    outcome === 'approved'
+                      ? 'border-perf-excellent bg-perf-excellent/10'
+                      : outcome === 'failed'
+                        ? 'border-perf-fail bg-perf-fail/10'
+                        : isSelected
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                          : 'border-border bg-surface hover:border-primary/50'
                   }
+                  ${isSelected && outcome ? 'ring-2 ring-primary/60' : ''}
                 `}
               >
                 <span
@@ -117,14 +136,23 @@ export default function WorkshopSelector({
                 </span>
                 <span
                   className={`mt-1 flex items-center gap-1.5 text-sm ${
-                    workshop.status === 'completed'
-                      ? 'text-accent-ia'
+                    outcome
+                      ? 'font-medium text-texto'
                       : isSelected || workshop.status === 'in-progress'
                         ? 'text-primary'
                         : 'text-texto/60'
                   }`}
                 >
-                  <span className="shrink-0" aria-hidden="true">
+                  <span
+                    className={`shrink-0 ${
+                      outcome === 'approved'
+                        ? 'text-perf-excellent'
+                        : outcome === 'failed'
+                          ? 'text-perf-fail'
+                          : ''
+                    }`}
+                    aria-hidden="true"
+                  >
                     {status.icon}
                   </span>
                   {status.label}
