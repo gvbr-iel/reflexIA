@@ -124,7 +124,10 @@ const STEP_ERROR_MESSAGE =
 // Hook
 // ─────────────────────────────────────────────
 
-export function useIncidentWizard(workshopId: string): UseIncidentWizardReturn {
+export function useIncidentWizard(
+  workshopId: string,
+  onDraftChange?: () => void,
+): UseIncidentWizardReturn {
   // ── Carga inicial ─────────────────────────
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -156,6 +159,14 @@ export function useIncidentWizard(workshopId: string): UseIncidentWizardReturn {
   // escribiendo mientras se guardaba (en ese caso sigue "sin guardar").
   const editVersionRef = useRef(0);
   const isSavingRef = useRef(false);
+
+  // Avisa a quien usa el hook cuando el borrador se guarda o se descarta
+  // (por ejemplo, para actualizar el estado del taller en el selector).
+  // Va en una referencia para no recrear los callbacks si el aviso cambia.
+  const onDraftChangeRef = useRef(onDraftChange);
+  useEffect(() => {
+    onDraftChangeRef.current = onDraftChange;
+  });
 
   // ── Derivados ─────────────────────────────
   const currentIndex = INCIDENT_STEPS.findIndex((s) => s.id === currentStepId);
@@ -242,6 +253,7 @@ export function useIncidentWizard(workshopId: string): UseIncidentWizardReturn {
         setHasDraft(true);
         setSaveStatus('saved');
         if (editVersionRef.current === versionAtStart) setIsDirty(false);
+        onDraftChangeRef.current?.();
       } catch {
         setSaveStatus('error');
       } finally {
@@ -347,6 +359,7 @@ export function useIncidentWizard(workshopId: string): UseIncidentWizardReturn {
       setHasDraft(false);
       setSavedAt(null);
       setSaveStatus('idle');
+      onDraftChangeRef.current?.();
     } catch {
       setSaveStatus('error');
     }

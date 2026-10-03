@@ -25,10 +25,12 @@ import DraftManager from './DraftManager'
 
 interface IncidentWizardProps {
   workshopId: string
+  /** Se llama tras guardar o descartar el borrador del taller. */
+  onDraftChange?: () => void
 }
 
-export default function IncidentWizard({ workshopId }: IncidentWizardProps) {
-  const wizard = useIncidentWizard(workshopId)
+export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWizardProps) {
+  const wizard = useIncidentWizard(workshopId, onDraftChange)
   const {
     references,
     isLoading: isLoadingReferences,

@@ -3,13 +3,9 @@ import { Lock } from 'lucide-react'
 
 import Button from '../../components/Button'
 import DevTheoryToggle from './components/DevTheoryToggle'
-import IncidentWizard from './components/IncidentWizard'
+import WorkshopWorkspace from './components/WorkshopWorkspace'
 import { useTheoryGate } from './hooks/useTheoryGate'
 import { setSimulatedTheoryApproval } from './dev/theoryApprovalSimulator'
-
-/* Taller en el que trabaja el asistente. El wizard es por taller (1 a 4);
-   mientras no exista el selector de talleres se trabaja con el primero. */
-const DEFAULT_WORKSHOP_ID = 'workshop-1'
 
 /* ------------------------------------------------
    CriticalIncidentView — HU-03 / RF-03
@@ -83,8 +79,8 @@ export default function CriticalIncidentView() {
       )
     }
 
-    /* ---- Desbloqueado: asistente paso a paso ---- */
-    return <IncidentWizard workshopId={DEFAULT_WORKSHOP_ID} />
+    /* ---- Desbloqueado: selector de talleres y asistente paso a paso ---- */
+    return <WorkshopWorkspace />
   }
 
   return (
