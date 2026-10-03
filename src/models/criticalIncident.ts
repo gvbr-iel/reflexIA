@@ -10,8 +10,9 @@
  *
  * Dependencia con HU-04: los talleres solo se desbloquean si el
  * estudiante aprobó la evaluación del marco teórico (RF-04).
- * Se importa `TheoryApprovalStatus` desde models/theoryQuiz.ts
- * para validar esa condición.
+ * Este modelo NO importa tipos de theoryQuiz: esa condición se
+ * consulta en un único punto, el hook useTheoryGate del feature
+ * critical-incidents/, que lee `TheoryApprovalStatus`.
  */
 
 // ─────────────────────────────────────────────
