@@ -25,9 +25,18 @@
  * - `locked`: el taller anterior no se completó (o no aprobó HU-04).
  * - `available`: desbloqueado pero no iniciado.
  * - `in-progress`: el estudiante tiene un borrador guardado.
- * - `completed`: enviado y con retroalimentación recibida.
+ * - `completed`: ya tiene resultado (aprobado o reprobado). Un taller
+ *   reprobado también desbloquea el siguiente.
  */
 export type WorkshopStatus = 'locked' | 'available' | 'in-progress' | 'completed';
+
+/**
+ * Resultado de un taller completado.
+ *
+ * El rojo de un taller reprobado es el único uso permitido de ese color en
+ * la interfaz: color semántico de desempeño (AI_GUIDELINES §4).
+ */
+export type WorkshopOutcome = 'approved' | 'failed';
 
 /** Información de un taller (1 a 4). */
 export interface Workshop {
@@ -41,6 +50,8 @@ export interface Workshop {
   description: string;
   /** Estado actual del taller en el flujo lineal. */
   status: WorkshopStatus;
+  /** Resultado del taller (null mientras no está completado). */
+  outcome: WorkshopOutcome | null;
   /** Mejor puntaje obtenido (null si no se ha enviado). */
   bestScore: number | null;
   /** Cantidad de intentos utilizados. */

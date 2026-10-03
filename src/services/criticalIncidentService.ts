@@ -8,6 +8,7 @@
  * - Listar los 4 talleres con su estado en el flujo lineal.
  * - Leer, guardar y descartar el borrador de un taller.
  * - Entregar las referencias bibliográficas del panel lateral.
+ * - Simular el resultado de un taller (solo mock; ver `simulateWorkshopResult`).
  *
  * Estado actual: **mock local con localStorage**.
  * Cuando el backend esté disponible, se reemplazan las funciones
@@ -23,6 +24,7 @@
 import type {
   Workshop,
   WorkshopStatus,
+  WorkshopOutcome,
   WorkshopAttempt,
   IncidentDraft,
   IncidentStep,
@@ -40,6 +42,7 @@ import { DEFAULT_WORKSHOP_CONFIG } from '../models/criticalIncident';
 const STORAGE_KEYS = {
   DRAFTS: 'reflexia_incident_drafts',
   ATTEMPTS: 'reflexia_incident_attempts',
+  RESULTS: 'reflexia_incident_results',
 } as const;
 
 /** Borradores indexados por `workshopId` (uno por taller). */
@@ -47,6 +50,9 @@ type DraftStore = Record<string, IncidentDraft>;
 
 /** Intentos de envío indexados por `workshopId`. */
 type AttemptStore = Record<string, WorkshopAttempt[]>;
+
+/** Resultado de cada taller completado, indexado por `workshopId`. */
+type ResultStore = Record<string, { outcome: WorkshopOutcome; resolvedAt: string }>;
 
 // ─────────────────────────────────────────────
 // Definición de los talleres (mock)
@@ -157,21 +163,27 @@ function assertWorkshopExists(workshopId: string): void {
  * Construye la lista de talleres con su estado en el flujo lineal.
  *
  * Prioridad del estado: `completed` > `locked` > `in-progress` > `available`.
- * Un taller se bloquea si el anterior no está completado. El bloqueo por
+ * Un taller con resultado, aprobado o reprobado, cuenta como completado y
+ * desbloquea el siguiente. Un taller se bloquea si el anterior no está
+ * completado. El bloqueo por
  * aprobación de HU-04 NO se calcula aquí (ver `useTheoryGate`).
  */
-function buildWorkshops(drafts: DraftStore, attempts: AttemptStore): Workshop[] {
+function buildWorkshops(
+  drafts: DraftStore,
+  attempts: AttemptStore,
+  results: ResultStore,
+): Workshop[] {
   const { maxAttemptsPerWorkshop } = DEFAULT_WORKSHOP_CONFIG;
   const workshops: Workshop[] = [];
 
   WORKSHOP_DEFINITIONS.forEach((definition, index) => {
     const workshopAttempts = attempts[definition.id] ?? [];
-    const reviewed = workshopAttempts.find((a) => a.status === 'reviewed');
+    const result = results[definition.id];
     const previousCompleted =
       index === 0 || workshops[index - 1].status === 'completed';
 
     let status: WorkshopStatus;
-    if (reviewed) status = 'completed';
+    if (result) status = 'completed';
     else if (!previousCompleted) status = 'locked';
     else if (drafts[definition.id]) status = 'in-progress';
     else status = 'available';
@@ -182,7 +194,8 @@ function buildWorkshops(drafts: DraftStore, attempts: AttemptStore): Workshop[] 
       bestScore: null,
       attemptsUsed: workshopAttempts.length,
       maxAttempts: maxAttemptsPerWorkshop,
-      completedAt: reviewed ? reviewed.submittedAt : null,
+      outcome: result ? result.outcome : null,
+      completedAt: result ? result.resolvedAt : null,
     });
   });
 
@@ -213,9 +226,10 @@ export const criticalIncidentService = {
 
     const drafts = readStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
     const attempts = readStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
+    const results = readStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
 
     return {
-      workshops: buildWorkshops(drafts, attempts),
+      workshops: buildWorkshops(drafts, attempts, results),
       config: DEFAULT_WORKSHOP_CONFIG,
     };
   },
@@ -307,5 +321,53 @@ export const criticalIncidentService = {
     // return axios.get<TheoryReference[]>('/api/critical-incidents/references', { params: { step } });
 
     return REFERENCES.filter((ref) => ref.relevantSteps.includes(step));
+  },
+
+  /**
+   * SOLO MOCK. Simula el resultado que el sistema notificará al estudiante
+   * cuando revise un taller: aprobado o reprobado.
+   *
+   * Un taller con resultado queda completado y, tanto si aprobó como si
+   * reprobó, desbloquea el siguiente. No toca los borradores ni los intentos.
+   *
+   * Producción: el resultado lo entrega el backend tras la revisión y este
+   * método se elimina junto con la simulación de la vista.
+   */
+  async simulateWorkshopResult(
+    workshopId: string,
+    outcome: WorkshopOutcome,
+  ): Promise<void> {
+    assertWorkshopExists(workshopId);
+
+    const drafts = readStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
+    const attempts = readStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
+    const results = readStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
+
+    const workshop = buildWorkshops(drafts, attempts, results).find(
+      (w) => w.id === workshopId,
+    );
+    if (workshop?.status === 'locked') {
+      throw new Error('El taller está bloqueado: completa el anterior primero.');
+    }
+
+    results[workshopId] = { outcome, resolvedAt: new Date().toISOString() };
+    writeStorage(STORAGE_KEYS.RESULTS, results);
+  },
+
+  /**
+   * SOLO MOCK. Quita el resultado simulado de un taller y el de los
+   * siguientes, que dejarían de estar desbloqueados. Sirve para repetir
+   * la demostración. Se elimina junto con `simulateWorkshopResult`.
+   */
+  async clearWorkshopResult(workshopId: string): Promise<void> {
+    assertWorkshopExists(workshopId);
+
+    const results = readStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
+    const fromIndex = WORKSHOP_DEFINITIONS.findIndex((w) => w.id === workshopId);
+
+    WORKSHOP_DEFINITIONS.slice(fromIndex).forEach((w) => {
+      delete results[w.id];
+    });
+    writeStorage(STORAGE_KEYS.RESULTS, results);
   },
 };
