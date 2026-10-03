@@ -1,10 +1,15 @@
 import { useNavigate } from 'react-router-dom'
-import { Lock, CheckCircle2 } from 'lucide-react'
+import { Lock } from 'lucide-react'
 
 import Button from '../../components/Button'
 import DevTheoryToggle from './components/DevTheoryToggle'
+import IncidentWizard from './components/IncidentWizard'
 import { useTheoryGate } from './hooks/useTheoryGate'
 import { setSimulatedTheoryApproval } from './dev/theoryApprovalSimulator'
+
+/* Taller en el que trabaja el asistente. El wizard es por taller (1 a 4);
+   mientras no exista el selector de talleres se trabaja con el primero. */
+const DEFAULT_WORKSHOP_ID = 'workshop-1'
 
 /* ------------------------------------------------
    CriticalIncidentView — HU-03 / RF-03
@@ -78,23 +83,8 @@ export default function CriticalIncidentView() {
       )
     }
 
-    /* ---- Desbloqueado: el asistente se incorpora en el siguiente paso ---- */
-    return (
-      <div className="rounded-xl border border-border bg-surface p-6 md:p-8 flex items-start gap-4">
-        <span className="text-accent-ia shrink-0" aria-hidden="true">
-          <CheckCircle2 size={28} />
-        </span>
-        <div className="space-y-1">
-          <h2 className="font-heading font-semibold text-xl text-texto">
-            Marco teórico aprobado
-          </h2>
-          <p className="text-texto/70">
-            Ya puedes registrar tu incidente crítico. El asistente paso a
-            paso aparecerá aquí.
-          </p>
-        </div>
-      </div>
-    )
+    /* ---- Desbloqueado: asistente paso a paso ---- */
+    return <IncidentWizard workshopId={DEFAULT_WORKSHOP_ID} />
   }
 
   return (
