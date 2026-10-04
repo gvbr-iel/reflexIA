@@ -33,7 +33,7 @@ npx tsc --noEmit       # verificación de tipos: la única comprobación automá
 
 - Los servicios exponen firmas estables con un `TODO` de Axios en cada método: al llegar el backend se cambian los cuerpos, no las firmas. Las vistas y componentes nunca llaman al servicio directamente, solo los hooks.
 - `models/theoryQuiz.ts` y `models/criticalIncident.ts` son los contratos entre features; otros módulos los leen sin importar el feature.
-- Claves de `localStorage` en uso: `reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, `reflexia_incident_attempts`, `reflexia_incident_results`.
+- Claves de `localStorage` en uso: `reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, `reflexia_incident_attempts`, `reflexia_incident_results`, `reflexia_whitelist`.
 - Un hook o componente que usan dos features va a `src/hooks/` o `src/components/` (regla R2), no se importa de un feature a otro. Ejemplos: `useWorkshops`, `WorkshopStatusBadge`.
 
 **Dependencia HU-03 (incidentes) → HU-04 (marco teórico).** Los talleres solo se habilitan si el estudiante aprobó el marco teórico. Esa condición se consulta en **un único punto**: `views/critical-incidents/hooks/useTheoryGate.ts`, que llama a `theoryQuizService.getApprovalStatus()` y falla cerrado. El servicio de incidentes **no** conoce HU-04. `DevTheoryToggle` y `dev/theoryApprovalSimulator.ts` simulan la aprobación escribiendo directamente la clave `reflexia_theory_approval` (acoplamiento deliberado, solo con `import.meta.env.DEV`); se eliminan cuando HU-04 esté integrada.
@@ -53,7 +53,8 @@ npx tsc --noEmit       # verificación de tipos: la única comprobación automá
 ## Estado de integración (verifica con git, puede haber cambiado)
 
 - HU-04 (`TheoryQuizView`, hook, servicio y componentes) y HU-03 (asistente, selector y resultado de talleres) ya están integradas en `main`. Del asistente aún faltan el envío a revisión, la retroalimentación "El Impulso" y la anonimización (RF-05).
-- Siguen como placeholders de 9 líneas: la whitelist, las reflexiones, los plazos y el panel docente. No existen `context/`, `views/auth/`, `views/privacy-guard/` ni `views/work-pacing/`, así que no hay autenticación (RF-08).
+- HU-01 (whitelist de `/admin/whitelist`) ya está integrada en `main`: lista con filtros, carga masiva con vista previa, alta individual y revocación inmediata. La carga masiva se bloquea entera mientras haya correos que no sean `@ucen.cl` válidos. El login (RF-08) debe usar `whitelistService.checkAccess(email)` y `utils/institutionalEmail.ts`, no reimplementar esas reglas.
+- Siguen como placeholders de 9 líneas: las reflexiones, los plazos y el panel docente. No existen `context/`, `views/auth/`, `views/privacy-guard/` ni `views/work-pacing/`, así que no hay autenticación (RF-08).
 
 ## Flujo de trabajo del equipo
 
