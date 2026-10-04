@@ -13,7 +13,8 @@
  * La lista de talleres y su estado (bloqueado, disponible, en curso,
  * aprobado o reprobado) se leen de la misma fuente que el asistente de
  * incidentes críticos (`useWorkshops`), y cada botón abre el asistente
- * del taller elegido (/estudiante/innovaciones/:workshopId).
+ * del taller elegido (/estudiante/talleres/:workshopId), sin salir de la
+ * sección Talleres.
  */
 
 import { useState, useEffect } from 'react'
