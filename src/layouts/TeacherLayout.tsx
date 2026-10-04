@@ -65,7 +65,7 @@ export default function TeacherLayout() {
 
         <aside
           className={`
-            fixed md:static top-[57px] left-0 h-[calc(100vh-57px)]
+            fixed md:sticky top-[57px] left-0 h-[calc(100vh-57px)] shrink-0
             w-60 bg-surface border-r border-border
             flex flex-col p-4 gap-1
             z-30 transition-transform duration-200
