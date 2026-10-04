@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 
+import { whitelistService } from '../services/whitelistService'
 import { firebaseAuth, isFirebaseConfigured } from '../services/firebase'
 import { signInStudent, signOutStudent, verifyStudentAccess } from '../services/authService'
 
@@ -39,8 +40,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     let isMounted = true
+    let unsubscribeAuthorization: (() => void) | null = null
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
       const attempt = ++latestAttempt.current
+      unsubscribeAuthorization?.()
+      unsubscribeAuthorization = null
       if (!firebaseUser) {
         if (isMounted) {
           setUser(null)
@@ -61,6 +65,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         setUser(firebaseUser)
         setStatus('authenticated')
+        unsubscribeAuthorization = whitelistService.watchAccess(
+          firebaseUser.email ?? '',
+          (currentAccess) => {
+            if (!isMounted || attempt !== latestAttempt.current) return
+            if (currentAccess.allowed && currentAccess.role === 'student') return
+
+            void signOutStudent().catch((error: unknown) => {
+              if (!isMounted || attempt !== latestAttempt.current) return
+              console.error('No se pudo cerrar una sesión revocada:', error)
+              setUser(null)
+              setStatus('error')
+            })
+          },
+          (error) => {
+            if (!isMounted || attempt !== latestAttempt.current) return
+            console.error('No se pudo monitorear la autorización:', error)
+            setUser(null)
+            setStatus('error')
+          },
+        )
       } catch (error) {
         if (!isMounted || attempt !== latestAttempt.current) return
         console.error('No se pudo verificar el acceso institucional:', error)
@@ -71,6 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       isMounted = false
+      unsubscribeAuthorization?.()
       unsubscribe()
     }
   }, [authorizationAttempt])

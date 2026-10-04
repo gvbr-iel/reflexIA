@@ -11,7 +11,7 @@ const GENERIC_CREDENTIAL_ERROR =
   'No pudimos iniciar sesión. Verifica tus credenciales y que tu correo esté autorizado.'
 
 export default function LoginView() {
-  const { signIn, status } = useAuth()
+  const { signIn, status, retryAuthorization } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -149,9 +149,15 @@ export default function LoginView() {
           </div>
 
           {status === 'error' && (
-            <p role="status" className="mt-4 text-sm text-texto/70">
-              El servicio de acceso no está disponible. Contacta al equipo de soporte.
-            </p>
+            <div className="mt-4 space-y-3">
+              <p role="status" className="text-sm text-texto/70">
+                El servicio de acceso no está disponible. Revisa tu conexión o
+                inténtalo nuevamente.
+              </p>
+              <Button variant="outline" fullWidth onClick={retryAuthorization}>
+                Reintentar verificación
+              </Button>
+            </div>
           )}
         </section>
       </div>

@@ -11,6 +11,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
@@ -91,6 +92,16 @@ function createEntry(email: string, role: WhitelistRole): WhitelistEntry {
   }
 }
 
+function serializeEntry(entry: WhitelistEntry) {
+  return {
+    email: entry.email,
+    role: entry.role,
+    status: entry.status,
+    addedAt: entry.addedAt,
+    revokedAt: entry.revokedAt,
+  }
+}
+
 function validateEmail(email: string): string {
   const validation = validateInstitutionalEmail(email)
   if (validation !== 'valid') throw new WhitelistError(validation)
@@ -111,7 +122,7 @@ async function setAccessStatus(id: string, revoke: boolean): Promise<WhitelistEn
       status: revoke ? 'revoked' : 'active',
       revokedAt: revoke ? new Date().toISOString() : null,
     }
-    transaction.set(reference, updated)
+    transaction.set(reference, serializeEntry(updated))
     return updated
   })
 }
@@ -144,12 +155,12 @@ export const whitelistService = {
         status: 'active',
         revokedAt: null,
       }
-      await setDoc(reference, entry)
+      await setDoc(reference, serializeEntry(entry))
       return { entry, reactivated: true }
     }
 
     const entry = createEntry(email, payload.role)
-    await setDoc(reference, entry)
+    await setDoc(reference, serializeEntry(entry))
     return { entry, reactivated: false }
   },
 
@@ -203,7 +214,7 @@ export const whitelistService = {
     for (let start = 0; start < writes.length; start += MAX_BATCH_SIZE) {
       const batch = writeBatch(database)
       writes.slice(start, start + MAX_BATCH_SIZE).forEach((entry) => {
-        batch.set(doc(database, COLLECTION_NAME, entry.id), entry)
+        batch.set(doc(database, COLLECTION_NAME, entry.id), serializeEntry(entry))
       })
       await batch.commit()
     }
@@ -230,5 +241,36 @@ export const whitelistService = {
     const entry = parseEntry(snapshot.id, snapshot.data())
     if (entry.status === 'revoked') return { allowed: false, reason: 'revoked' }
     return { allowed: true, role: entry.role }
+  },
+
+  watchAccess(
+    email: string,
+    onChange: (result: AccessCheckResult) => void,
+    onError: (error: Error) => void,
+  ): () => void {
+    const validation = validateInstitutionalEmail(email)
+    if (validation !== 'valid') {
+      onChange({ allowed: false, reason: 'invalid-domain' })
+      return () => undefined
+    }
+
+    const normalizedEmail = normalizeEmail(email)
+    return onSnapshot(
+      doc(getDatabase(), COLLECTION_NAME, normalizedEmail),
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          onChange({ allowed: false, reason: 'not-registered' })
+          return
+        }
+
+        const entry = parseEntry(snapshot.id, snapshot.data())
+        if (entry.status === 'revoked') {
+          onChange({ allowed: false, reason: 'revoked' })
+          return
+        }
+        onChange({ allowed: true, role: entry.role })
+      },
+      onError,
+    )
   },
 }
