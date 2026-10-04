@@ -1,18 +1,16 @@
-import { type ReactNode } from 'react'
-import { CheckCircle2, Circle, Lock, Pencil, XCircle } from 'lucide-react'
-
 import Button from '../../../components/Button'
-import type { Workshop, WorkshopStatus } from '../../../models/criticalIncident'
+import WorkshopStatusBadge from '../../../components/WorkshopStatusBadge'
+import type { Workshop } from '../../../models/criticalIncident'
 
 /* ------------------------------------------------
    WorkshopSelector — selector de talleres 1 a 4 (RF-03)
    Muestra cada taller con su estado en el flujo lineal
    y permite elegir en cuál trabajar. El estado se indica
-   con ícono y texto, no solo con color.
-   Un taller completado se muestra en verde si fue aprobado y
-   en rojo si fue reprobado; el rojo es el color semántico de
-   desempeño reprobatorio (AI_GUIDELINES §4). Ambos resultados
-   desbloquean el siguiente taller.
+   con ícono y texto (WorkshopStatusBadge), no solo con color.
+   La tarjeta de un taller completado se pinta en verde si fue
+   aprobado y en rojo si fue reprobado; el rojo es el color
+   semántico de desempeño reprobatorio (AI_GUIDELINES §4).
+   Ambos resultados desbloquean el siguiente taller.
    Se puede elegir un taller bloqueado: el asistente
    explica por qué no está disponible.
    Sin lógica propia (R5): recibe todo desde useWorkshops.
@@ -28,27 +26,6 @@ interface WorkshopSelectorProps {
   error: string | null
   onSelect: (workshopId: string) => void
   onRetry: () => void
-}
-
-interface StatusInfo {
-  label: string
-  icon: ReactNode
-}
-
-const STATUS_INFO: Record<Exclude<WorkshopStatus, 'completed'>, StatusInfo> = {
-  locked: { label: 'Bloqueado', icon: <Lock size={16} /> },
-  available: { label: 'Disponible', icon: <Circle size={16} /> },
-  'in-progress': { label: 'En curso', icon: <Pencil size={16} /> },
-}
-
-/** Texto e ícono del estado; un taller completado muestra su resultado. */
-function getStatusInfo(workshop: Workshop): StatusInfo {
-  if (workshop.status === 'completed') {
-    return workshop.outcome === 'failed'
-      ? { label: 'Reprobado', icon: <XCircle size={16} /> }
-      : { label: 'Aprobado', icon: <CheckCircle2 size={16} /> }
-  }
-  return STATUS_INFO[workshop.status]
 }
 
 export default function WorkshopSelector({
@@ -103,7 +80,6 @@ export default function WorkshopSelector({
         {workshops.map((workshop) => {
           const isSelected = workshop.id === selectedWorkshopId
           const isLocked = workshop.status === 'locked'
-          const status = getStatusInfo(workshop)
           const outcome = workshop.status === 'completed' ? workshop.outcome : null
 
           return (
@@ -134,29 +110,11 @@ export default function WorkshopSelector({
                 >
                   {workshop.title}
                 </span>
-                <span
-                  className={`mt-1 flex items-center gap-1.5 text-sm ${
-                    outcome
-                      ? 'font-medium text-texto'
-                      : isSelected || workshop.status === 'in-progress'
-                        ? 'text-primary'
-                        : 'text-texto/60'
-                  }`}
-                >
-                  <span
-                    className={`shrink-0 ${
-                      outcome === 'approved'
-                        ? 'text-perf-excellent'
-                        : outcome === 'failed'
-                          ? 'text-perf-fail'
-                          : ''
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {status.icon}
-                  </span>
-                  {status.label}
-                </span>
+                <WorkshopStatusBadge
+                  workshop={workshop}
+                  highlighted={isSelected}
+                  className="mt-1"
+                />
               </button>
             </li>
           )
