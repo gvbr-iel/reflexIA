@@ -52,7 +52,7 @@ export const STATUS_LABELS: Record<WhitelistStatus, string> = {
  * componente global `Table`, que exige `Record<string, unknown>`.
  */
 export type WhitelistEntry = {
-  /** Identificador único de la entrada. */
+  /** Identificador único; en Firestore corresponde al correo normalizado. */
   id: string;
   /** Correo institucional en minúsculas (e.g. "usuario@ucen.cl"). */
   email: string;
