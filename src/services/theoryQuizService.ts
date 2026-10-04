@@ -30,6 +30,7 @@ import type {
 } from '../models/theoryQuiz';
 
 import { DEFAULT_QUIZ_CONFIG } from '../models/theoryQuiz';
+import { getUserStorageKey } from '../utils/userStorage';
 
 // ─────────────────────────────────────────────
 // Claves de localStorage (mock temporal)
@@ -432,8 +433,9 @@ function pickRandom<T>(array: T[], count: number): T[] {
  * Retorna `null` si la clave no existe o el JSON es inválido.
  */
 function readStorage<T>(key: string): T | null {
+  const scopedKey = getUserStorageKey(key);
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(scopedKey);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;
@@ -444,7 +446,7 @@ function readStorage<T>(key: string): T | null {
  * Escribe un valor serializado como JSON en localStorage.
  */
 function writeStorage<T>(key: string, value: T): void {
-  localStorage.setItem(key, JSON.stringify(value));
+  localStorage.setItem(getUserStorageKey(key), JSON.stringify(value));
 }
 
 // ─────────────────────────────────────────────
