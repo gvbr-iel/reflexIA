@@ -6,6 +6,8 @@ Este módulo implementa el **asistente paso a paso (Step Wizard)** para redactar
 
 El asistente es **por taller** (talleres 1 a 4, con desbloqueo lineal) y solo está disponible si el estudiante aprobó el marco teórico (HU-04 / RF-04).
 
+Cada taller termina con un resultado: **aprobado** (se muestra en verde) o **reprobado** (en rojo). En ambos casos el estudiante puede continuar con el siguiente taller.
+
 Criterios de aceptación de RF-03 y dónde se cumplen:
 
 | Criterio | Dónde |
@@ -30,14 +32,17 @@ src/
         ├── components/
         │   ├── WorkshopWorkspace.tsx        # Une selector y asistente
         │   ├── WorkshopSelector.tsx         # Tarjetas de los talleres 1 a 4
+        │   ├── WorkshopResultBanner.tsx     # Aviso de aprobado o reprobado
         │   ├── IncidentWizard.tsx           # Compone el asistente de un taller
         │   ├── StepWizard.tsx               # Indicador de los 4 pasos
         │   ├── IncidentStepForm.tsx         # Campo de texto de cada paso
         │   ├── TheoryReferenceSidebar.tsx   # Panel de referencias
         │   ├── DraftManager.tsx             # Guardar y descartar borrador
-        │   └── DevTheoryToggle.tsx          # Solo desarrollo: simula la aprobación
+        │   ├── DevTheoryToggle.tsx          # Solo desarrollo: simula la aprobación
+        │   └── DevWorkshopResultToggle.tsx  # Solo desarrollo: simula el resultado del taller
         ├── dev/
-        │   └── theoryApprovalSimulator.ts   # Solo desarrollo
+        │   ├── theoryApprovalSimulator.ts   # Solo desarrollo
+        │   └── useWorkshopResultSimulator.ts # Solo desarrollo: resultado del taller
         ├── hooks/
         │   ├── useTheoryGate.ts             # Único punto de contacto con HU-04
         │   ├── useWorkshops.ts              # Lista y selección de talleres
@@ -56,7 +61,7 @@ src/
 
 Contratos del módulo:
 
-- **Talleres** (`Workshop`, `WorkshopStatus`): estado en el flujo lineal (`locked`, `available`, `in-progress`, `completed`), intentos usados y máximos.
+- **Talleres** (`Workshop`, `WorkshopStatus`, `WorkshopOutcome`): estado en el flujo lineal (`locked`, `available`, `in-progress`, `completed`), resultado (`approved` o `failed`, solo cuando está completado), intentos usados y máximos.
 - **Pasos** (`IncidentStep`, `IncidentStepInfo`, `INCIDENT_STEPS`): los 4 pasos con título, instrucción y ejemplo, tomados de AI_GUIDELINES §7.
 - **Borrador** (`IncidentDraft`, `SaveDraftPayload`): contenido de los 4 campos, paso en que quedó el estudiante y si el guardado fue automático.
 - **Retroalimentación y envío** (`AIFeedback`, `WorkshopAttempt`, `SubmitWorkshopPayload`): definidos para el futuro envío a revisión; **todavía no se usan**.
@@ -73,13 +78,13 @@ Mock con `localStorage` y firmas estables; cada método incluye un `TODO` con la
 
 **Métodos:**
 
-- **`fetchWorkshops()`**: los 4 talleres con su estado, calculado por progresión lineal (un taller se bloquea si el anterior no está completado) y la configuración vigente.
+- **`fetchWorkshops()`**: los 4 talleres con su estado, calculado por progresión lineal (un taller se bloquea si el anterior no tiene resultado) y la configuración vigente.
 - **`getDraft(workshopId)`**: el borrador del taller, o `null`.
 - **`saveDraft(payload, isAutoSaved)`**: crea o reemplaza el borrador. Solo escribe en la clave de borradores, nunca en la de intentos.
 - **`clearDraft(workshopId)`**: descarta el borrador.
 - **`getReferences(step)`**: las referencias pertinentes al paso.
 
-**Claves de localStorage:** `reflexia_incident_drafts` (un borrador por taller) y `reflexia_incident_attempts`.
+**Claves de localStorage:** `reflexia_incident_drafts` (un borrador por taller), `reflexia_incident_attempts` y `reflexia_incident_results` (resultado de cada taller, Etapa 9).
 
 Si la escritura falla, el error se propaga: un borrador que no se guardó no se da por guardado. El servicio **no conoce HU-04**.
 
@@ -133,7 +138,7 @@ Todos sin estado propio salvo el de interfaz (R5), con Tailwind y tokens, sin es
 **Archivos creados:** `hooks/useWorkshops.ts`, `components/WorkshopSelector.tsx`, `components/WorkshopWorkspace.tsx`
 
 - **`useWorkshops`**: lista los talleres y recuerda cuál está seleccionado (por defecto, el que tiene borrador en curso). Su `refresh` actualiza los estados sin mostrar la carga.
-- **`WorkshopSelector`**: tarjetas Taller 1 a 4 con estado indicado con ícono y texto: Bloqueado, Disponible, En curso y Completado.
+- **`WorkshopSelector`**: tarjetas Taller 1 a 4 con estado indicado con ícono y texto: Bloqueado, Disponible, En curso, Aprobado y Reprobado (estos dos, desde la Etapa 9).
 - **`WorkshopWorkspace`**: une el selector con el asistente del taller elegido y actualiza los estados al cambiar de taller.
 
 ### Etapa 8 — Diseño adaptable
@@ -144,6 +149,23 @@ Los breakpoints de Tailwind miden el viewport, pero el menú lateral de la app r
 - `StepWizard` muestra los títulos de los 4 pasos solo desde `xl`; entre `sm` y `xl` solo el del paso actual.
 - El contenido de la vista se centra con un ancho máximo de 96 rem, y el panel lateral y el título escalan con el ancho de la pantalla.
 
+### Etapa 9 — Resultado del taller (aprobado o reprobado)
+
+**Archivos creados:** `components/WorkshopResultBanner.tsx`, `components/DevWorkshopResultToggle.tsx`, `dev/useWorkshopResultSimulator.ts`
+**Archivos modificados:** `models/criticalIncident.ts`, `services/criticalIncidentService.ts`, `components/WorkshopSelector.tsx`, `components/WorkshopWorkspace.tsx`
+
+Regla de negocio: un taller con resultado queda **completado**, y tanto si fue aprobado como si fue reprobado **desbloquea el siguiente**. Un taller reprobado se muestra en rojo y uno aprobado en verde.
+
+- **Modelo**: se agrega `WorkshopOutcome` (`approved` o `failed`) y el campo `outcome` en `Workshop`, que es `null` mientras el taller no está completado.
+- **Servicio**: el resultado de cada taller se guarda en `reflexia_incident_results`. Un taller se considera completado cuando tiene resultado; esto reemplaza la condición anterior, que dependía de un intento revisado (ningún código escribía intentos, así que no cambia el comportamiento visible). Los métodos `simulateWorkshopResult` y `clearWorkshopResult` son **solo mock**:
+  - `simulateWorkshopResult` rechaza simular el resultado de un taller bloqueado.
+  - `clearWorkshopResult` quita el resultado del taller y de los siguientes, que dejarían de estar desbloqueados.
+  - Ninguno toca los borradores ni los intentos.
+- **`WorkshopSelector`**: la tarjeta del taller aprobado se pinta en verde con "Aprobado" y la del reprobado en rojo con "Reprobado". Cada una lleva ícono y texto, no solo color. El taller seleccionado conserva un anillo para distinguirlo.
+- **`WorkshopResultBanner`**: aviso sobre el asistente que indica el resultado y recuerda que puede continuar con el siguiente taller; en el último taller solo informa que era el último.
+- **`DevWorkshopResultToggle` y `useWorkshopResultSimulator`**: solo con `npm run dev`. Simulan la notificación del resultado del taller seleccionado con **Simular aprobado** (verde), **Simular reprobado** y **Quitar resultado**, que permite repetir la demostración. Se eliminan junto con los métodos mock del servicio cuando el resultado lo entregue el backend.
+- **Colores**: el rojo se usa únicamente como color semántico de desempeño reprobatorio (AI_GUIDELINES §4); ningún botón es rojo, por eso "Simular reprobado" es un botón neutro. El botón verde reutiliza `Button` con clases `!` para no modificar un componente compartido (R7); una variante `success` sería la solución más limpia si el equipo la aprueba.
+
 ---
 
 ## Cómo probar
@@ -151,7 +173,8 @@ Los breakpoints de Tailwind miden el viewport, pero el menú lateral de la app r
 1. `npm run dev` y abrir `/estudiante/innovaciones`.
 2. Sin aprobar el marco teórico se ve la pantalla de bloqueo. Con **Simular aprobado** (solo en desarrollo) aparece el asistente.
 3. Verificar los criterios: el paso no avanza con el campo vacío; el borrador se guarda manual y automáticamente y se recupera al recargar; el contador de intentos no cambia al guardar.
-4. `npx tsc --noEmit` para la verificación de tipos (no hay tests).
+4. En la caja "Modo desarrollo" del taller, pulsar **Simular aprobado** o **Simular reprobado**: la tarjeta pasa a verde o a rojo, aparece el aviso de resultado y se desbloquea el siguiente taller. **Quitar resultado** permite repetir la demostración.
+5. `npx tsc --noEmit` para la verificación de tipos (no hay tests).
 
 ## Discrepancias y pendientes del módulo
 
@@ -161,9 +184,11 @@ Los breakpoints de Tailwind miden el viewport, pero el menú lateral de la app r
 | Referencias bibliográficas | Los autores, años y textos de `criticalIncidentService` son parafraseos provisionales marcados `[POR DEFINIR]`; hay que validarlos antes de mostrarlos a estudiantes. | Por definir con la cliente |
 | Títulos de los talleres | Se usan nombres neutros ("Taller 1" a "Taller 4"); no hay descripciones definitivas. | `AI_GUIDELINES.md` §6 |
 | Envío a revisión y "El Impulso" | Fuera del alcance de este prototipo. Los tipos existen en el modelo pero ningún código los usa. | RF-02, RNF-05 |
-| Talleres 2 a 4 | Como no existe el envío, ningún taller puede completarse y los talleres 2 a 4 quedan siempre bloqueados. | Depende del envío a revisión |
+| Resultado del taller | El resultado (aprobado o reprobado) se simula solo en desarrollo. Al integrar el backend lo entregará la revisión del taller y habrá que eliminar la simulación. Un taller reprobado no se puede repetir y el resultado todavía no consume intentos. | Depende del envío a revisión |
+| Colores del resultado | El taller aprobado usa `perf-excellent` (verde esmeralda) a pedido del equipo; AI_GUIDELINES §4 define "aprobado" como azul verdoso (`perf-pass`) y reserva el esmeralda para "sobresaliente". | `AI_GUIDELINES.md` §4 |
 | Mínimo de caracteres | `minCharactersPerField` (50) está definido pero sin uso: el avance exige solo texto no vacío; el mínimo aplicará al envío. | Decisión del equipo |
 | Intentos por taller | ¿2 o 3? Se usa 3 por defecto. | `AI_GUIDELINES.md` §11 |
 | Integración con HU-04 | Al integrar la vista del marco teórico, eliminar `DevTheoryToggle` y `theoryApprovalSimulator`; `useTheoryGate` no necesita cambios. | Coordinación con HU-04 |
+| Herramientas de desarrollo | `DevTheoryToggle`, `theoryApprovalSimulator`, `DevWorkshopResultToggle` y `useWorkshopResultSimulator` solo se muestran con `npm run dev`; eliminarlas al conectar HU-04 y el backend. | Antes del paso a producción |
 | Rutas | El módulo se muestra en `/estudiante/innovaciones`, pero por AI_GUIDELINES §6 los talleres corresponden a `/estudiante/talleres`. | Acordar con el equipo |
 | Backend | No existe; el servicio usa `localStorage` y cada método tiene su `TODO` de Axios. | Coordinación con backend |
