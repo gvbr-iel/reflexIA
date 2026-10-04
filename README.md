@@ -118,5 +118,6 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 | `/estudiante` | StudentLayout | StudentDashboardView | Mi progreso (dashboard) |
 | `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | Verificación del marco teórico |
 | `/estudiante/talleres` | StudentLayout | RepositoryView | Lista de talleres con su estado; cada botón abre el asistente del taller |
-| `/estudiante/innovaciones/:workshopId?` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado (sin taller, abre el que corresponde) |
+| `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado, dentro de la sección Talleres |
+| `/estudiante/innovaciones` | StudentLayout | InnovationsView | Biblioteca de innovaciones (placeholder, RF-07) |
 | `*` (fallback) | — | — | Redirige a la página de presentación `/` |

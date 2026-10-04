@@ -13,15 +13,15 @@ import IncidentWizard from './IncidentWizard'
 /* ------------------------------------------------
    WorkshopWorkspace — selector de talleres + asistente
    El asistente es por taller (1 a 4) y el taller elegido
-   vive en la URL (/estudiante/innovaciones/:workshopId):
-   así la lista de talleres puede abrir uno concreto, al
+   vive en la URL (/estudiante/talleres/:workshopId), dentro de
+   la sección Talleres: así la lista puede abrir uno concreto, al
    recargar no se pierde y el botón "atrás" funciona.
    Solo se monta cuando el marco teórico está aprobado.
    Un taller con resultado, aprobado o reprobado, muestra
    su aviso y desbloquea el siguiente.
    ------------------------------------------------ */
 
-/** Taller al que se entra cuando la URL no indica ninguno: el que tiene un
+/** Taller al que se redirige cuando el de la URL no existe: el que tiene un
     borrador en curso, si no el primero disponible y, si no, el primero. */
 function pickDefaultWorkshopId(workshops: Workshop[]): string | null {
   const preferred =
@@ -52,9 +52,9 @@ export default function WorkshopWorkspace() {
     refresh()
   }, [selectedWorkshopId, refresh])
 
-  /* Sin taller en la URL, o con uno que no existe, se redirige al que
-     corresponde. Se hace una sola vez: después la URL fija el taller y no
-     salta cuando cambian los estados (por ejemplo, al aprobar uno). */
+  /* Con un taller que no existe en la URL se redirige al que corresponde.
+     Se hace una sola vez: después la URL fija el taller y no salta cuando
+     cambian los estados (por ejemplo, al aprobar uno). */
   if (!isLoading && !error && !selectedWorkshop) {
     const defaultWorkshopId = pickDefaultWorkshopId(workshops)
     if (defaultWorkshopId) {

@@ -18,6 +18,7 @@ import StudentDashboardView from './views/student-dashboard/StudentDashboardView
 import TheoryQuizView from './views/theory-verification/TheoryQuizView'
 import RepositoryView from './views/repository/RepositoryView'
 import CriticalIncidentView from './views/critical-incidents/CriticalIncidentView'
+import InnovationsView from './views/innovations/InnovationsView'
 import LandingPage from './views/landingpage/LandingPage'
 
 /* ------------------------------------------------
@@ -49,8 +50,14 @@ export default function App() {
       <Route path="/estudiante" element={<StudentLayout />}>
         <Route index element={<StudentDashboardView />} />
         <Route path="marco-teorico" element={<TheoryQuizView />} />
-        <Route path="talleres" element={<RepositoryView />} />
-        <Route path="innovaciones/:workshopId?" element={<CriticalIncidentView />} />
+        {/* /estudiante/talleres → lista de talleres;
+            /estudiante/talleres/:workshopId → asistente de incidentes
+            críticos del taller elegido, sin salir de la sección Talleres. */}
+        <Route path="talleres">
+          <Route index element={<RepositoryView />} />
+          <Route path=":workshopId" element={<CriticalIncidentView />} />
+        </Route>
+        <Route path="innovaciones" element={<InnovationsView />} />
       </Route>
 
       {/* ===== Fallback ===== */}
