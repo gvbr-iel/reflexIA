@@ -58,16 +58,63 @@ type ResultStore = Record<string, { outcome: WorkshopOutcome; resolvedAt: string
 // Definición de los talleres (mock)
 // ─────────────────────────────────────────────
 // TODO: Reemplazar por endpoint GET /api/critical-incidents/workshops.
-// [POR DEFINIR] Los títulos y descripciones finales de los talleres 1 a 4
-// no están definidos (AI_GUIDELINES §6); se usan nombres cortos neutros.
+// Esta es la única fuente de la lista de talleres: la usan el asistente de
+// incidentes críticos y la lista de talleres (RepositoryView).
+// [POR DEFINIR] Temas, descripciones y plazos provisionales, tomados de la
+// lista de talleres que se hizo en HU-04 (AI_GUIDELINES §6 no los define).
+// Validar con la profesora guía, en particular si cada taller es una etapa
+// distinta del incidente o un incidente completo trabajado con el asistente
+// de 4 pasos. Los plazos los configurará el profesor guía (RF-06).
 
-const WORKSHOP_DEFINITIONS: Pick<Workshop, 'id' | 'number' | 'title' | 'description'>[] =
-  [1, 2, 3, 4].map((number) => ({
-    id: `workshop-${number}`,
-    number,
-    title: `Taller ${number}`,
-    description: 'Descripción por definir con la profesora guía.',
-  }));
+const WORKSHOP_DEFINITIONS: Pick<
+  Workshop,
+  'id' | 'number' | 'title' | 'topic' | 'subtitle' | 'description' | 'deadline'
+>[] = [
+  {
+    id: 'workshop-1',
+    number: 1,
+    title: 'Taller 1',
+    topic: 'Contexto e inicio del incidente',
+    subtitle: 'Alumnos, infraestructura y conocimientos previos',
+    description:
+      'Describe el escenario donde ocurrió el evento significativo, ' +
+      'caracterizando el entorno educativo y las condiciones previas.',
+    deadline: '2026-10-15',
+  },
+  {
+    id: 'workshop-2',
+    number: 2,
+    title: 'Taller 2',
+    topic: 'Descripción del hecho y actores',
+    subtitle: 'Cronología y personas involucradas',
+    description:
+      'Relata los acontecimientos objetivos sin juicios prematuros, ' +
+      'identificando a los actores y sus roles e influencias.',
+    deadline: '2026-10-22',
+  },
+  {
+    id: 'workshop-3',
+    number: 3,
+    title: 'Taller 3',
+    topic: 'Relevancia pedagógica y dilema',
+    subtitle: 'Fundamentación con Schön y literatura',
+    description:
+      'Analiza el fondo pedagógico del incidente conectándolo con ' +
+      'conceptos teóricos de la reflexión profesional.',
+    deadline: '2026-10-29',
+  },
+  {
+    id: 'workshop-4',
+    number: 4,
+    title: 'Taller 4',
+    topic: 'Propuesta de innovación y cambio',
+    subtitle: 'Actuación mejorada y transformación',
+    description:
+      'Diseña una alternativa de intervención transformadora que ' +
+      'responda al dilema detectado en la práctica.',
+    deadline: '2026-11-05',
+  },
+];
 
 // ─────────────────────────────────────────────
 // Referencias bibliográficas (mock)

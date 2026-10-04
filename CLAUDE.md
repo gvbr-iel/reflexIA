@@ -25,7 +25,7 @@ npx tsc --noEmit       # verificación de tipos: la única comprobación automá
 
 ## Arquitectura
 
-**Rutas y layouts.** `src/App.tsx` define rutas anidadas por rol (`/admin`, `/docente`, `/estudiante`). Cada rol tiene un layout en `src/layouts/` con header y menú lateral de 240 px (`w-60`, fijo desde `md`) y renderiza la vista hija con `<Outlet />`. No hay autenticación ni guardas de ruta todavía. Las rutas `/estudiante/talleres` e `/estudiante/innovaciones` parecen cruzadas respecto de AI_GUIDELINES §6 (talleres es `critical-incidents/`, innovaciones es `repository/`); no las cambies sin acordarlo.
+**Rutas y layouts.** `src/App.tsx` define rutas anidadas por rol (`/admin`, `/docente`, `/estudiante`). Cada rol tiene un layout en `src/layouts/` con header y menú lateral de 240 px (`w-60`, fijo desde `md`) y renderiza la vista hija con `<Outlet />`. No hay autenticación ni guardas de ruta todavía. `/estudiante/talleres` es la lista de talleres (`RepositoryView`) y `/estudiante/innovaciones/:workshopId?` es el asistente de incidentes críticos (`CriticalIncidentView`); el taller elegido va en la URL. Esos nombres parecen cruzados respecto de AI_GUIDELINES §6 (talleres es `critical-incidents/`, innovaciones es `repository/`); no los cambies sin acordarlo, y si se renombran hazlo en `utils/routes.ts` y en `App.tsx`.
 
 **Cadena de capas de cada feature.** El patrón a seguir es siempre:
 
@@ -33,11 +33,14 @@ npx tsc --noEmit       # verificación de tipos: la única comprobación automá
 
 - Los servicios exponen firmas estables con un `TODO` de Axios en cada método: al llegar el backend se cambian los cuerpos, no las firmas. Las vistas y componentes nunca llaman al servicio directamente, solo los hooks.
 - `models/theoryQuiz.ts` y `models/criticalIncident.ts` son los contratos entre features; otros módulos los leen sin importar el feature.
-- Claves de `localStorage` en uso: `reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, `reflexia_incident_attempts`.
+- Claves de `localStorage` en uso: `reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, `reflexia_incident_attempts`, `reflexia_incident_results`.
+- Un hook o componente que usan dos features va a `src/hooks/` o `src/components/` (regla R2), no se importa de un feature a otro. Ejemplos: `useWorkshops`, `WorkshopStatusBadge`.
 
 **Dependencia HU-03 (incidentes) → HU-04 (marco teórico).** Los talleres solo se habilitan si el estudiante aprobó el marco teórico. Esa condición se consulta en **un único punto**: `views/critical-incidents/hooks/useTheoryGate.ts`, que llama a `theoryQuizService.getApprovalStatus()` y falla cerrado. El servicio de incidentes **no** conoce HU-04. `DevTheoryToggle` y `dev/theoryApprovalSimulator.ts` simulan la aprobación escribiendo directamente la clave `reflexia_theory_approval` (acoplamiento deliberado, solo con `import.meta.env.DEV`); se eliminan cuando HU-04 esté integrada.
 
 **Invariante de HU-03.** Guardar un borrador **nunca** descuenta intentos de revisión: `criticalIncidentService.saveDraft` solo escribe la clave de borradores. El asistente es por taller (`workshopId`, talleres 1 a 4 con desbloqueo lineal).
+
+**Fuente única de los talleres.** La lista de talleres y su estado salen de `criticalIncidentService.fetchWorkshops()`, a través del hook global `src/hooks/useWorkshops.ts`, y la leen tanto el asistente como `RepositoryView`; no vuelvas a escribir la lista a mano en una vista. Un taller con resultado (`outcome`: aprobado o reprobado) queda completado y, en ambos casos, desbloquea el siguiente. El resultado se simula solo con `npm run dev` (`dev/useWorkshopResultSimulator.ts` y los métodos `simulateWorkshopResult` y `clearWorkshopResult` del servicio); se eliminan cuando el resultado lo entregue un backend.
 
 ## Convenciones que no se deducen del código
 
@@ -49,8 +52,8 @@ npx tsc --noEmit       # verificación de tipos: la única comprobación automá
 
 ## Estado de integración (verifica con git, puede haber cambiado)
 
-- La vista real de HU-04 (`TheoryQuizView`, la rueda del dashboard) vivía en `origin/marcoTeorico` (commit `8a05d83`) y no había llegado a `main`, que solo tenía el placeholder. El hook, el servicio y los componentes de HU-04 sí están en `main`.
-- Salvo HU-04 y HU-03 (en la rama `incidentesCriticos`), todas las demás vistas son placeholders de 9 líneas.
+- HU-04 (`TheoryQuizView`, hook, servicio y componentes) y HU-03 (asistente, selector y resultado de talleres) ya están integradas en `main`. Del asistente aún faltan el envío a revisión, la retroalimentación "El Impulso" y la anonimización (RF-05).
+- Siguen como placeholders de 9 líneas: la whitelist, las reflexiones, los plazos y el panel docente. No existen `context/`, `views/auth/`, `views/privacy-guard/` ni `views/work-pacing/`, así que no hay autenticación (RF-08).
 
 ## Flujo de trabajo del equipo
 

@@ -44,10 +44,16 @@ export interface Workshop {
   id: string;
   /** Número ordinal del taller (1–4). */
   number: number;
-  /** Título corto del taller (e.g. "Fundamentación del Incidente"). */
+  /** Título corto del taller (e.g. "Taller 1"). */
   title: string;
   /** Descripción breve del objetivo del taller. */
   description: string;
+  /** Tema del taller (e.g. "Contexto e inicio del incidente"). */
+  topic: string;
+  /** Resumen en una línea de lo que se trabaja en el taller. */
+  subtitle: string;
+  /** Fecha límite en formato YYYY-MM-DD (null si no tiene). */
+  deadline: string | null;
   /** Estado actual del taller en el flujo lineal. */
   status: WorkshopStatus;
   /** Resultado del taller (null mientras no está completado). */
