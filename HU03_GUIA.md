@@ -184,25 +184,38 @@ Regla de negocio: un taller con resultado queda **completado**, y tanto si fue a
 
 - **Servicio y modelo**: el tema, el resumen, la descripción y el plazo de cada taller pasaron de la vista al servicio. El contenido es provisional (`[POR DEFINIR]`).
 - **`RepositoryView`**: lee del hook y conserva su diseño y su pantalla de bloqueo. Cada tarjeta muestra el estado real con `WorkshopStatusBadge` y el botón cambia según el estado: **Comenzar taller**, **Continuar taller**, **Ver taller** (completado) o **Bloqueado** (deshabilitado). Incluye los estados de carga y error.
-- **Ruta con parámetro** `/estudiante/innovaciones/:workshopId?`: el botón abre el asistente del taller elegido. `WorkshopWorkspace` lee el taller de la URL, así que al recargar no se pierde y el botón atrás funciona. Si la URL no indica taller, o indica uno que no existe, redirige **una sola vez** al que tiene un borrador en curso, si no al primero disponible y, si no, al primero. Después la URL fija el taller y no salta cuando cambian los estados.
+- **Ruta con parámetro** (`/estudiante/innovaciones/:workshopId?` en esta etapa; desde la Etapa 11, `/estudiante/talleres/:workshopId`): el botón abre el asistente del taller elegido. `WorkshopWorkspace` lee el taller de la URL, así que al recargar no se pierde y el botón atrás funciona. Si la URL indica un taller que no existe, redirige **una sola vez** al que tiene un borrador en curso, si no al primero disponible y, si no, al primero. Después la URL fija el taller y no salta cuando cambian los estados.
 - **`utils/routes.ts`**: construye la URL de un taller en un solo lugar, para la lista y el asistente.
 - **`useWorkshops`**: pasó a `src/hooks/` porque lo usan dos features (regla R2) y quedó solo con la lista, ya que el taller seleccionado vive en la URL.
 - **`WorkshopStatusBadge`** (en `src/components/`): muestra ícono, texto y color del estado de un taller, incluido el resultado aprobado o reprobado. Lo usan el selector y la lista.
-- **`StudentLayout`**: `end` pasa a aplicarse solo a "Mi progreso", para que "Innovaciones" quede activa también en `/estudiante/innovaciones/:workshopId`.
+- **`StudentLayout`**: `end` pasa a aplicarse solo a "Mi progreso", para que la sección activa del menú se mantenga en las subrutas (hoy, Talleres en `/estudiante/talleres/:workshopId`).
 
 **Flujo resultante:** Mi progreso → Talleres (lista) → botón del taller → asistente del taller elegido. Cumple RNF-04 (máximo 2 clics desde el panel principal).
 
 **Pendiente:** la tarjeta "Talleres Prácticos: Habilitados (4)" del dashboard todavía muestra un dato fijo; podría leer `useWorkshops`.
 
+### Etapa 11 — El asistente se abre dentro de Talleres
+
+**Archivo creado:** `src/views/innovations/InnovationsView.tsx`
+**Archivos modificados:** `src/App.tsx`, `src/utils/routes.ts`, `components/WorkshopWorkspace.tsx`, `views/repository/RepositoryView.tsx`
+
+Hasta la Etapa 10, el botón de un taller llevaba a `/estudiante/innovaciones/:workshopId`, es decir, a otra sección del menú. Ahora el asistente se abre en **`/estudiante/talleres/:workshopId`**: el estudiante no sale de Talleres y el menú sigue marcando esa sección.
+
+- **`App.tsx`**: `talleres` pasa a ser una ruta con dos hijas, la lista (`index`) y el asistente (`:workshopId`). Solo cambió la ruta; `CriticalIncidentView` y todo el asistente funcionan igual.
+- **`utils/routes.ts`**: la constante pasa a ser `WORKSHOPS_ROUTE` (`/estudiante/talleres`) y `workshopRoute` construye la URL nueva; la lista y el asistente siguen usando esa única función.
+- **Innovaciones se conserva**: el menú y la ruta `/estudiante/innovaciones` siguen existiendo, ahora con una vista placeholder (`InnovationsView`) para la biblioteca de innovaciones (RF-07), que implementará el equipo encargado.
+- **Redirección**: como la lista de talleres es la propia entrada, ya no existe el caso "sin taller en la URL"; solo se redirige cuando el taller de la URL no existe.
+- **URL anterior**: `/estudiante/innovaciones/:workshopId` ya no existe y cae en el redirect general, que lleva a la página de presentación `/`.
+
 ---
 
 ## Cómo probar
 
-1. `npm run dev` y abrir `/estudiante/innovaciones`.
+1. `npm run dev` y abrir `/estudiante/talleres/workshop-1`.
 2. Sin aprobar el marco teórico se ve la pantalla de bloqueo. Con **Simular aprobado** (solo en desarrollo) aparece el asistente.
 3. Verificar los criterios: el paso no avanza con el campo vacío; el borrador se guarda manual y automáticamente y se recupera al recargar; el contador de intentos no cambia al guardar.
 4. En la caja "Modo desarrollo" del taller, pulsar **Simular aprobado** o **Simular reprobado**: la tarjeta pasa a verde o a rojo, aparece el aviso de resultado y se desbloquea el siguiente taller. **Quitar resultado** permite repetir la demostración.
-5. Ir a `/estudiante/talleres`: la lista muestra el mismo estado de cada taller que el selector del asistente, y cada botón abre `/estudiante/innovaciones/<taller>`. Probar también entrar por el menú "Innovaciones" (sin taller) y con una URL de taller inexistente: ambos redirigen al taller que corresponde.
+5. Ir a `/estudiante/talleres`: la lista muestra el mismo estado de cada taller que el selector del asistente, y cada botón abre `/estudiante/talleres/<taller>` sin salir de la sección Talleres (el menú sigue marcando "Talleres"). Probar también una URL de taller inexistente, que redirige al taller que corresponde, y que el menú "Innovaciones" muestra su vista aparte.
 6. `npx tsc --noEmit` para la verificación de tipos (no hay tests).
 
 ## Discrepancias y pendientes del módulo
@@ -219,6 +232,6 @@ Regla de negocio: un taller con resultado queda **completado**, y tanto si fue a
 | Intentos por taller | ¿2 o 3? Se usa 3 por defecto. | `AI_GUIDELINES.md` §11 |
 | Integración con HU-04 | La vista del marco teórico ya está integrada en `main`: `DevTheoryToggle` y `theoryApprovalSimulator` pueden eliminarse si el equipo lo decide; `useTheoryGate` no necesita cambios. | Coordinación con HU-04 |
 | Herramientas de desarrollo | `DevTheoryToggle`, `theoryApprovalSimulator`, `DevWorkshopResultToggle` y `useWorkshopResultSimulator` solo se muestran con `npm run dev`; eliminarlas al conectar HU-04 y el backend. | Antes del paso a producción |
-| Rutas | El asistente está en `/estudiante/innovaciones/:workshopId?` y la lista de talleres en `/estudiante/talleres`; por AI_GUIDELINES §6 esos nombres parecen cruzados. Si se renombran, se cambia en `utils/routes.ts` y en `App.tsx`. | Acordar con el equipo |
+| Rutas | Los talleres (lista y asistente) están en `/estudiante/talleres` y `/estudiante/talleres/:workshopId`, como pide AI_GUIDELINES §6; `/estudiante/innovaciones` es un placeholder para RF-07. Falta decidir en qué carpeta vive cada vista: `repository/` contiene hoy la lista de talleres, no la biblioteca de innovaciones. Las rutas se cambian en `utils/routes.ts` y en `App.tsx`. | Acordar con el equipo |
 | Dashboard | La tarjeta "Talleres Prácticos" muestra "Habilitados (4)" fijo; podría leer `useWorkshops`. | Coordinación con HU-04 |
 | Backend | No existe; el servicio usa `localStorage` y cada método tiene su `TODO` de Axios. | Coordinación con backend |

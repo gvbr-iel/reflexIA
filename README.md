@@ -124,3 +124,6 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 
 La configuración, reglas y procedimiento de autorización para el acceso de
 estudiantes están documentados en [HU08_GUIA.md](./HU08_GUIA.md).
+| `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado, dentro de la sección Talleres |
+| `/estudiante/innovaciones` | StudentLayout | InnovationsView | Biblioteca de innovaciones (placeholder, RF-07) |
+| `*` (fallback) | — | — | Redirige a la página de presentación `/` |
