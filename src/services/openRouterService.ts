@@ -76,11 +76,15 @@ const MODEL_ROTATION_CODES = new Set([
   504,  // Gateway Timeout
 ]);
 
-/** Códigos HTTP que disparan la rotación de API key. */
+/**
+ * Códigos HTTP que disparan la rotación de API key.
+ * 429 no va aquí: en los modelos gratuitos suele indicar saturación del
+ * modelo o límite por minuto, así que conviene probar el siguiente modelo
+ * (lo cubre MODEL_ROTATION_CODES) antes de descartar la key.
+ */
 const KEY_ROTATION_CODES = new Set([
   401,  // Unauthorized (key inválida)
   403,  // Forbidden (key sin permisos)
-  429,  // Too Many Requests (cuota de la key agotada)
 ]);
 
 // ─────────────────────────────────────────────
