@@ -110,6 +110,7 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 
 | Ruta | Layout | Vista | Descripción |
 |---|---|---|---|
+| `/` | — | LandingPage | Presentación del proyecto y accesos a las vistas de estudiante y docente |
 | `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | Gestión de correos autorizados |
 | `/docente` | TeacherLayout | TeacherDashboardView | Panel general del docente |
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | Revisión de reflexiones |
@@ -118,4 +119,4 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 | `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | Verificación del marco teórico |
 | `/estudiante/talleres` | StudentLayout | RepositoryView | Lista de talleres con su estado; cada botón abre el asistente del taller |
 | `/estudiante/innovaciones/:workshopId?` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado (sin taller, abre el que corresponde) |
-| `*` (fallback) | — | — | Redirige a `/estudiante` |
+| `*` (fallback) | — | — | Redirige a la página de presentación `/` |

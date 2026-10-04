@@ -18,6 +18,7 @@ import StudentDashboardView from './views/student-dashboard/StudentDashboardView
 import TheoryQuizView from './views/theory-verification/TheoryQuizView'
 import RepositoryView from './views/repository/RepositoryView'
 import CriticalIncidentView from './views/critical-incidents/CriticalIncidentView'
+import LandingPage from './views/landingpage/LandingPage'
 
 /* ------------------------------------------------
    App — árbol de rutas de la aplicación.
@@ -27,6 +28,9 @@ import CriticalIncidentView from './views/critical-incidents/CriticalIncidentVie
 export default function App() {
   return (
     <Routes>
+      {/* ===== Página pública de presentación ===== */}
+      <Route path="/" element={<LandingPage />} />
+
       {/* ===== Admin ===== */}
       <Route path="/admin" element={<AdminLayout />}>
         {/* /admin → redirige a /admin/whitelist */}
@@ -50,9 +54,7 @@ export default function App() {
       </Route>
 
       {/* ===== Fallback ===== */}
-      {/* Por ahora redirige al rol estudiante; cuando exista AuthContext
-          se redirigirá según el rol autenticado. */}
-      <Route path="*" element={<Navigate to="/estudiante" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
