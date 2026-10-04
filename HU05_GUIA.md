@@ -91,3 +91,25 @@ Servicio que encapsula toda la comunicación con la API de OpenRouter para la de
 
 **Logs de depuración:** cada rotación de key o modelo se registra en `console.warn` con el código HTTP y el nombre del modelo, para facilitar la depuración durante el desarrollo.
 
+### Etapa 3 — Hook de lógica y estado `useSensitiveDataDetector`
+
+**Archivo creado:** `src/views/critical-incidents/hooks/useSensitiveDataDetector.ts`
+
+Hook que encapsula toda la lógica de detección, el ciclo de vida de la petición a la API y el estado reactivo del detector (R5), separando por completo la lógica de los componentes visuales.
+
+**Interfaz pública expuesta (`UseSensitiveDataDetectorReturn`):**
+
+- **`isAnalyzing`**: booleano que indica si el análisis hacia OpenRouter está en curso (activa loaders y deshabilita acciones concurrentes).
+- **`analysisError`**: mensaje de error legible en español (o `null` si no hay error).
+- **`detectedWords`**: lista de palabras sensibles (`SensitiveWord[]`) detectadas y normalizadas.
+- **`analyzedText`**: texto original que fue analizado (permite validar la correspondencia con el preview).
+- **`hasAnalyzed`**: booleano que indica si ya se completó al menos un análisis en el paso actual.
+- **`hasSensitiveData`**: booleano derivado (`detectedWords.length > 0`) para saber rápidamente si existen palabras marcadas.
+- **`analyze(text)`**: función asíncrona que valida la entrada, gestiona estados de carga y error, y llama a `openRouterService.detectSensitiveData(text)`.
+- **`clearResults()`**: función para resetear el estado y cancelar peticiones en vuelo al cambiar de paso o editar el relato.
+
+**Manejo de concurrencia y carreras:**
+- Se utiliza una referencia mutable (`latestRequestRef`) para descartar respuestas tardías o respuestas obsoletas si el usuario lanza un nuevo análisis o limpia los resultados.
+- Se implementa un bloqueo de reentrancia (`isAnalyzingRef`) para evitar múltiples llamadas paralelas accidentales si el usuario presiona repetidamente el botón.
+
+
