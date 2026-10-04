@@ -57,3 +57,37 @@ Contratos del módulo:
 El modelo **no modifica ni extiende** los tipos de `criticalIncident.ts`. Se re-exporta desde `models/index.ts`.
 
 El `.env.example` documenta la variable `VITE_OPENROUTER_API_KEY` con un placeholder.
+
+### Etapa 2 — Servicio de OpenRouter con rotación de keys y modelos
+
+**Archivo creado:** `src/services/openRouterService.ts`
+
+Servicio que encapsula toda la comunicación con la API de OpenRouter para la detección de datos sensibles.
+
+**Método público:**
+
+- **`detectSensitiveData(text: string)`**: analiza el texto y devuelve un `SensitiveDataDetection` con las palabras sensibles encontradas. Si el texto es demasiado corto (`< 10` caracteres) devuelve un resultado vacío sin llamar a la API.
+
+**Rotación automática de API keys:**
+
+- La lista de keys se construye en runtime: primero `import.meta.env.VITE_OPENROUTER_API_KEY`, luego las keys de respaldo de `OPENROUTER_API_KEYS` (filtrar placeholders).
+- Si una key falla con HTTP 401 (inválida), 403 (sin permisos) o 429 (cuota agotada), se salta a la siguiente key y se reinician los modelos.
+- Si no hay ninguna key configurada (todas son placeholders), se lanza un error claro explicando cómo configurarlas.
+
+**Rotación automática de modelos:**
+
+- Para cada key, se intenta con cada modelo de `OPENROUTER_MODELS` en orden.
+- Si un modelo falla con HTTP 402 (ya no es gratis), 429 (tokens agotados) o 503 (no disponible), se salta al siguiente modelo con la misma key.
+- Si todos los modelos y keys fallan, se devuelve un error descriptivo con el último error.
+
+**Validación y normalización de la respuesta:**
+
+- El modelo debería devolver JSON puro, pero a veces lo envuelve en bloques de código markdown; el parser maneja ambos formatos.
+- Cada palabra detectada se valida: campos obligatorios, categoría válida, posiciones dentro del rango del texto.
+- Si las posiciones no coinciden con el substring del texto (el modelo alucinó las posiciones), se recalculan buscando la palabra en el texto.
+- Si la palabra no existe en el texto (alucinación completa), se descarta.
+- Se eliminan solapamientos: si dos detecciones se solapan, se conserva la más larga.
+- El resultado final se ordena por `startIndex`.
+
+**Logs de depuración:** cada rotación de key o modelo se registra en `console.warn` con el código HTTP y el nombre del modelo, para facilitar la depuración durante el desarrollo.
+
