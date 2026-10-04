@@ -10,11 +10,14 @@ import '@fontsource/plus-jakarta-sans/700.css'
 
 import './assets/styles/tokens.css'
 import App from './App.tsx'
+import { AuthProvider } from './context/AuthContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

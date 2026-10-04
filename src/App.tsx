@@ -19,6 +19,8 @@ import TheoryQuizView from './views/theory-verification/TheoryQuizView'
 import RepositoryView from './views/repository/RepositoryView'
 import CriticalIncidentView from './views/critical-incidents/CriticalIncidentView'
 import LandingPage from './views/landingpage/LandingPage'
+import LoginView from './views/auth/LoginView'
+import RequireStudent from './components/RequireStudent'
 
 /* ------------------------------------------------
    App — árbol de rutas de la aplicación.
@@ -30,6 +32,7 @@ export default function App() {
     <Routes>
       {/* ===== Página pública de presentación ===== */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/iniciar-sesion" element={<LoginView />} />
 
       {/* ===== Admin ===== */}
       <Route path="/admin" element={<AdminLayout />}>
@@ -46,7 +49,14 @@ export default function App() {
       </Route>
 
       {/* ===== Estudiante ===== */}
-      <Route path="/estudiante" element={<StudentLayout />}>
+      <Route
+        path="/estudiante"
+        element={
+          <RequireStudent>
+            <StudentLayout />
+          </RequireStudent>
+        }
+      >
         <Route index element={<StudentDashboardView />} />
         <Route path="marco-teorico" element={<TheoryQuizView />} />
         <Route path="talleres" element={<RepositoryView />} />
