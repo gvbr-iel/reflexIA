@@ -1,18 +1,22 @@
-import { ArrowLeft, ArrowRight, Lock } from 'lucide-react'
+import { useEffect } from 'react'
+import { ArrowLeft, ArrowRight, Lock, Shield } from 'lucide-react'
 
 import Button from '../../../components/Button'
 import { useIncidentWizard } from '../hooks/useIncidentWizard'
 import { useTheoryReferences } from '../hooks/useTheoryReferences'
+import { useSensitiveDataDetector } from '../hooks/useSensitiveDataDetector'
 import StepWizard from './StepWizard'
 import IncidentStepForm from './IncidentStepForm'
 import TheoryReferenceSidebar from './TheoryReferenceSidebar'
+import SensitiveDataPreview from './SensitiveDataPreview'
 import DraftManager from './DraftManager'
 
 /* ------------------------------------------------
    IncidentWizard — asistente paso a paso de un taller
    Compone StepWizard, IncidentStepForm,
-   TheoryReferenceSidebar y DraftManager con la lógica
-   de useIncidentWizard y useTheoryReferences.
+   TheoryReferenceSidebar, SensitiveDataPreview y DraftManager
+   con la lógica de useIncidentWizard, useTheoryReferences
+   y useSensitiveDataDetector.
    Solo se monta cuando el marco teórico está aprobado,
    por lo que no carga datos mientras el acceso está
    bloqueado.
@@ -31,12 +35,18 @@ interface IncidentWizardProps {
 
 export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWizardProps) {
   const wizard = useIncidentWizard(workshopId, onDraftChange)
+  const sensitiveDetector = useSensitiveDataDetector()
   const {
     references,
     isLoading: isLoadingReferences,
     error: referencesError,
     retry: retryReferences,
   } = useTheoryReferences(wizard.currentStep.id)
+
+  // Limpia los resultados de detección sensible al cambiar de paso
+  useEffect(() => {
+    sensitiveDetector.clearResults()
+  }, [wizard.currentStep.id, sensitiveDetector.clearResults])
 
   /* ---- Estado de carga ---- */
   if (wizard.isLoading) {
@@ -96,7 +106,7 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
         />
       </div>
 
-      <div className="xl:col-start-1 xl:row-start-2">
+      <div className="xl:col-start-1 xl:row-start-2 space-y-4">
         <IncidentStepForm
           key={wizard.currentStep.id}
           step={wizard.currentStep}
@@ -105,6 +115,23 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           onChange={(text) => wizard.setFieldValue(wizard.currentStep.id, text)}
           error={wizard.stepError}
         />
+
+        {(sensitiveDetector.hasAnalyzed ||
+          sensitiveDetector.isAnalyzing ||
+          sensitiveDetector.analysisError) && (
+          <SensitiveDataPreview
+            originalText={sensitiveDetector.analyzedText ?? ''}
+            detectedWords={sensitiveDetector.detectedWords}
+            isAnalyzing={sensitiveDetector.isAnalyzing}
+            analysisError={sensitiveDetector.analysisError}
+            hasAnalyzed={sensitiveDetector.hasAnalyzed}
+            hasSensitiveData={sensitiveDetector.hasSensitiveData}
+            onRetry={() =>
+              sensitiveDetector.analyze(wizard.values[wizard.currentStep.id] || '')
+            }
+            onDismiss={sensitiveDetector.clearResults}
+          />
+        )}
       </div>
 
       <div className="xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-2 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
@@ -118,7 +145,7 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
       </div>
 
       <div className="space-y-6 xl:col-start-1 xl:row-start-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <Button
             variant="outline"
             icon={<ArrowLeft size={18} />}
@@ -128,12 +155,27 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
             Atrás
           </Button>
 
-          {!wizard.isLastStep && (
-            <Button onClick={wizard.goNext}>
-              Siguiente
-              <ArrowRight size={18} aria-hidden="true" />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Button
+              variant="outline"
+              size="md"
+              icon={<Shield size={18} />}
+              isLoading={sensitiveDetector.isAnalyzing}
+              onClick={() =>
+                sensitiveDetector.analyze(wizard.values[wizard.currentStep.id] || '')
+              }
+              disabled={!wizard.values[wizard.currentStep.id]?.trim()}
+            >
+              Detectar datos sensibles
             </Button>
-          )}
+
+            {!wizard.isLastStep && (
+              <Button onClick={wizard.goNext}>
+                Siguiente
+                <ArrowRight size={18} aria-hidden="true" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {wizard.isLastStep && wizard.allStepsCompleted && (
