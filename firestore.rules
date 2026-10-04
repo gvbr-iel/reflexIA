@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /whitelist/{email} {
+      function isWhitelistAdmin() {
+        return request.auth != null && request.auth.token.admin == true;
+      }
+
+      function hasValidWhitelistData() {
+        return request.resource.data.keys().hasAll([
+            'email', 'role', 'status', 'addedAt', 'revokedAt'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'email', 'role', 'status', 'addedAt', 'revokedAt'
+          ])
+          && request.resource.data.email == email
+          && request.resource.data.email.matches('^[^@\\s]+@ucen\\.cl$')
+          && request.resource.data.role in ['student', 'teacher']
+          && request.resource.data.status in ['active', 'revoked']
+          && request.resource.data.addedAt is string
+          && (
+            request.resource.data.revokedAt == null
+            || request.resource.data.revokedAt is string
+          );
+      }
+
+      allow get: if isWhitelistAdmin()
+        || (request.auth != null && request.auth.token.email == email);
+      allow list: if isWhitelistAdmin();
+      allow create, update: if isWhitelistAdmin() && hasValidWhitelistData();
+      allow delete: if isWhitelistAdmin();
+    }
+  }
+}

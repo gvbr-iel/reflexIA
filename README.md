@@ -111,6 +111,7 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 | Ruta | Layout | Vista | Descripción |
 |---|---|---|---|
 | `/` | — | LandingPage | Presentación del proyecto y accesos a las vistas de estudiante y docente |
+| `/iniciar-sesion` | — | LoginView | Acceso de estudiante con correo institucional |
 | `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | Gestión de correos autorizados |
 | `/docente` | TeacherLayout | TeacherDashboardView | Panel general del docente |
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | Revisión de reflexiones |
@@ -118,6 +119,11 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 | `/estudiante` | StudentLayout | StudentDashboardView | Mi progreso (dashboard) |
 | `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | Verificación del marco teórico |
 | `/estudiante/talleres` | StudentLayout | RepositoryView | Lista de talleres con su estado; cada botón abre el asistente del taller |
+| `/estudiante/innovaciones/:workshopId?` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado (sin taller, abre el que corresponde) |
+| `*` (fallback) | — | — | Redirige a la página de presentación `/` |
+
+La configuración, reglas y procedimiento de autorización para el acceso de
+estudiantes están documentados en [HU08_GUIA.md](./HU08_GUIA.md).
 | `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado, dentro de la sección Talleres |
 | `/estudiante/innovaciones` | StudentLayout | InnovationsView | Biblioteca de innovaciones (placeholder, RF-07) |
 | `*` (fallback) | — | — | Redirige a la página de presentación `/` |

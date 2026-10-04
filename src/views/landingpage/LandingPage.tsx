@@ -86,7 +86,7 @@ export default function LandingPage() {
               El proyecto
             </a>
             <Link
-              to="/estudiante"
+              to="/iniciar-sesion"
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-base font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:px-5"
             >
               Explorar plataforma
@@ -120,7 +120,7 @@ export default function LandingPage() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  to="/estudiante"
+                  to="/iniciar-sesion"
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   Conocer el recorrido
@@ -261,7 +261,7 @@ export default function LandingPage() {
                   guardar borradores y desarrollar ideas de mejora pedagógica.
                 </p>
                 <Link
-                  to="/estudiante"
+                  to="/iniciar-sesion"
                   className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-primary hover:text-accent-ia focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   Ver vista de estudiante
@@ -304,7 +304,7 @@ export default function LandingPage() {
               </p>
             </div>
             <Link
-              to="/estudiante"
+              to="/iniciar-sesion"
               className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-surface px-6 py-3 text-base font-semibold text-primary transition-colors hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
             >
               Explorar el prototipo

@@ -1,5 +1,5 @@
 import { type ReactNode, useState, useEffect } from 'react'
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   BookOpen,
   ClipboardList,
@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { theoryQuizService } from '../services/theoryQuizService'
+import { useAuth } from '../hooks/useAuth'
 
 /* ------------------------------------------------
    StudentLayout — marco visual del Estudiante
@@ -35,7 +36,10 @@ const navItems: NavItem[] = [
 export default function StudentLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isTheoryApproved, setIsTheoryApproved] = useState<boolean | null>(null)
+  const [signOutError, setSignOutError] = useState<string | null>(null)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
 
   useEffect(() => {
     // Consultar estado de aprobación del marco teórico
@@ -43,6 +47,17 @@ export default function StudentLayout() {
       setIsTheoryApproved(status.isApproved)
     })
   }, [location.pathname])
+
+  async function handleSignOut() {
+    setSignOutError(null)
+    try {
+      await signOut()
+      navigate('/iniciar-sesion', { replace: true })
+    } catch (error) {
+      console.error('No se pudo cerrar la sesión:', error)
+      setSignOutError('No se pudo cerrar la sesión. Inténtalo nuevamente.')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-bg flex flex-col">
@@ -66,6 +81,7 @@ export default function StudentLayout() {
         </div>
 
         <button
+          onClick={handleSignOut}
           className="flex items-center gap-2 text-sm text-texto/60 hover:text-texto transition-colors"
           aria-label="Cerrar sesión"
         >
@@ -73,6 +89,12 @@ export default function StudentLayout() {
           <span className="hidden sm:inline">Salir</span>
         </button>
       </header>
+
+      {signOutError && (
+        <p role="alert" className="border-b border-border bg-primary/5 px-4 py-2 text-sm text-texto">
+          {signOutError}
+        </p>
+      )}
 
       <div className="flex flex-1">
         {/* ===== Sidebar ===== */}

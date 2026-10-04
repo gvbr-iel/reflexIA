@@ -132,7 +132,7 @@ Cada módulo vive en `src/views/<feature>/` (ver sección 9).
 
 | Pantalla | RF | Rol | Módulo |
 |---|---|---|---|
-| Registro / inicio de sesión (solo `@ucen.cl`, sin RUT) | RF-08 | Todos | **[PROPUESTA]** `auth/` (el README aún no lo lista) |
+| Inicio de sesión (solo `@ucen.cl`, sin RUT) | RF-08 | Estudiante | `auth/` |
 | Panel principal del estudiante con la **rueda** y su progreso; encabezado con nombre, asignatura, código y profesor guía | RNF-04 | Estudiante | `StudentLayout` + vista de inicio **[POR DEFINIR]** |
 | Marco teórico + evaluación diagnóstica | RF-04 | Estudiante | `theory-verification/` |
 | Talleres 1 a 4: fundamentación, objetivos, sustento teórico, actividad y matriz del producto esperado | RF-03 | Estudiante | `critical-incidents/` |
@@ -250,5 +250,8 @@ Formato: `<tipo>: <descripción corta en infinitivo>`
 - **Dominio del correo:** el README (RNF-02) dice `@ucen.cl`; la extracción de las reuniones decía `@central.cl`. En este archivo se usa `@ucen.cl` hasta confirmar con la cliente.
 - **Aprobación del cuestionario diagnóstico:** el README habla de "puntaje mínimo aprobatorio"; en las reuniones se mencionó exigir **100% de aciertos**. Confirmar cuál rige y si el umbral es configurable por el profesor (RF-06).
 - **Intentos de revisión de la IA por taller:** ¿2 o 3? (se acordó limitarlos, falta fijar el número).
-- **Evaluación final, panel docente y autenticación (`auth/`):** no aparecen en el árbol de carpetas del README; definir en qué módulo viven.
+- **Evaluación final y panel docente:** no aparecen en el árbol de carpetas del README; definir en qué módulo viven.
 - Valores finales de la **paleta** y **stack de estilos** (secciones 4 y 9). La tipografía ya quedó definida en la sección 5.
+
+La configuración de acceso y los detalles de HU-08 están consolidados en
+[`HU08_GUIA.md`](./HU08_GUIA.md).

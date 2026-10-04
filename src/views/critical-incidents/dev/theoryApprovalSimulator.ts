@@ -13,6 +13,7 @@
  */
 
 import type { TheoryApprovalStatus } from '../../../models/theoryQuiz';
+import { getUserStorageKey } from '../../../utils/userStorage';
 
 /** Misma clave que `theoryQuizService` (STORAGE_KEYS.APPROVAL). */
 const THEORY_APPROVAL_KEY = 'reflexia_theory_approval';
@@ -22,8 +23,9 @@ const THEORY_APPROVAL_KEY = 'reflexia_theory_approval';
  * "No aprobado" elimina la clave, que es el estado inicial real.
  */
 export function setSimulatedTheoryApproval(approved: boolean): void {
+  const storageKey = getUserStorageKey(THEORY_APPROVAL_KEY);
   if (!approved) {
-    localStorage.removeItem(THEORY_APPROVAL_KEY);
+    localStorage.removeItem(storageKey);
     return;
   }
 
@@ -41,5 +43,5 @@ export function setSimulatedTheoryApproval(approved: boolean): void {
     approvedAt: new Date().toISOString(),
   };
 
-  localStorage.setItem(THEORY_APPROVAL_KEY, JSON.stringify(status));
+  localStorage.setItem(storageKey, JSON.stringify(status));
 }
