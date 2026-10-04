@@ -1,5 +1,5 @@
-import { type ReactNode, useState } from 'react'
-import { Outlet, NavLink } from 'react-router-dom'
+import { type ReactNode, useState, useEffect } from 'react'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import {
   BookOpen,
   ClipboardList,
@@ -8,7 +8,10 @@ import {
   Menu,
   X,
   LogOut,
+  CheckCircle2,
+  Lock,
 } from 'lucide-react'
+import { theoryQuizService } from '../services/theoryQuizService'
 
 /* ------------------------------------------------
    StudentLayout — marco visual del Estudiante
@@ -31,6 +34,15 @@ const navItems: NavItem[] = [
 
 export default function StudentLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isTheoryApproved, setIsTheoryApproved] = useState<boolean | null>(null)
+  const location = useLocation()
+
+  useEffect(() => {
+    // Consultar estado de aprobación del marco teórico
+    theoryQuizService.getApprovalStatus().then((status) => {
+      setIsTheoryApproved(status.isApproved)
+    })
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen bg-bg flex flex-col">
@@ -82,24 +94,60 @@ export default function StudentLayout() {
           `}
         >
           <nav className="space-y-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-accent-ia/10 text-accent-ia'
-                      : 'text-texto/70 hover:bg-accent-ia/5 hover:text-accent-ia'
-                  }`
-                }
-              >
-                {item.icon}
-                {item.label}
-              </NavLink>
-            ))}
+            {navItems.map((item) => {
+              const isTheoryItem = item.path === '/estudiante/marco-teorico'
+              const isTalleresItem = item.path === '/estudiante/talleres'
+
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-accent-ia/10 text-accent-ia'
+                        : 'text-texto/70 hover:bg-accent-ia/5 hover:text-accent-ia'
+                    }`
+                  }
+                >
+                  {item.icon}
+                  <span className="flex-1">{item.label}</span>
+
+                  {/* Indicador marco teórico: aprobado */}
+                  {isTheoryItem && isTheoryApproved === true && (
+                    <span
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-ia bg-accent-ia/10 px-1.5 py-0.5 rounded-full"
+                      title="Marco teórico aprobado"
+                    >
+                      <CheckCircle2 size={12} />
+                      <span className="hidden lg:inline text-[10px]">Listo</span>
+                    </span>
+                  )}
+
+                  {/* Indicador marco teórico: pendiente */}
+                  {isTheoryItem && isTheoryApproved === false && (
+                    <span
+                      className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full"
+                      title="Evaluación requerida"
+                    >
+                      Req.
+                    </span>
+                  )}
+
+                  {/* Indicador talleres: bloqueado si no ha aprobado */}
+                  {isTalleresItem && isTheoryApproved === false && (
+                    <span
+                      className="text-texto/40"
+                      title="Bloqueado hasta aprobar el marco teórico (RF-03)"
+                    >
+                      <Lock size={13} />
+                    </span>
+                  )}
+                </NavLink>
+              )
+            })}
           </nav>
         </aside>
 
