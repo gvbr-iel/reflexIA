@@ -9,6 +9,11 @@
  *
  * Si el marco teórico está pendiente, muestra un estado bloqueado
  * con acceso directo a la evaluación.
+ *
+ * La lista de talleres y su estado (bloqueado, disponible, en curso,
+ * aprobado o reprobado) se leen de la misma fuente que el asistente de
+ * incidentes críticos (`useWorkshops`), y cada botón abre el asistente
+ * del taller elegido (/estudiante/innovaciones/:workshopId).
  */
 
 import { useState, useEffect } from 'react'
@@ -24,56 +29,38 @@ import {
 } from 'lucide-react'
 import { theoryQuizService } from '../../services/theoryQuizService'
 import type { TheoryApprovalStatus } from '../../models/theoryQuiz'
+import type { Workshop } from '../../models/criticalIncident'
+import { useWorkshops } from '../../hooks/useWorkshops'
+import { workshopRoute } from '../../utils/routes'
 import Button from '../../components/Button'
+import WorkshopStatusBadge from '../../components/WorkshopStatusBadge'
 
-interface WorkshopItem {
-  id: number
-  title: string
-  subtitle: string
-  description: string
-  status: 'pending' | 'in_progress' | 'completed'
-  deadline: string
+/** Texto del botón de un taller que no está bloqueado. */
+function actionLabel(workshop: Workshop): string {
+  if (workshop.status === 'in-progress') return 'Continuar taller'
+  if (workshop.status === 'completed') return 'Ver taller'
+  return 'Comenzar taller'
 }
 
-const WORKSHOPS: WorkshopItem[] = [
-  {
-    id: 1,
-    title: 'Taller 1: Contexto e inicio del incidente',
-    subtitle: 'Alumnos, infraestructura y conocimientos previos',
-    description: 'Describe el escenario donde ocurrió el evento significativo, caracterizando el entorno educativo y las condiciones previas.',
-    status: 'in_progress',
-    deadline: '15 de Octubre, 2026',
-  },
-  {
-    id: 2,
-    title: 'Taller 2: Descripción del hecho y actores',
-    subtitle: 'Cronología y personas involucradas',
-    description: 'Relata los acontecimientos objetivos sin juicios prematuros, identificando a los actores y sus roles e influencias.',
-    status: 'pending',
-    deadline: '22 de Octubre, 2026',
-  },
-  {
-    id: 3,
-    title: 'Taller 3: Relevancia pedagógica y dilema',
-    subtitle: 'Fundamentación con Schön y literatura',
-    description: 'Analiza el fondo pedagógico del incidente conectándolo con conceptos teóricos de la reflexión profesional.',
-    status: 'pending',
-    deadline: '29 de Octubre, 2026',
-  },
-  {
-    id: 4,
-    title: 'Taller 4: Propuesta de innovación y cambio',
-    subtitle: 'Actuación mejorada y transformación',
-    description: 'Diseña una alternativa de intervención transformadora que responda al dilema detectado en la práctica.',
-    status: 'pending',
-    deadline: '05 de Noviembre, 2026',
-  },
-]
+/** Formatea una fecha YYYY-MM-DD (se interpreta como fecha local). */
+function formatDeadline(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('es-CL', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
 
 export default function RepositoryView() {
   const navigate = useNavigate()
   const [approval, setApproval] = useState<TheoryApprovalStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  const {
+    workshops,
+    isLoading: isLoadingWorkshops,
+    error: workshopsError,
+    retry: retryWorkshops,
+  } = useWorkshops()
 
   useEffect(() => {
     theoryQuizService.getApprovalStatus()
@@ -136,6 +123,96 @@ export default function RepositoryView() {
     )
   }
 
+  // ── Lista de talleres: carga, error, vacío o tarjetas ──
+  function renderWorkshops() {
+    if (isLoadingWorkshops) {
+      return (
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          role="status"
+          aria-busy="true"
+          aria-label="Cargando talleres"
+        >
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-52 rounded-xl bg-border/50 animate-pulse" />
+          ))}
+        </div>
+      )
+    }
+
+    if (workshopsError) {
+      return (
+        <div role="alert" className="bg-surface rounded-xl border border-border p-5 space-y-3">
+          <p className="text-texto">{workshopsError}</p>
+          <Button variant="outline" size="sm" onClick={retryWorkshops}>
+            Reintentar
+          </Button>
+        </div>
+      )
+    }
+
+    if (workshops.length === 0) {
+      return <p className="text-texto/70">Por ahora no hay talleres disponibles.</p>
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {workshops.map((workshop) => (
+          <div
+            key={workshop.id}
+            className="bg-surface rounded-xl border border-border p-5 hover:border-secondary/50 transition-all flex flex-col justify-between gap-4"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-secondary uppercase tracking-wider">
+                  Taller {workshop.number}
+                </span>
+                {workshop.deadline && (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-texto/60">
+                    <Calendar size={12} /> {formatDeadline(workshop.deadline)}
+                  </span>
+                )}
+              </div>
+
+              <h3 className="font-heading text-lg font-bold text-texto">
+                {workshop.title}: {workshop.topic}
+              </h3>
+              <p className="text-xs font-medium text-secondary">
+                {workshop.subtitle}
+              </p>
+              <p className="text-sm text-texto/70 leading-relaxed">
+                {workshop.description}
+              </p>
+            </div>
+
+            <div className="pt-2 border-t border-border/50 flex items-center justify-between gap-3">
+              <WorkshopStatusBadge workshop={workshop} />
+              {workshop.status === 'locked' ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={<Lock size={14} />}
+                  disabled
+                >
+                  Bloqueado
+                </Button>
+              ) : (
+                <Button
+                  variant={workshop.status === 'completed' ? 'outline' : 'primary'}
+                  size="sm"
+                  icon={<ArrowRight size={14} />}
+                  onClick={() => navigate(workshopRoute(workshop.id))}
+                >
+                  {actionLabel(workshop)}
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   // ── Estado desbloqueado: marco teórico aprobado ──
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -169,52 +246,12 @@ export default function RepositoryView() {
             <Layers size={20} className="text-secondary" />
             Talleres del Semestre
           </h2>
-          <span className="text-xs text-texto/60 font-medium">4 etapas secuenciales</span>
+          <span className="text-xs text-texto/60 font-medium">
+            {workshops.length > 0 ? workshops.length : 4} etapas secuenciales
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {WORKSHOPS.map((workshop) => (
-            <div
-              key={workshop.id}
-              className="bg-surface rounded-xl border border-border p-5 hover:border-secondary/50 transition-all flex flex-col justify-between gap-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-secondary uppercase tracking-wider">
-                    Taller {workshop.id}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] text-texto/60">
-                    <Calendar size={12} /> {workshop.deadline}
-                  </span>
-                </div>
-
-                <h3 className="font-heading text-lg font-bold text-texto">
-                  {workshop.title}
-                </h3>
-                <p className="text-xs font-medium text-secondary">
-                  {workshop.subtitle}
-                </p>
-                <p className="text-sm text-texto/70 leading-relaxed">
-                  {workshop.description}
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-border/50 flex items-center justify-between">
-                <span className="text-xs font-medium text-texto/60">
-                  {workshop.status === 'in_progress' ? 'En desarrollo' : 'Pendiente'}
-                </span>
-                <Button
-                  variant={workshop.id === 1 ? 'primary' : 'outline'}
-                  size="sm"
-                  icon={<ArrowRight size={14} />}
-                  onClick={() => navigate('/estudiante/innovaciones')}
-                >
-                  {workshop.id === 1 ? 'Continuar taller' : 'Ver pauta'}
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+        {renderWorkshops()}
       </div>
     </div>
   )
