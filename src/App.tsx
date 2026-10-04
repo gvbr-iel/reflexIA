@@ -46,7 +46,7 @@ export default function App() {
         <Route index element={<StudentDashboardView />} />
         <Route path="marco-teorico" element={<TheoryQuizView />} />
         <Route path="talleres" element={<RepositoryView />} />
-        <Route path="innovaciones" element={<CriticalIncidentView />} />
+        <Route path="innovaciones/:workshopId?" element={<CriticalIncidentView />} />
       </Route>
 
       {/* ===== Fallback ===== */}
