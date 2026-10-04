@@ -1,10 +1,14 @@
 import { type ReactNode, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 /* ------------------------------------------------
    Modal — componente reutilizable global
    Overlay, cierre con Escape / clic exterior,
    cabecera con título y botón cerrar.
+   Se renderiza en un portal sobre <body> para que
+   los estilos del contenedor donde se usa (márgenes
+   de space-y-*, overflow, z-index) no lo afecten.
    ------------------------------------------------ */
 
 interface ModalProps {
@@ -50,7 +54,7 @@ export default function Modal({
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -108,6 +112,7 @@ export default function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
