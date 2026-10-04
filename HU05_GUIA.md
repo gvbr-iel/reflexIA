@@ -130,5 +130,18 @@ Componente presentacional desacoplado y sin estado propio (R5), responsable de v
    - **Texto con highlights:** Renderizado del texto original con las palabras sensibles envueltas en etiquetas `<mark>` con fondo tenue (`bg-perf-fail/15`), texto rojo (`text-perf-fail`) y tooltip descriptivo con la categoría.
    - **Aviso pedagógico:** Mensaje de confidencialidad y recordatorio de que el texto debe corregirse manualmente en el campo del formulario.
 
+### Etapa 5 — Integración en el asistente `IncidentWizard`
+
+**Archivo modificado:** `src/views/critical-incidents/components/IncidentWizard.tsx`
+
+Se integró el flujo de detección en el asistente de talleres prácticos de incidentes críticos, manteniendo el formulario `IncidentStepForm.tsx` puro y desacoplado (R5).
+
+**Detalles de la integración:**
+- **Hook `useSensitiveDataDetector`:** Instanciado a nivel de wizard para compartir estado entre la botonera y el preview.
+- **Botón "Detectar datos sensibles":** Agregado en la barra de acciones inmediatamente a la izquierda del botón "Siguiente". Diseñado con `variant="outline"`, ícono `Shield`, estado `isLoading` durante el análisis y deshabilitado si el texto del paso actual está en blanco.
+- **Montaje del preview:** `SensitiveDataPreview` se monta condicionalmente justo debajo del campo de texto de `IncidentStepForm` ante estados de análisis, error o resultados disponibles.
+- **Limpieza contextual:** Un `useEffect` suscrito al cambio de `wizard.currentStep.id` invoca `sensitiveDetector.clearResults()`, garantizando que al cambiar de paso se limpien los resaltados del paso anterior sin mezclar relatos.
+
+
 
 
