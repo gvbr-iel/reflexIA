@@ -132,7 +132,7 @@ Cada módulo vive en `src/views/<feature>/` (ver sección 9).
 
 | Pantalla | RF | Rol | Módulo |
 |---|---|---|---|
-| Inicio de sesión (solo `@ucen.cl`, sin RUT) | RF-08 | Estudiante | `auth/` (`/iniciar-sesion`, Firebase Authentication + whitelist en Firestore) |
+| Inicio de sesión (solo `@ucen.cl`, sin RUT) | RF-08 | Estudiante | `auth/` |
 | Panel principal del estudiante con la **rueda** y su progreso; encabezado con nombre, asignatura, código y profesor guía | RNF-04 | Estudiante | `StudentLayout` + vista de inicio **[POR DEFINIR]** |
 | Marco teórico + evaluación diagnóstica | RF-04 | Estudiante | `theory-verification/` |
 | Talleres 1 a 4: fundamentación, objetivos, sustento teórico, actividad y matriz del producto esperado | RF-03 | Estudiante | `critical-incidents/` |
@@ -164,7 +164,6 @@ Las secciones del estudiante se **desbloquean en orden lineal**.
 - **Sin estética deportiva:** ni imágenes, ni íconos, ni elementos asociados a educación física o deporte.
 - **Sin rojo/naranjo estructural** (ver excepción de la sección 4).
 - **Sin RUT** en registros ni formularios (Ley 21.719 de Protección de Datos Personales).
-- **Credenciales y whitelist:** Firebase Authentication y Firestore son la única excepción a la persistencia mock frontend; nunca exponer claves privadas de Firebase Admin SDK en el cliente.
 - **La IA nunca redacta ni corrige el texto del alumno.** Solo entrega orientaciones generales ("impulsos").
 - **Sin video ni audio** de salas de clases (restricciones legales de privacidad).
 - **Anonimización estricta:** no se registran nombres reales de estudiantes, profesores, colegios ni cursos exactos. Solo rangos generales o edades como contexto. Si se detecta un nombre propio, el relato **no se procesa** hasta que el usuario lo anonimice.
@@ -174,7 +173,7 @@ Las secciones del estudiante se **desbloquean en orden lineal**.
 ## 9. Reglas técnicas para la IA
 
 ### Stack
-- **React + TypeScript** (`App.tsx`, `main.tsx`), con Context API (`AuthContext`, `ThemeContext`). Firebase Authentication y Cloud Firestore se usan solo para sesión de estudiante y whitelist; los demás módulos mantienen mocks locales salvo aprobación explícita de otro cambio.
+- **React + TypeScript** (`App.tsx`, `main.tsx`), con Context API (`AuthContext`, `ThemeContext`) y llamadas a la API con Axios/Fetch desde `services/`.
 - **Bundler:** Vite (`vite.config.ts`).
 - **Estilos:** Tailwind CSS v3 (`tailwindcss` en `package.json`).
 - **Librería de pruebas:** **[POR DEFINIR]** (confirmar con el equipo y anotar aquí).
@@ -189,7 +188,7 @@ src/
 ├── hooks/         # Hooks globales (useAuth, useDebounce, etc.)
 ├── layouts/       # AdminLayout, TeacherLayout, StudentLayout
 ├── models/        # Tipos e interfaces globales (User, Reflection, Incident, etc.)
-├── services/      # Servicios Firebase para auth/whitelist y mocks por módulo
+├── services/      # Axios/Fetch y llamadas a la API por módulo
 ├── utils/         # Formateadores, validadores, anonimizadores
 ├── views/         # Un módulo por feature (ver sección 6)
 │   └── <feature>/ # components/, hooks/ y <Feature>View.tsx
@@ -254,15 +253,5 @@ Formato: `<tipo>: <descripción corta en infinitivo>`
 - **Evaluación final y panel docente:** no aparecen en el árbol de carpetas del README; definir en qué módulo viven.
 - Valores finales de la **paleta** y **stack de estilos** (secciones 4 y 9). La tipografía ya quedó definida en la sección 5.
 
-### Integración Firebase HU-01 / RF-08
-
-- El inicio de sesión es `/iniciar-sesion`: Firebase Authentication con correo y
-  contraseña, seguido por una comprobación del rol `student` en Firestore.
-- Las rutas `/estudiante/*` requieren sesión y registro activo en la colección
-  `whitelist`; el dominio permitido sigue siendo `@ucen.cl`.
-- La whitelist ya no se persiste en `localStorage`. Los borradores, intentos y
-  resultados de talleres permanecen locales y se particionan por UID. Consulta
-  `AUTH_FIREBASE_SETUP.md` y `firestore.rules` para la configuración.
-- No se incluyó un flujo de autenticación administrativa: mientras se acuerda e
-  implementa, la whitelist se gestiona desde Firebase Console o una herramienta
-  interna con Firebase Admin SDK.
+La configuración de acceso y los detalles de HU-08 están consolidados en
+[`HU08_GUIA.md`](./HU08_GUIA.md).

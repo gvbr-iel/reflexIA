@@ -111,7 +111,7 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 | Ruta | Layout | Vista | Descripción |
 |---|---|---|---|
 | `/` | — | LandingPage | Presentación del proyecto y accesos a las vistas de estudiante y docente |
-| `/iniciar-sesion` | — | LoginView | Inicio de sesión estudiantil con correo `@ucen.cl` y contraseña |
+| `/iniciar-sesion` | — | LoginView | Acceso de estudiante con correo institucional |
 | `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | Gestión de correos autorizados |
 | `/docente` | TeacherLayout | TeacherDashboardView | Panel general del docente |
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | Revisión de reflexiones |
@@ -122,7 +122,5 @@ Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anid
 | `/estudiante/innovaciones/:workshopId?` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado (sin taller, abre el que corresponde) |
 | `*` (fallback) | — | — | Redirige a la página de presentación `/` |
 
-Las rutas `/estudiante/*` requieren una sesión Firebase activa y un documento
-estudiantil autorizado en Firestore. Consulta [AUTH_FIREBASE_SETUP.md](./AUTH_FIREBASE_SETUP.md)
-para configurar Firebase Authentication, Firestore, las reglas y el primer
-usuario autorizado.
+La configuración, reglas y procedimiento de autorización para el acceso de
+estudiantes están documentados en [HU08_GUIA.md](./HU08_GUIA.md).
