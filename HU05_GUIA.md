@@ -112,4 +112,23 @@ Hook que encapsula toda la lógica de detección, el ciclo de vida de la petici�
 - Se utiliza una referencia mutable (`latestRequestRef`) para descartar respuestas tardías o respuestas obsoletas si el usuario lanza un nuevo análisis o limpia los resultados.
 - Se implementa un bloqueo de reentrancia (`isAnalyzingRef`) para evitar múltiples llamadas paralelas accidentales si el usuario presiona repetidamente el botón.
 
+### Etapa 4 — Componente de vista previa `SensitiveDataPreview`
+
+**Archivo creado:** `src/views/critical-incidents/components/SensitiveDataPreview.tsx`
+
+Componente presentacional desacoplado y sin estado propio (R5), responsable de visualizar los estados y resultados de la detección de datos sensibles.
+
+**Comportamiento por estados (R9):**
+
+1. **Inactivo (`!isAnalyzing && !analysisError && !hasAnalyzed`):** No se renderiza en el DOM (`null`).
+2. **Cargando (`isAnalyzing`):** Muestra un skeleton animado de tres líneas (`animate-pulse`) con spinner circular e indicador textual en español.
+3. **Error (`analysisError`):** Contenedor con ícono `AlertCircle`, mensaje detallado en español y botón `Button` (`variant="outline"`, `size="sm"`) para reintentar la llamada.
+4. **Texto limpio (`!hasSensitiveData`):** Panel en tonos verdes (`accent-ia`) con ícono `ShieldCheck` informando que no se detectaron nombres propios ni instituciones educativas, con botón de cierre.
+5. **Datos sensibles detectados (`hasSensitiveData`):**
+   - **Encabezado:** Ícono `ShieldAlert` en rojo semántico (`perf-fail`), título con el número de coincidencias encontradas y botón `X` de descarte.
+   - **Badges por categoría:** Etiquetas visuales (`student_name`, `teacher_name`, `school_name`, `other_pii`) con conteos exactos utilizando `SENSITIVE_CATEGORY_LABELS`.
+   - **Texto con highlights:** Renderizado del texto original con las palabras sensibles envueltas en etiquetas `<mark>` con fondo tenue (`bg-perf-fail/15`), texto rojo (`text-perf-fail`) y tooltip descriptivo con la categoría.
+   - **Aviso pedagógico:** Mensaje de confidencialidad y recordatorio de que el texto debe corregirse manualmente en el campo del formulario.
+
+
 
