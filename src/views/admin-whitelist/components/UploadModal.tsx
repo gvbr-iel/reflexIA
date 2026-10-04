@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
+  AlertTriangle,
   CircleAlert,
   CircleCheck,
   ClipboardList,
@@ -89,9 +90,19 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
   const bulk = useBulkUpload(entries)
   const [isImporting, setIsImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  /* Se activa al intentar importar con errores; el aviso se oculta solo al corregirlos. */
+  const [showErrors, setShowErrors] = useState(false)
+  const errorsRef = useRef<HTMLDivElement>(null)
 
   const toImport = bulk.emailsToImport.length
-  const skipped = bulk.rows.length - toImport
+  const errorCount = bulk.rejectedRows.length
+  const alreadyRegistered = bulk.counts.existing + bulk.counts.duplicate
+  const isBlocked = showErrors && errorCount > 0
+
+  /* Lleva el foco al aviso para que no pase desapercibido. */
+  useEffect(() => {
+    if (isBlocked) errorsRef.current?.focus()
+  }, [isBlocked])
 
   /* Las filas que se omiten van primero para que el administrador las revise. */
   const sortedRows = [...bulk.rows].sort(
@@ -102,17 +113,27 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
     if (isImporting) return
     bulk.reset()
     setImportError(null)
+    setShowErrors(false)
     onClose()
   }
 
   async function handleImport() {
     setImportError(null)
+
+    /* Con correos no válidos no se carga nada hasta que se corrijan. */
+    if (errorCount > 0) {
+      setShowErrors(true)
+      errorsRef.current?.focus()
+      return
+    }
+
     setIsImporting(true)
     const result = await onImport({ emails: bulk.emailsToImport, role: bulk.role })
     setIsImporting(false)
 
     if (result.ok) {
       bulk.reset()
+      setShowErrors(false)
       onClose()
     } else {
       setImportError(result.message)
@@ -130,7 +151,11 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
           <Button variant="outline" onClick={handleClose} disabled={isImporting}>
             Cancelar
           </Button>
-          <Button onClick={handleImport} disabled={toImport === 0} isLoading={isImporting}>
+          <Button
+            onClick={handleImport}
+            disabled={toImport === 0 && errorCount === 0}
+            isLoading={isImporting}
+          >
             {toImport === 1 ? 'Importar 1 correo' : `Importar ${toImport} correos`}
           </Button>
         </>
@@ -241,10 +266,47 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
               3. Revisa antes de importar
             </h3>
 
-            <div className="grid grid-cols-3 gap-2">
+            {/* Bloqueo: aparece al intentar importar con correos no válidos */}
+            {isBlocked && (
+              <div
+                ref={errorsRef}
+                tabIndex={-1}
+                role="alert"
+                className="flex items-start gap-3 rounded-lg border-2 border-primary/60 bg-primary/5 p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <AlertTriangle size={20} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
+                <div className="min-w-0 space-y-2">
+                  <p className="text-sm font-medium text-texto">
+                    No se importó ningún correo:{' '}
+                    {errorCount === 1
+                      ? 'hay 1 valor que no es un correo @ucen.cl válido.'
+                      : `hay ${errorCount} valores que no son correos @ucen.cl válidos.`}
+                  </p>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {bulk.rejectedRows.map((row, index) => (
+                      <li
+                        key={`${row.line}-${index}`}
+                        className="break-all rounded-md border border-border bg-surface px-2 py-0.5 text-sm text-texto"
+                      >
+                        {row.value}
+                        <span className="text-texto/60"> · línea {row.line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-texto/70">
+                    {bulk.mode === 'paste'
+                      ? 'Corrige o elimina estos valores en el texto pegado y vuelve a presionar "Importar".'
+                      : 'Corrige estos valores en tu archivo, quítalo y vuelve a subirlo.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <SummaryItem value={bulk.counts.new} label="Nuevos" />
               <SummaryItem value={bulk.counts.reactivate} label="Por reactivar" />
-              <SummaryItem value={skipped} label="Se omitirán" />
+              <SummaryItem value={alreadyRegistered} label="Ya registrados" />
+              <SummaryItem value={errorCount} label="Con errores" />
             </div>
 
             <ul
@@ -256,11 +318,11 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
               ))}
             </ul>
 
-            {skipped > 0 && (
+            {alreadyRegistered > 0 && (
               <p className="flex items-start gap-1.5 text-sm text-texto/70">
                 <Info size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
-                Los correos omitidos no se importan. Corrígelos en el archivo y vuelve a subirlo si
-                los necesitas.
+                Los correos ya activos o repetidos se omiten automáticamente; no necesitas
+                quitarlos.
               </p>
             )}
           </section>

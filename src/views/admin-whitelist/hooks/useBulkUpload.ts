@@ -62,6 +62,8 @@ export interface UseBulkUploadReturn {
   counts: BulkPreviewCounts;
   /** Correos que se enviarán al servicio (nuevos y por reactivar). */
   emailsToImport: string[];
+  /** Líneas que no son correos @ucen.cl válidos; bloquean la importación. */
+  rejectedRows: BulkPreviewRow[];
 
   downloadTemplate: () => void;
   /** Vuelve al estado inicial (al cerrar el modal o tras importar). */
@@ -202,6 +204,12 @@ export function useBulkUpload(entries: WhitelistEntry[]): UseBulkUploadReturn {
     [rows],
   );
 
+  const rejectedRows = useMemo(
+    () =>
+      rows.filter((row) => row.status === 'invalid-domain' || row.status === 'invalid-format'),
+    [rows],
+  );
+
   const downloadTemplate = useCallback(() => {
     const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -235,6 +243,7 @@ export function useBulkUpload(entries: WhitelistEntry[]): UseBulkUploadReturn {
     rows,
     counts,
     emailsToImport,
+    rejectedRows,
     downloadTemplate,
     reset,
   };
