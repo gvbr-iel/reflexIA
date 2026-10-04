@@ -27,9 +27,8 @@ src/
 └── views/
     └── critical-incidents/
         ├── components/
-        │   ├── SensitiveDataPreview.tsx  # Vista previa con palabras destacadas en rojo
-        │   └── IncidentStepForm.tsx      # (modificado) Botón de detección
-        │   └── IncidentWizard.tsx        # (modificado) Instancia el hook de detección
+        │   ├── SensitiveDataPreview.tsx # Vista previa con palabras destacadas en rojo
+        │   └── IncidentWizard.tsx       # (modificado) Instancia el hook, botón y preview
         └── hooks/
             └── useSensitiveDataDetector.ts  # Hook de lógica y estado de la detección
 ```
@@ -141,6 +140,68 @@ Se integró el flujo de detección en el asistente de talleres prácticos de inc
 - **Botón "Detectar datos sensibles":** Agregado en la barra de acciones inmediatamente a la izquierda del botón "Siguiente". Diseñado con `variant="outline"`, ícono `Shield`, estado `isLoading` durante el análisis y deshabilitado si el texto del paso actual está en blanco.
 - **Montaje del preview:** `SensitiveDataPreview` se monta condicionalmente justo debajo del campo de texto de `IncidentStepForm` ante estados de análisis, error o resultados disponibles.
 - **Limpieza contextual:** Un `useEffect` suscrito al cambio de `wizard.currentStep.id` invoca `sensitiveDetector.clearResults()`, garantizando que al cambiar de paso se limpien los resaltados del paso anterior sin mezclar relatos.
+
+### Etapa 6 — Documentación final y protocolo de pruebas
+
+**Archivo actualizado:** `HU05_GUIA.md`
+
+Se completó la documentación consolidada del módulo de anonimización (RF-05 / RNF-01), definiendo los protocolos de prueba manual para validar la detección, la respuesta visual y los casos de borde, así como el registro de discrepancias y trabajo pendiente con backend.
+
+---
+
+## Cómo probar
+
+1. **Configurar la API Key de OpenRouter:**
+   - Crear un archivo `.env` en la raíz del proyecto (basado en `.env.example`) y definir tu clave:
+     ```env
+     VITE_OPENROUTER_API_KEY=sk-or-v1-tu-clave-aqui
+     ```
+   - *Alternativa de respaldo:* Reemplazar los valores de `OPENROUTER_API_KEYS` en [`src/models/sensitiveData.ts`](src/models/sensitiveData.ts).
+2. **Iniciar la aplicación:**
+   ```bash
+   npm run dev
+   ```
+   Abrir en el navegador la ruta `/estudiante/talleres`.
+3. **Acceder a un taller de incidentes críticos:**
+   - Con el marco teórico aprobado (o simulado a través del entorno de desarrollo), abrir el asistente del primer taller disponible.
+4. **Prueba de detección de datos sensibles (Caso positivo):**
+   - En el paso 1 (*Contexto*) o en cualquiera de los pasos, escribir un relato que contenga datos sensibles evidentes. Por ejemplo:
+     > *"Durante la clase en la Escuela República de Chile, la profesora guía Marcela Soto nos pidió organizar a los estudiantes en grupos. El alumno Juanito Pérez y la alumna Martina comenzaron a discutir fuertemente."*
+   - Presionar el botón **"Detectar datos sensibles"** (ubicado junto al botón "Siguiente").
+   - Verificar que el botón muestre el spinner de carga (`isLoading`) y el panel despliegue el skeleton animado.
+   - Al recibir la respuesta del modelo, verificar que:
+     - El encabezado señale el número de coincidencias detectadas.
+     - Los badges muestren el conteo agrupado por categorías (*Nombre de alumno*, *Nombre de docente*, *Nombre de establecimiento*).
+     - El texto aparezca con los nombres propios e instituciones envueltos en `<mark>` con fondo suave y texto en color semántico rojo (`perf-fail`).
+     - Al pasar el cursor sobre las palabras resaltadas, el tooltip del navegador (`title`) indique la categoría del dato.
+5. **Prueba de corrección y texto limpio (Caso negativo):**
+   - Modificar manualmente el texto en el textarea para anonimizarlo pedagógicamente:
+     > *"Durante la clase en una escuela municipal básica, la profesora guía nos pidió organizar a los estudiantes en grupos. Un estudiante de tercer año básico y su compañera comenzaron a discutir fuertemente."*
+   - Volver a presionar **"Detectar datos sensibles"**.
+   - Verificar que el panel ahora muestre una tarjeta verde (`accent-ia`) con ícono `ShieldCheck` confirmando: *"No se detectaron datos sensibles en este paso del relato."*
+6. **Prueba de ciclo de vida al cambiar de paso:**
+   - Presionar "Siguiente" para avanzar al paso 2 (*Conflicto*).
+   - Verificar que el panel de detección anterior desaparece automáticamente y el nuevo paso inicia limpio.
+7. **Prueba de manejo de errores:**
+   - Configurar temporalmente una clave inválida o desactivar la red.
+   - Al presionar el botón, verificar que se muestre el contenedor de alerta con ícono `AlertCircle`, mensaje explicativo en español y botón "Reintentar".
+8. **Verificación de tipado estático:**
+   ```bash
+   npx tsc --noEmit
+   ```
+   Debe completar sin ningún error de TypeScript (código 0).
+
+---
+
+## Discrepancias y pendientes del módulo
+
+| Tema | Detalle | Referencia |
+|---|---|---|
+| **Bloqueo duro antes del envío** | En esta etapa de frontend, la detección es una herramienta asistiva y visual. El bloqueo estricto que impida finalizar o enviar el taller a revisión cuando existan datos sensibles se implementará cuando se conecte el flujo de entrega final (RF-02 / RF-05). | RF-05, RNF-01 |
+| **Seguridad de API Keys** | En esta versión solo frontend, la llamada se realiza directamente desde el cliente. Para producción, esta lógica y las credenciales deben delegarse a un microservicio o proxy de backend para resguardar las claves privadas. | RNF de Seguridad |
+| **Vigencia de modelos gratuitos** | La lista `OPENROUTER_MODELS` incluye modelos gratuitos de OpenRouter (Gemini Flash, Llama 3.1, Mistral, Qwen, Zephyr). Si la disponibilidad de modelos sin costo cambia en la plataforma externa, se deben actualizar los identificadores en `src/models/sensitiveData.ts`. | Mantenimiento |
+| **Detección offline complementaria** | Si el usuario no tiene conexión o se agotan las cuotas de OpenRouter, actualmente se informa el error. Como mejora futura, se podría incorporar un validador local básico por expresiones regulares o listas de nombres comunes chilenos como salvaguarda secundaria. | Mejora futura |
+
 
 
 
