@@ -47,7 +47,7 @@ export default function StudentLayout() {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
       {/* ===== Header ===== */}
-      <header className="bg-surface border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+      <header className="bg-surface border-b border-border h-14 px-4 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -86,7 +86,7 @@ export default function StudentLayout() {
 
         <aside
           className={`
-            fixed md:sticky top-[57px] left-0 h-[calc(100vh-57px)] shrink-0
+            fixed md:sticky top-14 left-0 h-[calc(100vh-3.5rem)] shrink-0
             w-60 bg-surface border-r border-border
             flex flex-col p-4 gap-1
             z-30 transition-transform duration-200
