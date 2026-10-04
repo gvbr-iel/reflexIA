@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-ReflexIA es un prototipo **solo frontend** (React 18 + TypeScript + Vite + Tailwind v3) de una plataforma de práctica profesional docente. **No hay backend**: toda la persistencia es un mock sobre `localStorage`. No agregues llamadas reales a una API ni dependas de un servidor.
+ReflexIA es un prototipo **solo frontend** (React 18 + TypeScript + Vite + Tailwind v3) de una plataforma de práctica profesional docente. No hay backend propio: la persistencia de talleres sigue siendo un mock sobre `localStorage`. La excepción explícita es Firebase Authentication y Cloud Firestore para autenticación y whitelist (HU-01/RF-08); no agregues otras llamadas a APIs ni dependas de servicios distintos de Firebase para esas dos funciones.
 
 Contexto, requisitos (RF/RNF) y reglas del equipo, que debes respetar en todo cambio:
 
@@ -25,18 +25,18 @@ npx tsc --noEmit       # verificación de tipos: la única comprobación automá
 
 ## Arquitectura
 
-**Rutas y layouts.** `src/App.tsx` define rutas anidadas por rol (`/admin`, `/docente`, `/estudiante`). Cada rol tiene un layout en `src/layouts/` con header y menú lateral de 240 px (`w-60`, fijo desde `md`) y renderiza la vista hija con `<Outlet />`. No hay autenticación ni guardas de ruta todavía. `/estudiante/talleres` es la lista de talleres (`RepositoryView`) y `/estudiante/innovaciones/:workshopId?` es el asistente de incidentes críticos (`CriticalIncidentView`); el taller elegido va en la URL. Esos nombres parecen cruzados respecto de AI_GUIDELINES §6 (talleres es `critical-incidents/`, innovaciones es `repository/`); no los cambies sin acordarlo, y si se renombran hazlo en `utils/routes.ts` y en `App.tsx`.
+**Rutas y layouts.** `src/App.tsx` define rutas anidadas por rol (`/admin`, `/docente`, `/estudiante`) y la ruta pública `/iniciar-sesion`. Las rutas de estudiante están protegidas por `RequireStudent`, que requiere una sesión Firebase y una autorización activa en Firestore. Cada rol tiene un layout en `src/layouts/` con header y menú lateral de 240 px (`w-60`, fijo desde `md`) y renderiza la vista hija con `<Outlet />`. `/estudiante/talleres` es la lista de talleres (`RepositoryView`) y `/estudiante/innovaciones/:workshopId?` es el asistente de incidentes críticos (`CriticalIncidentView`); el taller elegido va en la URL. Esos nombres parecen cruzados respecto de AI_GUIDELINES §6 (talleres es `critical-incidents/`, innovaciones es `repository/`); no los cambies sin acordarlo, y si se renombran hazlo en `utils/routes.ts` y en `App.tsx`.
 
 **Cadena de capas de cada feature.** El patrón a seguir es siempre:
 
-`models/<feature>.ts` (tipos y constantes) → `services/<feature>Service.ts` (mock con `localStorage`) → `views/<feature>/hooks/` (toda la lógica y el estado) → `views/<feature>/components/` (solo presentación) → `<Feature>View.tsx`.
+`models/<feature>.ts` (tipos y constantes) → `services/<feature>Service.ts` (mock con `localStorage`, excepto Firebase para auth/whitelist) → `views/<feature>/hooks/` (toda la lógica y el estado) → `views/<feature>/components/` (solo presentación) → `<Feature>View.tsx`.
 
-- Los servicios exponen firmas estables con un `TODO` de Axios en cada método: al llegar el backend se cambian los cuerpos, no las firmas. Las vistas y componentes nunca llaman al servicio directamente, solo los hooks.
+- Los servicios de talleres mantienen firmas estables y persistencia mock local. Auth y whitelist usan Firebase a través de `services/`; las vistas y componentes nunca llaman al servicio directamente, solo los hooks.
 - `models/theoryQuiz.ts` y `models/criticalIncident.ts` son los contratos entre features; otros módulos los leen sin importar el feature.
-- Claves de `localStorage` en uso: `reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, `reflexia_incident_attempts`, `reflexia_incident_results`, `reflexia_whitelist`.
+- Las claves base de `localStorage` para talleres (`reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, `reflexia_incident_attempts`, `reflexia_incident_results`) se particionan por UID con `utils/userStorage.ts`. La whitelist usa la colección Firestore `whitelist`.
 - Un hook o componente que usan dos features va a `src/hooks/` o `src/components/` (regla R2), no se importa de un feature a otro. Ejemplos: `useWorkshops`, `WorkshopStatusBadge`.
 
-**Dependencia HU-03 (incidentes) → HU-04 (marco teórico).** Los talleres solo se habilitan si el estudiante aprobó el marco teórico. Esa condición se consulta en **un único punto**: `views/critical-incidents/hooks/useTheoryGate.ts`, que llama a `theoryQuizService.getApprovalStatus()` y falla cerrado. El servicio de incidentes **no** conoce HU-04. `DevTheoryToggle` y `dev/theoryApprovalSimulator.ts` simulan la aprobación escribiendo directamente la clave `reflexia_theory_approval` (acoplamiento deliberado, solo con `import.meta.env.DEV`); se eliminan cuando HU-04 esté integrada.
+**Dependencia HU-03 (incidentes) → HU-04 (marco teórico).** Los talleres solo se habilitan si el estudiante aprobó el marco teórico. Esa condición se consulta en **un único punto**: `views/critical-incidents/hooks/useTheoryGate.ts`, que llama a `theoryQuizService.getApprovalStatus()` y falla cerrado. El servicio de incidentes **no** conoce HU-04. `DevTheoryToggle` y `dev/theoryApprovalSimulator.ts` simulan la aprobación en la clave particionada por UID de `reflexia_theory_approval` (solo con `import.meta.env.DEV`).
 
 **Invariante de HU-03.** Guardar un borrador **nunca** descuenta intentos de revisión: `criticalIncidentService.saveDraft` solo escribe la clave de borradores. El asistente es por taller (`workshopId`, talleres 1 a 4 con desbloqueo lineal).
 
@@ -53,8 +53,8 @@ npx tsc --noEmit       # verificación de tipos: la única comprobación automá
 ## Estado de integración (verifica con git, puede haber cambiado)
 
 - HU-04 (`TheoryQuizView`, hook, servicio y componentes) y HU-03 (asistente, selector y resultado de talleres) ya están integradas en `main`. Del asistente aún faltan el envío a revisión, la retroalimentación "El Impulso" y la anonimización (RF-05).
-- HU-01 (whitelist de `/admin/whitelist`) ya está integrada en `main`: lista con filtros, carga masiva con vista previa, alta individual y revocación inmediata. La carga masiva se bloquea entera mientras haya correos que no sean `@ucen.cl` válidos. El login (RF-08) debe usar `whitelistService.checkAccess(email)` y `utils/institutionalEmail.ts`, no reimplementar esas reglas.
-- Siguen como placeholders de 9 líneas: las reflexiones, los plazos y el panel docente. No existen `context/`, `views/auth/`, `views/privacy-guard/` ni `views/work-pacing/`, así que no hay autenticación (RF-08).
+- HU-01 (whitelist de `/admin/whitelist`) tiene lista con filtros, carga masiva con vista previa, alta individual y revocación. La lista se almacena en Firestore; las operaciones administrativas requieren un custom claim `admin: true`. Aún no hay login administrativo en la app: hasta implementarlo, gestionar la whitelist desde Firebase Console o una herramienta interna confiable. El inicio de sesión de estudiante (RF-08) combina Firebase Authentication, `whitelistService.checkAccess(email)` y `utils/institutionalEmail.ts`; no reimplementar el control de dominio/autorización.
+- Siguen pendientes las reflexiones, los plazos y el panel docente. Los borradores, intentos y resultados de talleres siguen en `localStorage` particionado por UID; Firebase cubre únicamente autenticación y whitelist en esta integración.
 
 ## Flujo de trabajo del equipo
 
