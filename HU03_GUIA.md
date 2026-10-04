@@ -205,7 +205,7 @@ Hasta la Etapa 10, el botón de un taller llevaba a `/estudiante/innovaciones/:w
 - **`utils/routes.ts`**: la constante pasa a ser `WORKSHOPS_ROUTE` (`/estudiante/talleres`) y `workshopRoute` construye la URL nueva; la lista y el asistente siguen usando esa única función.
 - **Innovaciones se conserva**: el menú y la ruta `/estudiante/innovaciones` siguen existiendo, ahora con una vista placeholder (`InnovationsView`) para la biblioteca de innovaciones (RF-07), que implementará el equipo encargado.
 - **Redirección**: como la lista de talleres es la propia entrada, ya no existe el caso "sin taller en la URL"; solo se redirige cuando el taller de la URL no existe.
-- **URL anterior**: `/estudiante/innovaciones/:workshopId` ya no existe y cae en el redirect general a `/estudiante`.
+- **URL anterior**: `/estudiante/innovaciones/:workshopId` ya no existe y cae en el redirect general, que lleva a la página de presentación `/`.
 
 ---
 
