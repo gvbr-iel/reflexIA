@@ -199,7 +199,7 @@ Se completó la documentación consolidada del módulo de anonimización (RF-05 
 |---|---|---|
 | **Bloqueo duro antes del envío** | En esta etapa de frontend, la detección es una herramienta asistiva y visual. El bloqueo estricto que impida finalizar o enviar el taller a revisión cuando existan datos sensibles se implementará cuando se conecte el flujo de entrega final (RF-02 / RF-05). | RF-05, RNF-01 |
 | **Seguridad de API Keys** | En esta versión solo frontend, la llamada se realiza directamente desde el cliente. Para producción, esta lógica y las credenciales deben delegarse a un microservicio o proxy de backend para resguardar las claves privadas. | RNF de Seguridad |
-| **Vigencia de modelos gratuitos** | La lista `OPENROUTER_MODELS` incluye modelos gratuitos de OpenRouter (Gemini Flash, Llama 3.1, Mistral, Qwen, Zephyr). Si la disponibilidad de modelos sin costo cambia en la plataforma externa, se deben actualizar los identificadores en `src/models/sensitiveData.ts`. | Mantenimiento |
+| **Vigencia de modelos gratuitos** | La lista `OPENROUTER_MODELS` incluye modelos gratuitos vigentes de OpenRouter encabezados por `openrouter/free` (auto-router gratuito) y respaldados por Nemotron, LiquidAI, Gemma y Qwen. Si la disponibilidad de modelos sin costo cambia en la plataforma externa, se deben actualizar los identificadores en `src/models/sensitiveData.ts`. | Mantenimiento |
 | **Detección offline complementaria** | Si el usuario no tiene conexión o se agotan las cuotas de OpenRouter, actualmente se informa el error. Como mejora futura, se podría incorporar un validador local básico por expresiones regulares o listas de nombres comunes chilenos como salvaguarda secundaria. | Mejora futura |
 
 

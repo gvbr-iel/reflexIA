@@ -116,11 +116,11 @@ export interface OpenRouterModel {
  * de modelos gratuitos.
  */
 export const OPENROUTER_MODELS: OpenRouterModel[] = [
-  { id: 'google/gemini-2.0-flash-exp:free',         name: 'Gemini 2.0 Flash (free)' },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',    name: 'Llama 3.1 8B (free)' },
-  { id: 'mistralai/mistral-7b-instruct:free',        name: 'Mistral 7B (free)' },
-  { id: 'qwen/qwen-2.5-7b-instruct:free',            name: 'Qwen 2.5 7B (free)' },
-  { id: 'huggingfaceh4/zephyr-7b-beta:free',          name: 'Zephyr 7B (free)' },
+  { id: 'openrouter/free',                    name: 'OpenRouter Free Router (auto)' },
+  { id: 'nvidia/nemotron-3.5-lightning:free', name: 'NVIDIA Nemotron 3.5 Lightning (free)' },
+  { id: 'liquid/lfm-2.5-2.6b:free',           name: 'LiquidAI LFM 2.5 2.6B (free)' },
+  { id: 'google/gemma-4-26b-a4b-it:free',     name: 'Google Gemma 4 26B (free)' },
+  { id: 'qwen/qwen3.8-27b:free',              name: 'Qwen 3.8 27B (free)' },
 ];
 
 /**

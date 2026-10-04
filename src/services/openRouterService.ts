@@ -66,9 +66,14 @@ function buildApiKeyList(): string[] {
 
 /** Códigos HTTP que disparan la rotación de modelo. */
 const MODEL_ROTATION_CODES = new Set([
+  400,  // Bad Request (parámetros no soportados por el proveedor)
   402,  // Payment Required (modelo ya no es gratis)
-  429,  // Too Many Requests (tokens agotados)
-  503,  // Service Unavailable (modelo no disponible)
+  404,  // Not Found (modelo retirado o endpoint no disponible)
+  429,  // Too Many Requests (tokens o tasa agotada)
+  500,  // Internal Server Error upstream
+  502,  // Bad Gateway
+  503,  // Service Unavailable (modelo temporalmente caído)
+  504,  // Gateway Timeout
 ]);
 
 /** Códigos HTTP que disparan la rotación de API key. */
