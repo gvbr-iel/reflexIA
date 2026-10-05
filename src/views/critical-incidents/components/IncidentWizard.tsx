@@ -5,18 +5,21 @@ import Button from '../../../components/Button'
 import { useIncidentWizard } from '../hooks/useIncidentWizard'
 import { useTheoryReferences } from '../hooks/useTheoryReferences'
 import { useSensitiveDataDetector } from '../hooks/useSensitiveDataDetector'
+import { useImpulse } from '../hooks/useImpulse'
 import StepWizard from './StepWizard'
 import IncidentStepForm from './IncidentStepForm'
 import TheoryReferenceSidebar from './TheoryReferenceSidebar'
 import SensitiveDataPreview from './SensitiveDataPreview'
 import DraftManager from './DraftManager'
+import ImpulsePanel from './ImpulsePanel'
 
 /* ------------------------------------------------
    IncidentWizard — asistente paso a paso de un taller
    Compone StepWizard, IncidentStepForm,
-   TheoryReferenceSidebar, SensitiveDataPreview y DraftManager
-   con la lógica de useIncidentWizard, useTheoryReferences
-   y useSensitiveDataDetector.
+   TheoryReferenceSidebar, SensitiveDataPreview, DraftManager
+   e ImpulsePanel ("El Impulso", HU-02) con la lógica de
+   useIncidentWizard, useTheoryReferences,
+   useSensitiveDataDetector y useImpulse.
    Solo se monta cuando el marco teórico está aprobado,
    por lo que no carga datos mientras el acceso está
    bloqueado.
@@ -36,6 +39,17 @@ interface IncidentWizardProps {
 export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWizardProps) {
   const wizard = useIncidentWizard(workshopId, onDraftChange)
   const sensitiveDetector = useSensitiveDataDetector()
+  // "El Impulso": pide orientaciones a la IA y lleva el contador de intentos.
+  // Guarda el borrador antes de pedir (no descuenta intentos) y avisa al
+  // selector de talleres cuando se registra un intento.
+  const impulse = useImpulse({
+    workshopId,
+    values: wizard.values,
+    maxAttempts: wizard.workshop?.maxAttempts ?? null,
+    hasSensitiveData: sensitiveDetector.hasSensitiveData,
+    saveDraft: wizard.saveDraft,
+    onAttemptRegistered: onDraftChange,
+  })
   const {
     references,
     isLoading: isLoadingReferences,
@@ -180,8 +194,9 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
 
         {wizard.isLastStep && wizard.allStepsCompleted && (
           <p role="status" className="text-sm text-texto/70">
-            Completaste los 4 pasos. Puedes guardar tu borrador y retomarlo
-            cuando quieras; el envío a revisión se habilitará más adelante.
+            Completaste los 4 pasos. Puedes pedir un impulso a la IA para saber
+            qué aspectos profundizar, o guardar tu borrador y retomarlo cuando
+            quieras: guardar no descuenta intentos.
           </p>
         )}
 
@@ -191,11 +206,15 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           lastSaveWasAuto={wizard.lastSaveWasAuto}
           hasDraft={wizard.hasDraft}
           isDirty={wizard.isDirty}
-          attemptsUsed={wizard.workshop.attemptsUsed}
-          maxAttempts={wizard.workshop.maxAttempts}
+          attemptsUsed={
+            impulse.isLoadingAttempts ? wizard.workshop.attemptsUsed : impulse.attemptsUsed
+          }
+          maxAttempts={impulse.maxAttempts}
           onSave={wizard.saveDraft}
           onDiscard={wizard.discardDraft}
         />
+
+        <ImpulsePanel impulse={impulse} />
       </div>
     </div>
   )
