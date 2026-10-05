@@ -8,6 +8,7 @@
  * - Listar los 4 talleres con su estado en el flujo lineal.
  * - Leer, guardar y descartar el borrador de un taller.
  * - Entregar las referencias bibliográficas del panel lateral.
+ * - Pedir un impulso de la IA y registrar el intento (HU-02, `requestImpulse`).
  * - Simular el resultado de un taller (solo mock; ver `simulateWorkshopResult`).
  *
  * Estado actual: **mock local con localStorage**.
@@ -30,11 +31,14 @@ import type {
   IncidentStep,
   TheoryReference,
   SaveDraftPayload,
+  SubmitWorkshopPayload,
+  SubmitWorkshopResponse,
   FetchWorkshopsResponse,
 } from '../models/criticalIncident';
 
-import { DEFAULT_WORKSHOP_CONFIG } from '../models/criticalIncident';
-import { readUserStorage, writeUserStorage } from '../utils/userStorage';
+import { DEFAULT_WORKSHOP_CONFIG, INCIDENT_STEPS } from '../models/criticalIncident';
+import { generateImpulse } from '../utils/impulseGenerator';
+import { getUserStorageKey, readUserStorage, writeUserStorage } from '../utils/userStorage';
 
 // ─────────────────────────────────────────────
 // Claves de localStorage (mock temporal)
@@ -228,6 +232,63 @@ function buildWorkshops(
 }
 
 // ─────────────────────────────────────────────
+// Impulsos de la IA (HU-02)
+// ─────────────────────────────────────────────
+
+/**
+ * Espera simulada (ms) de la IA al pedir un impulso. La respuesta real debe
+ * tardar 10 s o menos (RNF-05); esta espera hace visible el estado de carga.
+ */
+const IMPULSE_LATENCY_MS = 2_500;
+
+/** Simula el tiempo que tarda la IA en responder. */
+function simulateImpulseLatency(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, IMPULSE_LATENCY_MS));
+}
+
+/** Exige que cada paso tenga el mínimo de caracteres para pedir un impulso. */
+function assertImpulseContent(content: Record<IncidentStep, string>): void {
+  const { minCharactersPerField } = DEFAULT_WORKSHOP_CONFIG;
+
+  INCIDENT_STEPS.forEach((step) => {
+    if (content[step.id].trim().length < minCharactersPerField) {
+      throw new Error(
+        `El paso "${step.title}" necesita al menos ${minCharactersPerField} caracteres ` +
+          'para pedir un impulso. Desarróllalo un poco más e inténtalo de nuevo.',
+      );
+    }
+  });
+}
+
+/**
+ * Lee el estado actual y comprueba que el taller admite pedir un impulso:
+ * no está bloqueado y aún le quedan intentos de revisión.
+ */
+function loadRequestableWorkshop(workshopId: string) {
+  const drafts = readUserStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
+  const attempts = readUserStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
+  const results = readUserStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
+
+  const workshop = buildWorkshops(drafts, attempts, results).find((w) => w.id === workshopId);
+  if (!workshop) {
+    throw new Error(`El taller "${workshopId}" no existe.`);
+  }
+  if (workshop.status === 'locked') {
+    throw new Error(
+      'Este taller aún está bloqueado. Completa el taller anterior para pedir un impulso.',
+    );
+  }
+  if (workshop.attemptsUsed >= workshop.maxAttempts) {
+    throw new Error(
+      `Ya usaste los ${workshop.maxAttempts} intentos de revisión de este taller. ` +
+        'No puedes pedir más impulsos.',
+    );
+  }
+
+  return { workshop, drafts, attempts, results };
+}
+
+// ─────────────────────────────────────────────
 // Servicio público
 // ─────────────────────────────────────────────
 
@@ -359,6 +420,88 @@ export const criticalIncidentService = {
     // return axios.get<TheoryReference[]>('/api/critical-incidents/references', { params: { step } });
 
     return REFERENCES.filter((ref) => ref.relevantSteps.includes(step));
+  },
+
+  /**
+   * Pide un impulso de la IA sobre el texto de los 4 pasos y registra el
+   * intento (HU-02 / RF-02).
+   *
+   * Regla de negocio (RF-06): cada solicitud descuenta 1 intento de revisión.
+   * Se rechaza si el taller está bloqueado, si ya no quedan intentos o si
+   * algún paso tiene menos del mínimo de caracteres. Un rechazo NO descuenta.
+   * A diferencia de `saveDraft`, que nunca toca los intentos.
+   *
+   * Esta función no guarda ni borra el borrador: quien la llama debe
+   * guardarlo antes con `saveDraft`.
+   *
+   * Mock: el impulso lo genera `generateImpulse` tras una espera simulada.
+   * Producción: POST /api/critical-incidents/workshops/:workshopId/impulses
+   */
+  async requestImpulse(
+    payload: Omit<SubmitWorkshopPayload, 'attemptNumber'>,
+  ): Promise<SubmitWorkshopResponse> {
+    // TODO: Reemplazar por llamada Axios al backend
+    // return axios.post<SubmitWorkshopResponse>(`/api/critical-incidents/workshops/${payload.workshopId}/impulses`, payload);
+
+    const { workshopId } = payload;
+    assertWorkshopExists(workshopId);
+
+    const content = {
+      context: payload.context,
+      description: payload.description,
+      actors: payload.actors,
+      relevance: payload.relevance,
+    };
+    assertImpulseContent(content);
+
+    if (!getUserStorageKey(STORAGE_KEYS.ATTEMPTS)) {
+      throw new Error(
+        'No pudimos registrar tu intento porque la sesión no está activa. Inicia sesión nuevamente e inténtalo otra vez.',
+      );
+    }
+
+    // Falla rápido si no se puede pedir, antes de esperar a la IA.
+    loadRequestableWorkshop(workshopId);
+    await simulateImpulseLatency();
+
+    // Se vuelve a leer tras la espera: los intentos pudieron cambiar.
+    const { workshop, drafts, attempts, results } = loadRequestableWorkshop(workshopId);
+
+    const attemptNumber = workshop.attemptsUsed + 1;
+    const feedback = generateImpulse({ workshopId, attemptNumber, content });
+    const attempt: WorkshopAttempt = {
+      attemptNumber,
+      workshopId,
+      content,
+      feedback,
+      status: 'reviewed',
+      submittedAt: feedback.createdAt,
+    };
+
+    attempts[workshopId] = [...(attempts[workshopId] ?? []), attempt];
+    writeUserStorage(STORAGE_KEYS.ATTEMPTS, attempts);
+
+    const updatedWorkshop =
+      buildWorkshops(drafts, attempts, results).find((w) => w.id === workshopId) ?? workshop;
+
+    return { attempt, feedback, workshop: updatedWorkshop };
+  },
+
+  /**
+   * Obtiene los intentos de revisión de un taller, del más antiguo al más
+   * reciente. Cada uno trae el impulso que se entregó.
+   *
+   * Mock: lee de localStorage.
+   * Producción: GET /api/critical-incidents/workshops/:workshopId/attempts
+   */
+  async getAttempts(workshopId: string): Promise<WorkshopAttempt[]> {
+    // TODO: Reemplazar por llamada Axios al backend
+    // return axios.get<WorkshopAttempt[]>(`/api/critical-incidents/workshops/${workshopId}/attempts`);
+
+    assertWorkshopExists(workshopId);
+
+    const attempts = readUserStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
+    return attempts[workshopId] ?? [];
   },
 
   /**

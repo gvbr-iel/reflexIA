@@ -69,7 +69,7 @@ Contratos del módulo:
 - **Talleres** (`Workshop`, `WorkshopStatus`, `WorkshopOutcome`): estado en el flujo lineal (`locked`, `available`, `in-progress`, `completed`), resultado (`approved` o `failed`, solo cuando está completado), intentos usados y máximos, y su tema, resumen y plazo (`topic`, `subtitle` y `deadline` en formato `YYYY-MM-DD`).
 - **Pasos** (`IncidentStep`, `IncidentStepInfo`, `INCIDENT_STEPS`): los 4 pasos con título, instrucción y ejemplo, tomados de AI_GUIDELINES §7.
 - **Borrador** (`IncidentDraft`, `SaveDraftPayload`): contenido de los 4 campos, paso en que quedó el estudiante y si el guardado fue automático.
-- **Retroalimentación y envío** (`AIFeedback`, `WorkshopAttempt`, `SubmitWorkshopPayload`): definidos para el futuro envío a revisión; **todavía no se usan**.
+- **Retroalimentación y envío** (`AIFeedback`, `WorkshopAttempt`, `SubmitWorkshopPayload`): los usa HU-02 para "El Impulso" (ver `HU02_GUIA.md`). El envío final del taller a calificación todavía no existe.
 - **Configuración** (`WorkshopConfig`, `DEFAULT_WORKSHOP_CONFIG`): 3 intentos por taller, autoguardado cada 30 s y mínimo de 50 caracteres por campo.
 - **Referencias** (`TheoryReference`): cada referencia indica a qué pasos aplica.
 
@@ -225,7 +225,7 @@ Hasta la Etapa 10, el botón de un taller llevaba a `/estudiante/innovaciones/:w
 | Metodología R5 | La profesora guía usará un libro como base de la metodología; no se incorporó en este primer prototipo. | Por definir con la cliente |
 | Referencias bibliográficas | Los autores, años y textos de `criticalIncidentService` son parafraseos provisionales marcados `[POR DEFINIR]`; hay que validarlos antes de mostrarlos a estudiantes. | Por definir con la cliente |
 | Contenido de los talleres | Los temas, descripciones y plazos son provisionales, tomados de la lista de talleres de HU-04. Hay que validarlos con la profesora guía, en particular si cada taller es una etapa distinta del incidente (como en esa lista) o un incidente completo trabajado con el asistente de 4 pasos. Los plazos los configurará el profesor guía (RF-06). | `AI_GUIDELINES.md` §6 |
-| Envío a revisión y "El Impulso" | Fuera del alcance de este prototipo. Los tipos existen en el modelo pero ningún código los usa. | RF-02, RNF-05 |
+| "El Impulso" y envío a revisión | "El Impulso" (pedir orientaciones a la IA, con contador de intentos) ya está en el asistente y se documenta en `HU02_GUIA.md`; es una simulación en frontend (`requestImpulse` y `getAttempts` en el servicio). El **envío final del taller** a calificación sigue fuera del alcance. | RF-02, RNF-05 |
 | Resultado del taller | El resultado (aprobado o reprobado) se simula solo en desarrollo. Al integrar el backend lo entregará la revisión del taller y habrá que eliminar la simulación. Un taller reprobado no se puede repetir y el resultado todavía no consume intentos. | Depende del envío a revisión |
 | Colores del resultado | El taller aprobado usa `perf-excellent` (verde esmeralda) a pedido del equipo; AI_GUIDELINES §4 define "aprobado" como azul verdoso (`perf-pass`) y reserva el esmeralda para "sobresaliente". | `AI_GUIDELINES.md` §4 |
 | Mínimo de caracteres | `minCharactersPerField` (50) está definido pero sin uso: el avance exige solo texto no vacío; el mínimo aplicará al envío. | Decisión del equipo |
