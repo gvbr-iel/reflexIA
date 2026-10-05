@@ -4,6 +4,13 @@ import type { InnovationCase } from '../models/innovation'
 
 const ALL_CATEGORIES = 'Todas'
 
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('es')
+}
+
 export function useInnovations() {
   const [query, setQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES)
@@ -15,7 +22,7 @@ export function useInnovations() {
   )
 
   const filteredCases = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase('es')
+    const normalizedQuery = normalizeSearchText(query.trim())
 
     return innovationCases.filter((item) => {
       const matchesCategory =
@@ -28,8 +35,8 @@ export function useInnovations() {
         ...item.tags,
       ]
         .join(' ')
-        .toLocaleLowerCase('es')
-      const matchesQuery = !normalizedQuery || searchableContent.includes(normalizedQuery)
+      const normalizedContent = normalizeSearchText(searchableContent)
+      const matchesQuery = !normalizedQuery || normalizedContent.includes(normalizedQuery)
 
       return matchesCategory && matchesQuery
     })

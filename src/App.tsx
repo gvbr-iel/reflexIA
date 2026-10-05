@@ -76,6 +76,7 @@ export default function App() {
           <Route index element={<TeacherDashboardView />} />
           <Route path="reflexiones" element={<ReflectionsView />} />
           <Route path="plazos" element={<DeadlinesView />} />
+          <Route path="innovaciones" element={<InnovationsView />} />
         </Route>
 
         {/* ===== Estudiante ===== */}
