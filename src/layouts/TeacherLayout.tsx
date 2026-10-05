@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react'
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { FileText, Clock, LayoutDashboard, Menu, X, LogOut } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
 
 /* ------------------------------------------------
    TeacherLayout — marco visual del Profesor guía
@@ -22,6 +23,17 @@ const navItems: NavItem[] = [
 
 export default function TeacherLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { signOut } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleSignOut() {
+    try {
+      await signOut()
+      navigate('/iniciar-sesion', { replace: true })
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-bg flex flex-col">
@@ -45,6 +57,7 @@ export default function TeacherLayout() {
         </div>
 
         <button
+          onClick={handleSignOut}
           className="flex items-center gap-2 text-sm text-texto/60 hover:text-texto transition-colors"
           aria-label="Cerrar sesión"
         >

@@ -2,9 +2,30 @@ import { Navigate, useLocation } from 'react-router-dom'
 
 import Button from './Button'
 import { useAuth } from '../hooks/useAuth'
+import type { WhitelistRole } from '../models/whitelist'
 
-export default function RequireStudent({ children }: { children: React.ReactNode }) {
-  const { status, retryAuthorization } = useAuth()
+interface RequireAuthProps {
+  children: React.ReactNode
+  allowedRoles?: WhitelistRole[]
+}
+
+function getRoleHome(role: WhitelistRole | null): string {
+  switch (role) {
+    case 'teacher':
+      return '/docente'
+    case 'admin':
+      return '/admin'
+    case 'student':
+    default:
+      return '/estudiante'
+  }
+}
+
+export default function RequireStudent({
+  children,
+  allowedRoles = ['student'],
+}: RequireAuthProps) {
+  const { status, role, retryAuthorization } = useAuth()
   const location = useLocation()
 
   if (status === 'loading') {
@@ -33,5 +54,12 @@ export default function RequireStudent({ children }: { children: React.ReactNode
     return <Navigate to="/iniciar-sesion" replace state={{ from: location.pathname }} />
   }
 
+  if (role && !allowedRoles.includes(role)) {
+    return <Navigate to={getRoleHome(role)} replace />
+  }
+
   return children
 }
+
+export const RequireAuth = RequireStudent
+

@@ -16,6 +16,8 @@ export class StudentAuthError extends Error {
   }
 }
 
+export const AuthError = StudentAuthError
+
 function getAuth() {
   if (!firebaseAuth) {
     throw new StudentAuthError('unavailable')
@@ -23,7 +25,10 @@ function getAuth() {
   return firebaseAuth
 }
 
-export async function signInStudent(email: string, password: string): Promise<User> {
+export async function signInUser(
+  email: string,
+  password: string,
+): Promise<{ user: User; role: WhitelistRole }> {
   if (validateInstitutionalEmail(email) !== 'valid') {
     throw new StudentAuthError('invalid-email')
   }
@@ -54,28 +59,36 @@ export async function signInStudent(email: string, password: string): Promise<Us
 
   try {
     const access = await whitelistService.checkAccess(user.email ?? email)
-    if (!access.allowed || access.role !== 'student') {
+    if (!access.allowed || !access.role) {
       await firebaseSignOut(auth)
       throw new StudentAuthError('unauthorized')
     }
+    return { user, role: access.role }
   } catch (error) {
     if (error instanceof StudentAuthError) throw error
     await firebaseSignOut(auth)
     throw new StudentAuthError('unavailable')
   }
-
-  return user
 }
 
-export async function verifyStudentAccess(
+export async function signInStudent(email: string, password: string): Promise<User> {
+  const result = await signInUser(email, password)
+  return result.user
+}
+
+export async function verifyUserAccess(
   email: string,
 ): Promise<{ authorized: boolean; role?: WhitelistRole }> {
   const access = await whitelistService.checkAccess(email)
-  return access.allowed && access.role === 'student'
+  return access.allowed
     ? { authorized: true, role: access.role }
     : { authorized: false }
 }
 
+export const verifyStudentAccess = verifyUserAccess
+
 export async function signOutStudent(): Promise<void> {
   await firebaseSignOut(getAuth())
 }
+
+export const signOutUser = signOutStudent
