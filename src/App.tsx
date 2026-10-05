@@ -11,7 +11,7 @@ import WhiteListView from './views/admin-whitelist/WhiteListView'
 /* ---------- Vistas — Docente ---------- */
 import TeacherDashboardView from './views/teacher-dashboard/TeacherDashboardView'
 import ReflectionsView from './views/reflections/ReflectionsView'
-import DeadlinesView from './views/deadlines/DeadlinesView'
+import DeadlinesView from './views/work-pacing/DeadlinesView'
 
 /* ---------- Vistas — Estudiante ---------- */
 import StudentDashboardView from './views/student-dashboard/StudentDashboardView'
