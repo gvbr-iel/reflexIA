@@ -1,6 +1,27 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
+/* ---------- Layouts ---------- */
+import AdminLayout from './layouts/AdminLayout'
+import TeacherLayout from './layouts/TeacherLayout'
+import StudentLayout from './layouts/StudentLayout'
+
+/* ---------- Vistas — Admin ---------- */
+import WhiteListView from './views/admin-whitelist/WhiteListView'
+
+/* ---------- Vistas — Docente ---------- */
+import TeacherDashboardView from './views/teacher-dashboard/TeacherDashboardView'
+import ReflectionsView from './views/reflections/ReflectionsView'
+import DeadlinesView from './views/work-pacing/DeadlinesView'
+
+/* ---------- Vistas — Estudiante ---------- */
+import StudentDashboardView from './views/student-dashboard/StudentDashboardView'
+import TheoryQuizView from './views/theory-verification/TheoryQuizView'
+import RepositoryView from './views/repository/RepositoryView'
+import CriticalIncidentView from './views/critical-incidents/CriticalIncidentView'
+import InnovationsView from './views/innovations/InnovationsView'
+import LandingPage from './views/landingpage/LandingPage'
+import LoginView from './views/auth/LoginView'
 import RequireStudent from './components/RequireStudent'
 
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
