@@ -1,29 +1,12 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
-/* ---------- Layouts ---------- */
-import AdminLayout from './layouts/AdminLayout'
-import TeacherLayout from './layouts/TeacherLayout'
-import StudentLayout from './layouts/StudentLayout'
-
-/* ---------- Vistas — Admin ---------- */
-import WhiteListView from './views/admin-whitelist/WhiteListView'
-
-/* ---------- Vistas — Docente ---------- */
-import TeacherDashboardView from './views/teacher-dashboard/TeacherDashboardView'
-import ReflectionsView from './views/reflections/ReflectionsView'
-import DeadlinesView from './views/work-pacing/DeadlinesView'
-
-/* ---------- Vistas — Estudiante ---------- */
-import StudentDashboardView from './views/student-dashboard/StudentDashboardView'
-import TheoryQuizView from './views/theory-verification/TheoryQuizView'
-import RepositoryView from './views/repository/RepositoryView'
-import CriticalIncidentView from './views/critical-incidents/CriticalIncidentView'
-import InnovationsView from './views/innovations/InnovationsView'
-import LandingPage from './views/landingpage/LandingPage'
-import LoginView from './views/auth/LoginView'
+/* La guarda de ruta se carga de inmediato: protege /estudiante. */
 import RequireStudent from './components/RequireStudent'
 
+/* ---------- Layouts y vistas ----------
+   Cada pantalla se carga bajo demanda cuando se visita su ruta (lazy), por
+   lo que no se importan de forma estática: hacerlo duplicaría el nombre. */
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
 const TeacherLayout = lazy(() => import('./layouts/TeacherLayout'))
 const StudentLayout = lazy(() => import('./layouts/StudentLayout'))
@@ -32,7 +15,7 @@ const TeacherDashboardView = lazy(
   () => import('./views/teacher-dashboard/TeacherDashboardView'),
 )
 const ReflectionsView = lazy(() => import('./views/reflections/ReflectionsView'))
-const DeadlinesView = lazy(() => import('./views/deadlines/DeadlinesView'))
+const DeadlinesView = lazy(() => import('./views/work-pacing/DeadlinesView'))
 const StudentDashboardView = lazy(
   () => import('./views/student-dashboard/StudentDashboardView'),
 )
