@@ -55,7 +55,7 @@ src/
     ├── theory-verification/ # HU-04: Verificación diagnóstica del marco teórico
     ├── work-pacing/         # HU-06: Panel docente de plazos e intentos
     ├── student-dashboard/   # Dashboard "Mi progreso" del estudiante
-    ├── teacher-dashboard/   # Dashboard general del profesor guía (placeholder)
+    ├── teacher-dashboard/   # Panel del profesor guía: seguimiento de estudiantes (datos de ejemplo)
     ├── reflections/         # Revisión de reflexiones (placeholder)
     ├── innovations/         # Espacio de innovaciones (placeholder)
     ├── repository/          # Repositorio de talleres prácticos
@@ -71,7 +71,7 @@ src/
 | `/` | — | LandingPage | ✅ Listo | Presentación de la plataforma y acceso al inicio de sesión |
 | `/iniciar-sesion` | — | LoginView | ✅ Listo | Formulario de acceso institucional con correo `@ucen.cl` y contraseña |
 | `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | ✅ Listo | Gestión de la Whitelist en Cloud Firestore |
-| `/docente` | TeacherLayout | TeacherDashboardView | ⏳ Placeholder | Panel general del profesor guía |
+| `/docente` | TeacherLayout | TeacherDashboardView | ✅ Listo (datos de ejemplo) | Seguimiento semanal de estudiantes: resumen, filtros por situación y avance en marco teórico y talleres |
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | ⏳ Placeholder | Listado y retroalimentación de reflexiones |
 | `/docente/plazos` | TeacherLayout | DeadlinesView | ✅ Listo | Regulación del ritmo de trabajo: plazos e intentos |
 | `/estudiante` | StudentLayout | StudentDashboardView | ✅ Listo | Dashboard "Mi progreso reflexivo" |
