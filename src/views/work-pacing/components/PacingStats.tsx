@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { CalendarClock, CalendarX, SlidersHorizontal } from 'lucide-react'
+import { CalendarClock, CalendarX } from 'lucide-react'
 
 import type { PacingSummary } from '../hooks/useWorkPacing'
 import { formatDeadline } from '../../../utils/workPacingDates'
@@ -12,8 +12,6 @@ import { formatDeadline } from '../../../utils/workPacingDates'
    está editando):
      - Próximo cierre: la actividad con el plazo más cercano
      - Plazos vencidos: cuántas actividades ya pasaron su fecha
-     - Personalizadas: cuántas tienen valores distintos a los
-       originales
 
    Nota: la tarjeta (StatCard) es una copia de la de
    admin-whitelist. Cuando el equipo lo acuerde, conviene
@@ -74,13 +72,13 @@ function StatCard({ icon, label, value, detail, isLoading }: StatCardProps) {
 
 export default function PacingStats({ summary, isLoading }: PacingStatsProps) {
   // Saca del resumen los datos que usan las tres tarjetas.
-  const { nextDeadline, overdueCount, customizedCount, totalActivities } = summary
+  const { nextDeadline, overdueCount } = summary
 
   return (
-    // En móvil las tarjetas van una bajo otra; desde "sm" van en tres columnas.
+    // En móvil las tarjetas van una bajo otra; desde "sm" van en dos columnas.
     <section
       aria-label="Resumen de plazos e intentos"
-      className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:gap-4"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:gap-4"
     >
       {/* 1. Próximo cierre: la fecha y la actividad a la que pertenece. */}
       <StatCard
@@ -98,15 +96,6 @@ export default function PacingStats({ summary, isLoading }: PacingStatsProps) {
         value={String(overdueCount)}
         // Singular o plural según la cantidad.
         detail={overdueCount === 1 ? 'actividad con plazo cumplido' : 'actividades con plazo cumplido'}
-        isLoading={isLoading}
-      />
-
-      {/* 3. Personalizadas: cuántas actividades el profesor modificó. */}
-      <StatCard
-        icon={<SlidersHorizontal size={20} />}
-        label="Personalizadas"
-        value={`${customizedCount} de ${totalActivities}`}
-        detail="con valores distintos de los originales"
         isLoading={isLoading}
       />
     </section>
