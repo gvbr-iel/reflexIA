@@ -5,13 +5,25 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import Button from '../../components/Button'
 import { useAuth } from '../../hooks/useAuth'
 import { StudentAuthError } from '../../services/authService'
-import { INSTITUTIONAL_DOMAIN } from '../../models/whitelist'
+import { INSTITUTIONAL_DOMAIN, type WhitelistRole } from '../../models/whitelist'
 
 const GENERIC_CREDENTIAL_ERROR =
   'No pudimos iniciar sesión. Verifica tus credenciales y que tu correo esté autorizado.'
 
+function getRoleRedirect(role: WhitelistRole | null): string {
+  switch (role) {
+    case 'teacher':
+      return '/docente'
+    case 'admin':
+      return '/admin'
+    case 'student':
+    default:
+      return '/estudiante'
+  }
+}
+
 export default function LoginView() {
-  const { signIn, status, retryAuthorization } = useAuth()
+  const { signIn, status, role, retryAuthorization } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,7 +31,7 @@ export default function LoginView() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (status === 'authenticated') {
-    return <Navigate to="/estudiante" replace />
+    return <Navigate to={getRoleRedirect(role)} replace />
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -28,8 +40,8 @@ export default function LoginView() {
     setIsSubmitting(true)
 
     try {
-      await signIn(email, password)
-      navigate('/estudiante', { replace: true })
+      const userRole = await signIn(email, password)
+      navigate(getRoleRedirect(userRole), { replace: true })
     } catch (cause) {
       if (!(cause instanceof StudentAuthError)) {
         console.error('No se pudo iniciar sesión:', cause)
@@ -67,7 +79,7 @@ export default function LoginView() {
               <p className="font-heading text-xl font-bold text-primary">
                 Reflex<span className="text-accent-ia">IA</span>
               </p>
-              <p className="text-sm text-texto/65">Acceso de estudiante</p>
+              <p className="text-sm text-texto/65">Acceso institucional</p>
             </div>
           </div>
 
@@ -76,7 +88,7 @@ export default function LoginView() {
           </h1>
           <p className="mt-2 text-base leading-relaxed text-texto/70">
             Ingresa con tu correo institucional y la contraseña de tu cuenta.
-            Solo podrán acceder estudiantes autorizados de práctica profesional.
+            El sistema te redirigirá a tu panel correspondiente (estudiante, docente o administrador).
           </p>
 
           <form className="mt-7 space-y-5" onSubmit={handleSubmit}>

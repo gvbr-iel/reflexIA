@@ -1,12 +1,11 @@
-import { GraduationCap, Presentation } from 'lucide-react'
+import { GraduationCap, Presentation, ShieldCheck } from 'lucide-react'
 
 import { ROLE_LABELS, WHITELIST_ROLES, type WhitelistRole } from '../../../models/whitelist'
 
 /* ------------------------------------------------
    RoleSelector — HU-01 / RF-01
    Elige el perfil de los correos que se autorizan.
-   Solo estudiantes y profesores guía de la
-   asignatura de práctica profesional.
+   Estudiantes, profesores guía y administradores.
    ------------------------------------------------ */
 
 interface RoleSelectorProps {
@@ -20,18 +19,20 @@ interface RoleSelectorProps {
 const ROLE_ICONS = {
   student: GraduationCap,
   teacher: Presentation,
+  admin: ShieldCheck,
 } as const
 
 const ROLE_HINTS: Record<WhitelistRole, string> = {
   student: 'Estudiante en práctica profesional',
   teacher: 'Docente de la asignatura',
+  admin: 'Administrador del sistema',
 }
 
 export default function RoleSelector({ name, legend, value, onChange }: RoleSelectorProps) {
   return (
     <fieldset>
       <legend className="mb-1.5 block text-sm font-medium text-texto/80">{legend}</legend>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-3">
         {WHITELIST_ROLES.map((role) => {
           const Icon = ROLE_ICONS[role]
           const isSelected = value === role

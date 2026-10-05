@@ -57,7 +57,7 @@ function getDatabase() {
 }
 
 function isWhitelistRole(value: unknown): value is WhitelistRole {
-  return value === 'student' || value === 'teacher'
+  return value === 'student' || value === 'teacher' || value === 'admin'
 }
 
 function parseEntry(id: string, value: Record<string, unknown>): WhitelistEntry {

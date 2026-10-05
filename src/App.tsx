@@ -51,14 +51,28 @@ export default function App() {
         <Route path="/iniciar-sesion" element={<LoginView />} />
 
         {/* ===== Admin ===== */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route
+          path="/admin"
+          element={
+            <RequireStudent allowedRoles={['admin']}>
+              <AdminLayout />
+            </RequireStudent>
+          }
+        >
           {/* /admin → redirige a /admin/whitelist */}
           <Route index element={<Navigate to="whitelist" replace />} />
           <Route path="whitelist" element={<WhiteListView />} />
         </Route>
 
         {/* ===== Docente ===== */}
-        <Route path="/docente" element={<TeacherLayout />}>
+        <Route
+          path="/docente"
+          element={
+            <RequireStudent allowedRoles={['teacher']}>
+              <TeacherLayout />
+            </RequireStudent>
+          }
+        >
           <Route index element={<TeacherDashboardView />} />
           <Route path="reflexiones" element={<ReflectionsView />} />
           <Route path="plazos" element={<DeadlinesView />} />

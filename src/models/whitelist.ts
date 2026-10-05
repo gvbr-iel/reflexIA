@@ -19,7 +19,7 @@ export const INSTITUTIONAL_DOMAIN = '@ucen.cl';
  * Perfiles que pueden estar en la whitelist: solo estudiantes y
  * profesores de la asignatura de práctica profesional.
  */
-export const WHITELIST_ROLES = ['student', 'teacher'] as const;
+export const WHITELIST_ROLES = ['student', 'teacher', 'admin'] as const;
 
 export const WHITELIST_STATUSES = ['active', 'revoked'] as const;
 
@@ -37,6 +37,7 @@ export type WhitelistStatus = (typeof WHITELIST_STATUSES)[number];
 export const ROLE_LABELS: Record<WhitelistRole, string> = {
   student: 'Estudiante',
   teacher: 'Profesor guía',
+  admin: 'Administrador',
 };
 
 /** Textos de la interfaz para cada estado. */

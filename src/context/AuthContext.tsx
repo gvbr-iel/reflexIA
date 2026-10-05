@@ -9,14 +9,16 @@ import {
 } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 
+import type { WhitelistRole } from '../models/whitelist'
 import { whitelistService } from '../services/whitelistService'
 import { firebaseAuth, isFirebaseConfigured } from '../services/firebase'
-import { signInStudent, signOutStudent, verifyStudentAccess } from '../services/authService'
+import { signInUser, signOutStudent, verifyUserAccess } from '../services/authService'
 
 interface AuthContextValue {
   user: User | null
+  role: WhitelistRole | null
   status: 'loading' | 'authenticated' | 'unauthenticated' | 'error'
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<WhitelistRole>
   signOut: () => Promise<void>
   retryAuthorization: () => void
 }
@@ -29,6 +31,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
+  const [role, setRole] = useState<WhitelistRole | null>(null)
   const [status, setStatus] = useState<AuthContextValue['status']>('loading')
   const [authorizationAttempt, setAuthorizationAttempt] = useState(0)
   const latestAttempt = useRef(0)
@@ -48,6 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!firebaseUser) {
         if (isMounted) {
           setUser(null)
+          setRole(null)
           setStatus('unauthenticated')
         }
         return
@@ -55,26 +59,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setStatus('loading')
       try {
-        const access = await verifyStudentAccess(firebaseUser.email ?? '')
+        const access = await verifyUserAccess(firebaseUser.email ?? '')
         if (!isMounted || attempt !== latestAttempt.current) return
 
-        if (!access.authorized) {
+        if (!access.authorized || !access.role) {
           await signOutStudent()
           return
         }
 
         setUser(firebaseUser)
+        setRole(access.role)
         setStatus('authenticated')
         unsubscribeAuthorization = whitelistService.watchAccess(
           firebaseUser.email ?? '',
           (currentAccess) => {
             if (!isMounted || attempt !== latestAttempt.current) return
-            if (currentAccess.allowed && currentAccess.role === 'student') return
+            if (currentAccess.allowed) {
+              setRole(currentAccess.role)
+              return
+            }
 
             void signOutStudent().catch((error: unknown) => {
               if (!isMounted || attempt !== latestAttempt.current) return
               console.error('No se pudo cerrar una sesión revocada:', error)
               setUser(null)
+              setRole(null)
               setStatus('error')
             })
           },
@@ -82,6 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (!isMounted || attempt !== latestAttempt.current) return
             console.error('No se pudo monitorear la autorización:', error)
             setUser(null)
+            setRole(null)
             setStatus('error')
           },
         )
@@ -89,6 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!isMounted || attempt !== latestAttempt.current) return
         console.error('No se pudo verificar el acceso institucional:', error)
         setUser(null)
+        setRole(null)
         setStatus('error')
       }
     })
@@ -100,12 +111,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [authorizationAttempt])
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    await signInStudent(email, password)
+  const signIn = useCallback(async (email: string, password: string): Promise<WhitelistRole> => {
+    const result = await signInUser(email, password)
+    setUser(result.user)
+    setRole(result.role)
+    setStatus('authenticated')
+    return result.role
   }, [])
 
   const signOut = useCallback(async () => {
     await signOutStudent()
+    setUser(null)
+    setRole(null)
+    setStatus('unauthenticated')
   }, [])
 
   const retryAuthorization = useCallback(() => {
@@ -114,9 +132,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, status, signIn, signOut, retryAuthorization }),
-    [user, status, signIn, signOut, retryAuthorization],
+    () => ({ user, role, status, signIn, signOut, retryAuthorization }),
+    [user, role, status, signIn, signOut, retryAuthorization],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+
