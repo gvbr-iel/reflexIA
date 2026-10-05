@@ -240,6 +240,19 @@ function buildWorkshops(
 export const criticalIncidentService = {
 
   /**
+   * Obtiene los datos base de los talleres sin leer el progreso de un
+   * estudiante. El panel docente los usa para mostrar valores por defecto.
+   */
+  async fetchWorkshopPacingDefaults(): Promise<
+    Pick<Workshop, 'id' | 'number' | 'title' | 'topic' | 'deadline' | 'maxAttempts'>[]
+  > {
+    return WORKSHOP_DEFINITIONS.map((definition) => ({
+      ...definition,
+      maxAttempts: DEFAULT_WORKSHOP_CONFIG.maxAttemptsPerWorkshop,
+    }));
+  },
+
+  /**
    * Obtiene los 4 talleres con su estado y la configuración vigente.
    *
    * Mock: calcula el estado desde los borradores e intentos locales.

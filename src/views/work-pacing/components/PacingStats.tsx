@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { CalendarClock, CalendarX } from 'lucide-react'
+import { CalendarClock, CalendarX, SlidersHorizontal } from 'lucide-react'
 
 import type { PacingSummary } from '../hooks/useWorkPacing'
 import { formatDeadline } from '../../../utils/workPacingDates'
@@ -21,6 +21,8 @@ import { formatDeadline } from '../../../utils/workPacingDates'
 interface PacingStatsProps {
   /** Los números ya calculados por el hook useWorkPacing. */
   summary: PacingSummary
+  /** Cantidad total de actividades incluidas en el panel. */
+  activityCount: number
   /** true mientras se cargan los datos: se muestran bloques animados. */
   isLoading: boolean
 }
@@ -70,15 +72,15 @@ function StatCard({ icon, label, value, detail, isLoading }: StatCardProps) {
   )
 }
 
-export default function PacingStats({ summary, isLoading }: PacingStatsProps) {
+export default function PacingStats({ summary, activityCount, isLoading }: PacingStatsProps) {
   // Saca del resumen los datos que usan las tres tarjetas.
   const { nextDeadline, overdueCount } = summary
 
   return (
-    // En móvil las tarjetas van una bajo otra; desde "sm" van en dos columnas.
+    // En móvil van en una columna, en tablet en dos y en escritorio en tres.
     <section
       aria-label="Resumen de plazos e intentos"
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:gap-4"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4"
     >
       {/* 1. Próximo cierre: la fecha y la actividad a la que pertenece. */}
       <StatCard
@@ -96,6 +98,15 @@ export default function PacingStats({ summary, isLoading }: PacingStatsProps) {
         value={String(overdueCount)}
         // Singular o plural según la cantidad.
         detail={overdueCount === 1 ? 'actividad con plazo cumplido' : 'actividades con plazo cumplido'}
+        isLoading={isLoading}
+      />
+
+      {/* Actividades con valores distintos a los originales. */}
+      <StatCard
+        icon={<SlidersHorizontal size={20} />}
+        label="Actividades personalizadas"
+        value={`${summary.customizedCount} de ${activityCount}`}
+        detail="con plazos o intentos ajustados"
         isLoading={isLoading}
       />
     </section>
