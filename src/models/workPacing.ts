@@ -20,14 +20,20 @@
 export const THEORY_ACTIVITY_ID = 'theory-quiz';
 
 /**
- * Límites de intentos que el profesor puede configurar.
+ * Límites de intentos que el profesor puede configurar: de 1 a 3.
  *
- * [POR DEFINIR] AI_GUIDELINES §11 deja abierta la cantidad de intentos
- * (¿2 o 3?): con este panel la decide el profesor dentro de este rango.
+ * El máximo es 3 porque así lo define la cliente para el cuestionario del
+ * marco teórico ("hasta 3 intentos", AI_GUIDELINES §7), y para los talleres
+ * AI_GUIDELINES §11 deja abierto si son 2 o 3. Con este panel el profesor
+ * puede bajar el límite, pero no superar 3.
+ *
+ * Estos valores los leen el servicio (para validar), el hook (para no salirse
+ * del rango) y los botones − y + de cada tarjeta. Para cambiar el rango basta
+ * con editar esta constante.
  */
 export const PACING_LIMITS = {
   minAttempts: 1,
-  maxAttempts: 10,
+  maxAttempts: 3,
 } as const;
 
 // ─────────────────────────────────────────────
