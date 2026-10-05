@@ -87,7 +87,8 @@ export default function TeacherDashboardView() {
               isLoading={dashboard.isLoading}
             />
 
-            <div className="rounded-xl border border-border bg-surface p-4 md:p-6">
+            {/* En móvil las tarjetas van sueltas; el marco blanco solo desde tablet. */}
+            <div className="md:rounded-xl md:border md:border-border md:bg-surface md:p-6">
               <StudentProgressTable
                 students={dashboard.students}
                 getSituation={dashboard.getSituation}

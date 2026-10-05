@@ -23,7 +23,7 @@ interface StudentFilterBarProps {
 /** Filtros en el orden en que se muestran. */
 const FILTERS: { value: StudentFilter; label: string }[] = [
   { value: 'all', label: 'Todos' },
-  { value: 'overdue', label: 'Con plazo vencido' },
+  { value: 'overdue', label: 'Vencidos' },
   { value: 'in-progress', label: 'En curso' },
   { value: 'completed', label: 'Completados' },
 ]
@@ -35,8 +35,12 @@ export default function StudentFilterBar({
   isLoading,
 }: StudentFilterBarProps) {
   return (
-    // Los botones pasan a la línea de abajo si no caben (por ejemplo, en 360 px).
-    <div role="group" aria-label="Filtrar estudiantes por situación" className="flex flex-wrap gap-2">
+    // En móvil van en dos columnas ordenadas; desde "sm" se acomodan en una fila.
+    <div
+      role="group"
+      aria-label="Filtrar estudiantes por situación"
+      className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+    >
       {FILTERS.map(({ value, label }) => (
         <Button
           key={value}

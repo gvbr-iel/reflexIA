@@ -10,8 +10,14 @@ import PerformanceBadge from './PerformanceBadge'
    StudentProgressTable — panel docente
 
    Seguimiento de los estudiantes: situación general y
-   avance en el marco teórico y los talleres 1 a 4. Usa la
-   tabla global (tarjetas en móvil).
+   avance en el marco teórico y los talleres 1 a 4.
+
+   En escritorio y tablet usa la tabla global. En móvil la
+   tabla global apilaría 7 filas por estudiante, con mucho
+   texto junto; por eso aquí se muestra una tarjeta propia,
+   con el estudiante arriba y sus actividades en una lista
+   corta. Mientras carga o si no hay filas, se usa siempre
+   la tabla global, que ya maneja esos dos estados.
    ------------------------------------------------ */
 
 interface StudentProgressTableProps {
@@ -84,6 +90,45 @@ function ActivityCell({ activity }: { activity: StudentActivityProgress }) {
   )
 }
 
+/** Una actividad en la tarjeta móvil: título y estado en una línea, nota e intentos debajo. */
+function MobileActivityRow({ activity }: { activity: StudentActivityProgress }) {
+  return (
+    <li className="flex items-start justify-between gap-3 py-2.5">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-texto">{activity.title}</p>
+        <p className="text-xs text-texto/60">
+          {activity.grade !== null && `Nota ${activity.grade.toFixed(1)} · `}
+          Intentos {activity.attemptsUsed} de {activity.maxAttempts}
+        </p>
+      </div>
+      <PerformanceBadge status={activity.status} />
+    </li>
+  )
+}
+
+/** Tarjeta de un estudiante para móvil: quién es, su situación y sus 5 actividades. */
+function MobileStudentCard({ row }: { row: Row }) {
+  return (
+    <article className="rounded-xl border border-border bg-surface p-4">
+      {/* Arriba: alias y correo; la situación va debajo para que no se apriete. */}
+      <header className="space-y-2">
+        <div>
+          <h3 className="font-heading text-base font-semibold text-texto">{row.student.alias}</h3>
+          <p className="break-all text-xs text-texto/60">{row.student.email}</p>
+        </div>
+        <SituationBadge situation={row.situation} />
+      </header>
+
+      {/* Lista de actividades, separadas por una línea suave. */}
+      <ul className="mt-2 divide-y divide-border/60">
+        {row.student.activities.map((activity) => (
+          <MobileActivityRow key={activity.activityId} activity={activity} />
+        ))}
+      </ul>
+    </article>
+  )
+}
+
 /** Columna de una actividad: cambia solo su título y la actividad que muestra. */
 function activityColumn(
   key: 'theory' | 'workshop1' | 'workshop2' | 'workshop3' | 'workshop4',
@@ -140,5 +185,24 @@ export default function StudentProgressTable({
     }
   })
 
-  return <Table columns={columns} data={rows} isLoading={isLoading} emptyMessage={emptyMessage} rowKey="id" />
+  // Mientras carga o si no hay filas, la tabla global muestra el skeleton o el mensaje vacío.
+  if (isLoading || rows.length === 0) {
+    return <Table columns={columns} data={rows} isLoading={isLoading} emptyMessage={emptyMessage} rowKey="id" />
+  }
+
+  return (
+    <>
+      {/* Tablet y escritorio: tabla. */}
+      <div className="hidden md:block">
+        <Table columns={columns} data={rows} emptyMessage={emptyMessage} rowKey="id" />
+      </div>
+
+      {/* Móvil: una tarjeta por estudiante. */}
+      <div className="space-y-3 md:hidden">
+        {rows.map((row) => (
+          <MobileStudentCard key={row.id} row={row} />
+        ))}
+      </div>
+    </>
+  )
 }

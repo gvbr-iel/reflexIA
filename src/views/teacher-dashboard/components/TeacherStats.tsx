@@ -74,10 +74,10 @@ export default function TeacherStats({ summary, isLoading }: TeacherStatsProps) 
     summary
 
   return (
-    // En móvil van en una columna, en tablet en dos y en escritorio en cuatro.
+    // En móvil van de a dos para ocupar menos alto; en escritorio, en cuatro.
     <section
       aria-label="Resumen del seguimiento de estudiantes"
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4"
+      className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4"
     >
       {/* 1. Estudiantes en seguimiento. */}
       <StatCard
@@ -91,18 +91,18 @@ export default function TeacherStats({ summary, isLoading }: TeacherStatsProps) 
       {/* 2. Cuántos aprobaron el marco teórico (requisito para los talleres). */}
       <StatCard
         icon={<GraduationCap size={20} />}
-        label="Marco teórico aprobado"
+        label="Marco teórico"
         value={`${theoryApprovedCount} de ${totalStudents}`}
-        detail="pueden trabajar en los talleres"
+        detail="aprobado"
         isLoading={isLoading}
       />
 
       {/* 3. Talleres entregados entre todos los estudiantes (4 por estudiante). */}
       <StatCard
         icon={<ClipboardCheck size={20} />}
-        label="Talleres entregados"
+        label="Talleres"
         value={`${submittedWorkshopsCount} de ${totalStudents * 4}`}
-        detail="entre todos los estudiantes"
+        detail="entregados en total"
         isLoading={isLoading}
       />
 
@@ -112,7 +112,7 @@ export default function TeacherStats({ summary, isLoading }: TeacherStatsProps) 
         label="Plazos vencidos"
         value={String(overdueStudentsCount)}
         // Singular o plural según la cantidad.
-        detail={overdueStudentsCount === 1 ? 'estudiante con entrega atrasada' : 'estudiantes con entregas atrasadas'}
+        detail={overdueStudentsCount === 1 ? 'estudiante atrasado' : 'estudiantes atrasados'}
         isLoading={isLoading}
       />
     </section>
