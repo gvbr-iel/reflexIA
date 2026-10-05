@@ -1,132 +1,113 @@
-## 📋 Requisitos Funcionales (RF)
+# ReflexIA — Plataforma de Práctica Profesional Pedagógica
 
-El sistema contempla los siguientes requerimientos funcionales organizados por usuario, propósito y nivel de prioridad:
+ReflexIA es una aplicación web orientada a la práctica profesional docente de la Universidad Central de Chile (`@ucen.cl`), diseñada para estructurar la reflexión pedagógica profunda, acompañar el análisis de incidentes críticos de aula mediante inteligencia artificial formativa y resguardar la privacidad ética de los relatos escolares.
 
-* **RF-01: Gestión de la Whitelist (Lista de Correos Autorizados)**
-  * **Rol:** Administrador (Profesor guía / Coordinador)
-  * **Descripción:** Gestión autónoma de la lista de correos institucionales mediante cargas masivas, revisión de estados de alta (activo/inactivo), filtros de búsqueda y revocación inmediata de accesos.
-  * **Prioridad:** Alta (Garantiza trazabilidad y control de acceso seguro sin dependencia técnica).
+---
 
-* **RF-02: Automatización de Reflexiones y Retroalimentación**
-  * **Rol:** Profesor guía
-  * **Descripción:** Automatización en la revisión y entrega de retroalimentación formativa de las reflexiones semanales, permitiendo al docente visualizar propuestas del sistema antes de validarlas o editarlas.
-  * **Prioridad:** Alta (Mitiga la carga de trabajo en la evaluación de relatos).
+## 📋 Requisitos Funcionales (RF) y Estado de Implementación
 
-* **RF-03: Análisis Estructurado de Incidentes Críticos**
-  * **Rol:** Estudiante en práctica
-  * **Descripción:** Asistente paso a paso (*Step Wizard*) con referencias bibliográficas y marcos teóricos en pantalla para guiar el registro, análisis y guardado de borradores de experiencias fortuitas de aula.
-  * **Prioridad:** Alta (Promueve una reflexión pedagógica basada en teoría y evita análisis superficiales).
+| Código | Historia | Rol Principal | Estado | Descripción |
+|---|---|---|---|---|
+| **RF-01** | [HU-01](./HU01_GUIA.md) | Administrador | ✅ **Implementado** | Gestión autónoma de la lista de correos autorizados en Cloud Firestore mediante altas individuales, cargas masivas con vista previa, filtros de búsqueda, revocación inmediata y resumen de métricas para 3 roles (`student`, `teacher`, `admin`). |
+| **RF-02** | HU-02 | Profesor guía | ⏳ *Pendiente* | Automatización en la revisión y entrega de retroalimentación formativa de las reflexiones semanales (vista preliminar `ReflectionsView.tsx`). |
+| **RF-03** | [HU-03](./HU03_GUIA.md) | Estudiante | ✅ **Implementado** | Asistente paso a paso (*Step Wizard*) con referencias teóricas en pantalla para guiar el registro, análisis y autoguardado de borradores locales particionados por usuario. |
+| **RF-04** | [HU-04](./HU04_GUIA.md) | Estudiante | ✅ **Implementado** | Evaluación diagnóstica del marco teórico con banco de 30 preguntas, temporizador dinámico, calificación inmediata en Tailwind CSS y bloqueo automático de los talleres prácticos hasta aprobar. |
+| **RF-05** | [HU-05](./HU05_GUIA.md) | Asistente IA | ✅ **Implementado** | Detección automática en frontend de nombres propios, escuelas y datos sensibles en relatos mediante la API de OpenRouter con rotación de modelos gratuitos y destaque visual sin alterar el texto. |
+| **RF-06** | [HU-06](./HU06_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de control en `/docente/plazos` para definir fechas límite y límites de intentos de revisión por actividad (marco teórico y talleres 1 a 4). |
+| **RF-07** | HU-07 | Estudiante y Docente | ⏳ *Pendiente* | Biblioteca digital categorizada para consultar ejemplos de actuaciones mejoradas e innovaciones pedagógicas (vista preliminar `InnovationsView.tsx`). |
+| **RF-08** | [HU-08](./HU08_GUIA.md) | Todos los roles | ✅ **Implementado** | Inicio de sesión seguro con Firebase Authentication y autorización activa en Firestore, con redirección inteligente por rol a `/estudiante`, `/docente` o `/admin`. |
 
-* **RF-04: Verificación del Marco Teórico**
-  * **Rol:** Profesor guía
-  * **Descripción:** Evaluación o cuestionario automático sobre reflexión profesional con puntaje mínimo aprobatorio, bloqueando o condicionando de forma automática el acceso a los talleres prácticos.
-  * **Prioridad:** Alta (Asegura bases conceptuales sólidas previas a la práctica en terreno).
-
-* **RF-05: Anonimización y Resguardo de Privacidad**
-  * **Rol:** Profesor guía
-  * **Descripción:** Detección automática y enmascaramiento de nombres propios, colegios o datos sensibles en los relatos de los estudiantes, junto con la facultad docente de bloquear relatos expuestos.
-  * **Prioridad:** Alta (Cumplimiento estricto de normativas de confidencialidad y ética profesional).
-
-* **RF-06: Regulación del Ritmo de Trabajo y Límites de Intentos**
-  * **Rol:** Profesor guía
-  * **Descripción:** Configuración de ventanas de tiempo/plazos de entrega y restricción de intentos máximos permitidos por actividad, visualizando contadores de intentos restantes.
-  * **Prioridad:** Media (Fomenta el análisis pausado, la rigurosidad y evita entregas masivas o impulsivas).
-
-* **RF-07: Espacio de Consulta de Innovaciones**
-  * **Rol:** Estudiante y Profesor
-  * **Descripción:** Repositorio o biblioteca digital categorizada con filtros de búsqueda para consultar ejemplos de actuaciones mejoradas e innovaciones pedagógicas destacadas.
-  * **Prioridad:** Media (Sirve como fuente de inspiración, referencia y apoyo para estandarizar la excelencia).
-
-* **RF-08: Autenticación segura de Estudiantes de Práctica Profesional**
-    * **Rol:** Estudiante de Práctica Profesional
-    * **Descripción:** Aceptar y controlar el acceso de los estudiantes de práctica profesional.
-    * **Prioridad:** Alta (Es el entrypoint del estudiante con la plataforma).
+---
 
 ## 🔒 Requisitos No Funcionales (RNF) y Atributos de Calidad
 
-El proyecto cumple con los siguientes estándares técnicos y de negocio definidos para la plataforma:
-
 * **RNF-01: Privacidad y Confidencialidad**
-  * **Descripción:** Validación previa del texto en los relatos redactados por los usuarios. El sistema detecta nombres propios de alumnos, docentes o establecimientos educativos, bloqueando el procesamiento temporal y solicitando su anonimización antes de cualquier evaluación para proteger la identidad de los involucrados.
-
+  * Validación previa de textos mediante el servicio de IA (`openRouterService`). El sistema detecta datos sensibles (alumnos, docentes, colegios), alertando al usuario antes de cualquier envío para proteger la identidad institucional.
 * **RNF-02: Seguridad y Control de Acceso**
-  * **Descripción:** Autenticación restringida exclusivamente a usuarios con correo institucional de dominio `@ucen.cl` que se encuentren previamente registrados en la lista de autorizados (Whitelist - HU-01) en la base de datos, delimitando el acceso a estudiantes y profesores de la asignatura de práctica profesional.
-
+  * Autenticación restringida a cuentas con dominio `@ucen.cl` registradas y activas en la Whitelist de Firestore. No se almacena ni solicita RUT en ninguna etapa del sistema.
 * **RNF-03: Compatibilidad y Responsividad**
-  * **Descripción:** Interfaz 100% adaptativa (*responsive design*), garantizando una óptima visualización y experiencia de uso en dispositivos móviles (desde 360px de ancho), tablets y computadores de escritorio.
-
-* **RNF-04: Usabilidad**
-  * **Descripción:** Navegación optimizada para que el usuario pueda visualizar su progreso general y acceder a cualquier taller o marco teórico en un **máximo de 2 clics** desde el panel principal, utilizando un menú visual e intuitivo con una paleta de colores fríos (azules y verde esmeralda).
-
+  * Interfaz 100% responsiva diseñada para dispositivos móviles desde 360 px, tablets y computadores de escritorio con soporte de temas y fuentes tipográficas accesibles (Inter y Plus Jakarta Sans).
+* **RNF-04: Usabilidad y Navegación Rápida**
+  * Acceso en un **máximo de 2 clics** a cualquier taller o marco teórico desde los paneles de navegación, con layouts especializados para cada rol.
 * **RNF-05: Rendimiento**
-  * **Descripción:** El componente de procesamiento de Inteligencia Artificial debe generar la retroalimentación orientadora en un tiempo **menor o igual a 10 segundos** por intento, asegurando fluidez durante el desarrollo de cada taller.
+  * Optimización de empaquetado con Vite, code-splitting con `React.lazy` y `Suspense`, y respuesta ágil del motor de inferencia de IA.
+
+---
 
 ## 📂 Estructura de Directorios
 
-El código fuente del proyecto se encuentra organizado bajo una arquitectura modular por características (*Feature-Driven Development*), permitiendo una alta cohesión y desacoplamiento para cada una de las Historias de Usuario (HU).
+El código fuente sigue una arquitectura modular orientada a características (*Feature-Driven Development*):
 
 ```text
 src/
-├── assets/                  # Recursos estáticos (imágenes, iconos y estilos globales)
-├── components/              # Componentes UI reutilizables globales (Button, Modal, Table, Dropzone, etc.)
-├── context/                 # Contextos globales de React (AuthContext, ThemeContext)
-├── hooks/                   # Custom hooks globales (useAuth, useDebounce, etc.)
-├── layouts/                 # Diseños de pantallas según rol (AdminLayout, TeacherLayout, StudentLayout)
-├── models/                  # Tipos e interfaces TypeScript globales (User, Reflection, Incident, etc.)
-├── services/                # Configuración de Axios/Fetch y llamadas a APIs por módulos
-├── utils/                   # Funciones de utilidad (formateadores de fechas, validadores, anonimizadores)
-├── views/                   # Módulos o características principales (Features)
-│   ├── admin-whitelist/     # HU-01: Gestión de Whitelist
-│   │   ├── components/      # Subcomponentes específicos (UploadModal, WhitelistTable, FilterBar)
-│   │   ├── hooks/           # Lógica y estado de la whitelist (useWhitelist)
-│   │   └── WhitelistView.tsx
-│   ├── reflections/         # HU-02: Automatización de reflexiones y retroalimentación
-│   │   ├── components/      # FeedbackEditor, ReflectionList, AIPreviewBox
-│   │   ├── hooks/
-│   │   └── ReflectionsView.tsx
-│   ├── critical-incidents/  # HU-03: Análisis estructurado de incidentes críticos
-│   │   ├── components/      # StepWizard, TheoryReferenceSidebar, DraftManager
-│   │   ├── hooks/
-│   │   └── CriticalIncidentView.tsx
-│   ├── theory-verification/ # HU-04: Cuestionario del marco teórico
-│   │   ├── components/      # QuizEngine, ScoreCard
-│   │   ├── hooks/
-│   │   └── TheoryQuizView.tsx
-│   ├── privacy-guard/       # HU-05: Anonimización y resguardo de datos sensibles
-│   │   ├── components/      # SensitiveDataDetector, MaskingPreview
-│   │   └── ...
-│   ├── work-pacing/         # HU-06: Regulación de ritmo de trabajo e intentos (compartido/configuración)
-│   │   └── ...
-│   └── repository/          # HU-07: Espacio de consulta de innovaciones y buenas prácticas
-│       ├── components/      # InnovationCard, CategoryFilter, ResourceDetailModal
-│       └── RepositoryView.tsx
-├── App.tsx                  # Componente raíz y enrutador principal
-└── main.tsx                 # Punto de entrada de React
+├── assets/                  # Estilos globales (tokens.css) y recursos
+├── components/              # Componentes UI globales (Button, Modal, Table, Dropzone, ErrorBoundary)
+├── context/                 # Contextos de React (AuthContext con Firebase)
+├── hooks/                   # Custom hooks globales (useAuth, useWorkshops, etc.)
+├── layouts/                 # Diseños envolventes por rol (AdminLayout, TeacherLayout, StudentLayout)
+├── models/                  # Tipos TypeScript y contratos compartidos (whitelist, theoryQuiz, criticalIncident, etc.)
+├── services/                # Capa de servicios (firebase, authService, whitelistService, openRouterService, etc.)
+├── utils/                   # Utilidades de almacenamiento (userStorage), fechas y validadores de email institucional
+└── views/                   # Vistas principales de la aplicación
+    ├── admin-whitelist/     # HU-01: Panel de gestión de la whitelist
+    ├── auth/                # HU-08: Formulario de inicio de sesión institucional
+    ├── critical-incidents/  # HU-03: Asistente guiado de incidentes críticos
+    ├── theory-verification/ # HU-04: Verificación diagnóstica del marco teórico
+    ├── work-pacing/         # HU-06: Panel docente de plazos e intentos
+    ├── student-dashboard/   # Dashboard "Mi progreso" del estudiante
+    ├── teacher-dashboard/   # Dashboard general del profesor guía (placeholder)
+    ├── reflections/         # Revisión de reflexiones (placeholder)
+    ├── innovations/         # Espacio de innovaciones (placeholder)
+    ├── repository/          # Repositorio de talleres prácticos
+    └── landingpage/         # Página pública de bienvenida
 ```
 
-## 🗺️ Estructura de Rutas
+---
 
-Las rutas están configuradas en `App.tsx` usando React Router v6 con rutas anidadas. Cada rol tiene un layout envolvente que renderiza las vistas hijas a través de `<Outlet />`.
+## 🗺️ Mapa de Rutas de la Aplicación
 
-| Ruta | Layout | Vista | Descripción |
-|---|---|---|---|
-| `/` | — | LandingPage | Presentación del proyecto y accesos a las vistas de estudiante y docente |
-| `/iniciar-sesion` | — | LoginView | Acceso de estudiante con correo institucional |
-| `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | Gestión de correos autorizados |
-| `/docente` | TeacherLayout | TeacherDashboardView | Panel general del docente |
-| `/docente/reflexiones` | TeacherLayout | ReflectionsView | Revisión de reflexiones |
-| `/docente/plazos` | TeacherLayout | DeadlinesView | Configuración de plazos e intentos |
-| `/estudiante` | StudentLayout | StudentDashboardView | Mi progreso (dashboard) |
-| `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | Verificación del marco teórico |
-| `/estudiante/talleres` | StudentLayout | RepositoryView | Lista de talleres con su estado; cada botón abre el asistente del taller |
-| `/estudiante/innovaciones/:workshopId?` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado (sin taller, abre el que corresponde) |
-| `*` (fallback) | — | — | Redirige a la página de presentación `/` |
+| Ruta | Layout | Vista | Estado | Descripción |
+|---|---|---|---|---|
+| `/` | — | LandingPage | ✅ Listo | Presentación de la plataforma y acceso al inicio de sesión |
+| `/iniciar-sesion` | — | LoginView | ✅ Listo | Formulario de acceso institucional con correo `@ucen.cl` y contraseña |
+| `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | ✅ Listo | Gestión de la Whitelist en Cloud Firestore |
+| `/docente` | TeacherLayout | TeacherDashboardView | ⏳ Placeholder | Panel general del profesor guía |
+| `/docente/reflexiones` | TeacherLayout | ReflectionsView | ⏳ Placeholder | Listado y retroalimentación de reflexiones |
+| `/docente/plazos` | TeacherLayout | DeadlinesView | ✅ Listo | Regulación del ritmo de trabajo: plazos e intentos |
+| `/estudiante` | StudentLayout | StudentDashboardView | ✅ Listo | Dashboard "Mi progreso reflexivo" |
+| `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | ✅ Listo | Evaluación diagnóstica obligatoria del marco teórico |
+| `/estudiante/talleres` | StudentLayout | RepositoryView | ✅ Listo | Repositorio de talleres con bloqueo condicional |
+| `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | ✅ Listo | Asistente de incidentes críticos del taller seleccionado |
+| `/estudiante/innovaciones` | StudentLayout | InnovationsView | ⏳ Placeholder | Espacio de consulta de innovaciones |
+| `*` (fallback) | — | — | ✅ Listo | Redirección por defecto a la página de bienvenida `/` |
 
-La configuración, reglas y procedimiento de autorización para el acceso de
-estudiantes están documentados en [HU08_GUIA.md](./HU08_GUIA.md).
-| `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado, dentro de la sección Talleres |
-| `/estudiante/innovaciones` | StudentLayout | InnovationsView | Biblioteca de innovaciones (placeholder, RF-07) |
-| `*` (fallback) | — | — | Redirige a la página de presentación `/` |
+---
 
-Los layouts y vistas se cargan bajo demanda según la ruta; mientras se
-carga una pantalla, la aplicación muestra un estado accesible de carga.
+## 🚀 Puesta en Marcha Local
+
+### Prerrequisitos
+- Node.js 18+ y npm instalados.
+
+### Instalación y ejecución
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/gvbr-iel/reflexIA.git
+cd reflexIA
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Iniciar servidor de desarrollo
+npm run dev
+```
+
+La plataforma incluye configuración pública de respaldo para Firebase Web Client en `src/services/firebase.ts`, por lo que es posible ejecutarla y probarla localmente de inmediato sin configuración manual adicional. Para usar la detección de datos sensibles por IA en incidentes críticos (HU-05), define `VITE_OPENROUTER_API_KEY` en tu archivo `.env`.
+
+### Comprobaciones de calidad
+```bash
+# Verificación estricta de tipos TypeScript
+npm run lint
+
+# Compilación de producción
+npm run build
+```
