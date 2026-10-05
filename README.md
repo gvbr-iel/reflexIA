@@ -9,7 +9,7 @@ ReflexIA es una aplicación web orientada a la práctica profesional docente de 
 | Código | Historia | Rol Principal | Estado | Descripción |
 |---|---|---|---|---|
 | **RF-01** | [HU-01](./HU01_GUIA.md) | Administrador | ✅ **Implementado** | Gestión autónoma de la lista de correos autorizados en Cloud Firestore mediante altas individuales, cargas masivas con vista previa, filtros de búsqueda, revocación inmediata y resumen de métricas para 3 roles (`student`, `teacher`, `admin`). |
-| **RF-02** | HU-02 | Profesor guía | ⏳ *Pendiente* | Automatización en la revisión y entrega de retroalimentación formativa de las reflexiones semanales (vista preliminar `ReflectionsView.tsx`). |
+| **RF-02** | [HU-02](./HU02_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de revisión en `/docente/reflexiones` para ver la propuesta de la IA, editar los impulsos y validarlos, y panel "El Impulso" en el asistente del estudiante con contador de intentos. Los impulsos y las reflexiones son simulados en frontend. |
 | **RF-03** | [HU-03](./HU03_GUIA.md) | Estudiante | ✅ **Implementado** | Asistente paso a paso (*Step Wizard*) con referencias teóricas en pantalla para guiar el registro, análisis y autoguardado de borradores locales particionados por usuario. |
 | **RF-04** | [HU-04](./HU04_GUIA.md) | Estudiante | ✅ **Implementado** | Evaluación diagnóstica del marco teórico con banco de 30 preguntas, temporizador dinámico, calificación inmediata en Tailwind CSS y bloqueo automático de los talleres prácticos hasta aprobar. |
 | **RF-05** | [HU-05](./HU05_GUIA.md) | Asistente IA | ✅ **Implementado** | Detección automática en frontend de nombres propios, escuelas y datos sensibles en relatos mediante la API de OpenRouter con rotación de modelos gratuitos y destaque visual sin alterar el texto. |
@@ -56,7 +56,7 @@ src/
     ├── work-pacing/         # HU-06: Panel docente de plazos e intentos
     ├── student-dashboard/   # Dashboard "Mi progreso" del estudiante
     ├── teacher-dashboard/   # Dashboard general del profesor guía (placeholder)
-    ├── reflections/         # Revisión de reflexiones (placeholder)
+    ├── reflections/         # HU-02: Revisión docente de la retroalimentación de la IA
     ├── innovations/         # HU-07: Biblioteca de innovaciones pedagógicas
     ├── repository/          # Repositorio de talleres prácticos
     └── landingpage/         # Página pública de bienvenida
@@ -72,7 +72,7 @@ src/
 | `/iniciar-sesion` | — | LoginView | ✅ Listo | Formulario de acceso institucional con correo `@ucen.cl` y contraseña |
 | `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | ✅ Listo | Gestión de la Whitelist en Cloud Firestore |
 | `/docente` | TeacherLayout | TeacherDashboardView | ⏳ Placeholder | Panel general del profesor guía |
-| `/docente/reflexiones` | TeacherLayout | ReflectionsView | ⏳ Placeholder | Listado y retroalimentación de reflexiones |
+| `/docente/reflexiones` | TeacherLayout | ReflectionsView | ✅ Listo | Revisión, edición y validación de la retroalimentación de la IA |
 | `/docente/plazos` | TeacherLayout | DeadlinesView | ✅ Listo | Regulación del ritmo de trabajo: plazos e intentos |
 | `/docente/innovaciones` | TeacherLayout | InnovationsView | ✅ Listo | Biblioteca de consulta compartida con estudiantes |
 | `/estudiante` | StudentLayout | StudentDashboardView | ✅ Listo | Dashboard "Mi progreso reflexivo" |

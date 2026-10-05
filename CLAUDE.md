@@ -26,23 +26,27 @@ npm run build          # Compilación completa (tsc && vite build)
 
 **Rutas y layouts.** `src/App.tsx` define rutas anidadas por rol (`/admin`, `/docente`, `/estudiante`) y la ruta pública `/iniciar-sesion`. La guarda `RequireStudent` (alias `RequireAuth`) protege las rutas según `allowedRoles`. Cada rol tiene un layout en `src/layouts/` con cabecera (que muestra el email del usuario activo y botón de salida) y menú lateral de 240 px (`w-60`).
 - `/admin` → `/admin/whitelist`: Gestión de la whitelist (`WhiteListView`).
-- `/docente/plazos`: Regulación de plazos e intentos (`DeadlinesView`, HU-06). `/docente` y `/docente/reflexiones` son vistas preliminares.
+- `/docente/reflexiones`: Revisión, edición y validación de la retroalimentación de la IA (`ReflectionsView`, HU-02).
+- `/docente/plazos`: Regulación de plazos e intentos (`DeadlinesView`, HU-06). `/docente` es una vista preliminar.
+- `/docente/innovaciones`: Biblioteca de innovaciones, compartida con estudiantes (`InnovationsView`, HU-07).
 - `/estudiante`: Dashboard de progreso (`StudentDashboardView`).
 - `/estudiante/marco-teorico`: Evaluación diagnóstica (`TheoryQuizView`, HU-04).
 - `/estudiante/talleres`: Repositorio de talleres con bloqueo condicional (`RepositoryView`).
-- `/estudiante/talleres/:workshopId`: Asistente guiado de incidentes críticos (`CriticalIncidentView`, HU-03).
-- `/estudiante/innovaciones`: Espacio de innovaciones pedagógicas (`InnovationsView`, placeholder para RF-07).
+- `/estudiante/talleres/:workshopId`: Asistente guiado de incidentes críticos (`CriticalIncidentView`, HU-03), con el panel "El Impulso" (HU-02).
+- `/estudiante/innovaciones`: Biblioteca de innovaciones pedagógicas (`InnovationsView`, HU-07).
 
 **Cadena de capas de cada feature.** El patrón estándar es:
 `models/<feature>.ts` (tipos y contratos) → `services/<feature>Service.ts` (Firestore para whitelist/auth, o almacenamiento local particionado por UID para talleres) → `views/<feature>/hooks/` (toda la lógica y estado) → `views/<feature>/components/` (solo presentación) → `<Feature>View.tsx`.
 
 - Las vistas y componentes nunca llaman al servicio directamente, solo a través de hooks (regla R4).
-- `models/theoryQuiz.ts`, `models/whitelist.ts` y `models/criticalIncident.ts` son los contratos entre features.
-- Claves base de talleres: `reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, etc. Todas se particionan por el UID de Firebase con `utils/userStorage.ts`.
+- `models/theoryQuiz.ts`, `models/whitelist.ts`, `models/criticalIncident.ts` y `models/reflection.ts` son los contratos entre features.
+- Claves base de talleres: `reflexia_theory_attempts`, `reflexia_theory_approval`, `reflexia_incident_drafts`, `reflexia_incident_attempts`, `reflexia_reflection_reviews`, etc. Todas se particionan por el UID de Firebase con `utils/userStorage.ts`.
 
 **Dependencia HU-03 (incidentes) → HU-04 (marco teórico).** Los talleres solo se desbloquean si el estudiante aprobó el marco teórico. Se consulta en un único punto: `views/critical-incidents/hooks/useTheoryGate.ts`, invocando a `theoryQuizService.getApprovalStatus()`.
 
-**Invariante de HU-03.** Guardar un borrador **nunca** descuenta intentos de revisión: `criticalIncidentService.saveDraft` solo escribe la clave de borradores.
+**Invariante de HU-03.** Guardar un borrador **nunca** descuenta intentos de revisión: `criticalIncidentService.saveDraft` solo escribe la clave de borradores. Lo que sí descuenta 1 intento es pedir un impulso a la IA (`criticalIncidentService.requestImpulse`, HU-02).
+
+**HU-02 (retroalimentación con IA).** Los impulsos los genera `utils/impulseGenerator.ts`, una simulación local sin red que **nunca redacta ni corrige** el texto del alumno. El panel docente trabaja con reflexiones de ejemplo (`views/reflections/data/reflections.ts`) porque el almacenamiento local por UID impide leer los envíos de otra cuenta; solo la revisión del docente se guarda de verdad. La propuesta original de la IA (`aiFeedback`) nunca se modifica: sirve para auditar. Detalle en `HU02_GUIA.md`.
 
 ## Convenciones de diseño y código
 
@@ -54,9 +58,11 @@ npm run build          # Compilación completa (tsc && vite build)
 ## Estado de integración
 
 - **HU-01 (Whitelist):** Conectada a Cloud Firestore en tiempo real con soporte para 3 roles (`student`, `teacher`, `admin`), 5 métricas de resumen y carga masiva con bloqueo preventivo.
+- **HU-02 (Retroalimentación con IA):** Panel docente en `/docente/reflexiones` para revisar, editar y validar los impulsos, y panel "El Impulso" en el asistente del estudiante con contador de intentos. Simulado en frontend.
 - **HU-03 (Incidentes críticos):** Asistente paso a paso con referencias bibliográficas y autoguardado de borradores.
 - **HU-04 (Marco teórico):** Cuestionario de 30 preguntas, temporizador y resultados con Tailwind CSS e iconos Lucide; bloqueo condicional de talleres.
 - **HU-05 (Datos sensibles):** Detección en frontend vía OpenRouter con rotación automática de modelos gratuitos.
 - **HU-06 (Plazos e intentos):** Panel docente en `/docente/plazos` con límites de intentos y fechas de entrega.
+- **HU-07 (Biblioteca de innovaciones):** Catálogo categorizado con búsqueda, filtros y detalle, para estudiantes y profesores.
 - **HU-08 (Autenticación multi-rol):** Login unificado en `/iniciar-sesion` con Firebase Authentication, verificación en Firestore y redirección por perfil.
-- **Pendientes:** HU-02 (retroalimentación de reflexiones) y HU-07 (biblioteca de innovaciones).
+- **Pendientes:** todas las HU tienen su primera versión en frontend. Falta el backend (IA real, base de datos compartida entre cuentas) y los ajustes que lista cada guía `HU0X_GUIA.md`.
