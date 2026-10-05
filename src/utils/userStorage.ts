@@ -1,16 +1,17 @@
 import { firebaseAuth } from '../services/firebase'
 
-export function getUserStorageKey(key: string): string {
+export function getUserStorageKey(key: string): string | null {
   const uid = firebaseAuth?.currentUser?.uid
   if (!uid) {
-    throw new Error('Se requiere una sesión activa para acceder a los datos del estudiante.')
+    return null
   }
   return `${key}:${uid}`
 }
 
 export function readUserStorage<T>(key: string): T | null {
-  const scopedKey = getUserStorageKey(key)
   try {
+    const scopedKey = getUserStorageKey(key)
+    if (!scopedKey) return null
     const raw = localStorage.getItem(scopedKey)
     return raw ? (JSON.parse(raw) as T) : null
   } catch {
@@ -19,5 +20,12 @@ export function readUserStorage<T>(key: string): T | null {
 }
 
 export function writeUserStorage<T>(key: string, value: T): void {
-  localStorage.setItem(getUserStorageKey(key), JSON.stringify(value))
+  try {
+    const scopedKey = getUserStorageKey(key)
+    if (!scopedKey) return
+    localStorage.setItem(scopedKey, JSON.stringify(value))
+  } catch {
+    // Ignorar posibles errores al exceder cuota de almacenamiento
+  }
 }
+

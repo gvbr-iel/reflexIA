@@ -90,6 +90,7 @@ export default function FilterBar({
               <option value="all">Todos</option>
               <option value="student">Estudiantes</option>
               <option value="teacher">Profesores guía</option>
+              <option value="admin">Administradores</option>
             </select>
           </div>
         </div>

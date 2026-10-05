@@ -24,6 +24,8 @@ const THEORY_APPROVAL_KEY = 'reflexia_theory_approval';
  */
 export function setSimulatedTheoryApproval(approved: boolean): void {
   const storageKey = getUserStorageKey(THEORY_APPROVAL_KEY);
+  if (!storageKey) return;
+
   if (!approved) {
     localStorage.removeItem(storageKey);
     return;

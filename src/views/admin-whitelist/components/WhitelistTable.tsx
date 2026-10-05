@@ -1,4 +1,4 @@
-import { GraduationCap, Presentation, RotateCcw, UserX } from 'lucide-react'
+import { GraduationCap, Presentation, RotateCcw, ShieldCheck, UserX } from 'lucide-react'
 
 import Button from '../../../components/Button'
 import Table, { type Column } from '../../../components/Table'
@@ -37,7 +37,8 @@ function formatDate(iso: string): string {
 }
 
 function RoleBadge({ role }: { role: WhitelistRole }) {
-  const Icon = role === 'student' ? GraduationCap : Presentation
+  const Icon =
+    role === 'student' ? GraduationCap : role === 'teacher' ? Presentation : ShieldCheck
   return (
     <span className="inline-flex items-center gap-1.5 text-sm text-texto">
       <Icon size={16} className="text-primary" aria-hidden="true" />
