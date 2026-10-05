@@ -23,7 +23,7 @@ const navItems: NavItem[] = [
 
 export default function TeacherLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
   async function handleSignOut() {
@@ -59,14 +59,24 @@ export default function TeacherLayout() {
           </span>
         </div>
 
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 text-sm text-texto/60 hover:text-texto transition-colors"
-          aria-label="Cerrar sesión"
-        >
-          <LogOut size={18} />
-          <span className="hidden sm:inline">Salir</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {user?.email && (
+            <span
+              className="hidden md:inline text-xs text-texto/60 font-medium truncate max-w-[200px]"
+              title={user.email}
+            >
+              {user.email}
+            </span>
+          )}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 text-sm text-texto/60 hover:text-texto transition-colors"
+            aria-label="Cerrar sesión"
+          >
+            <LogOut size={18} />
+            <span className="hidden sm:inline">Salir</span>
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-1">

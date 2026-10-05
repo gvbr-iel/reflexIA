@@ -69,8 +69,8 @@ export default function WhiteListView() {
       <div className="flex items-start gap-3 rounded-xl border border-secondary/30 bg-secondary/5 p-4">
         <ShieldCheck size={20} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
         <p className="text-sm text-texto md:text-base">
-          Solo pueden ingresar <strong className="font-medium">estudiantes y profesores guía</strong>{' '}
-          de práctica profesional con un correo{' '}
+          Solo pueden ingresar <strong className="font-medium">estudiantes, profesores guía y administradores</strong>{' '}
+          con un correo institucional{' '}
           <strong className="font-medium">{INSTITUTIONAL_DOMAIN}</strong> que esté activo en esta
           lista. Al revocar un acceso, el cambio es inmediato.
         </p>

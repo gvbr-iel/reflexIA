@@ -80,7 +80,11 @@ function readConfig(): WorkPacingConfig {
 }
 
 function writeConfig(config: WorkPacingConfig): void {
-  localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
+  try {
+    localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
+  } catch (error) {
+    console.warn('No se pudo guardar la configuración de plazos en almacenamiento local:', error);
+  }
 }
 
 /** Valida cada actividad como lo haría el backend. */
@@ -151,7 +155,11 @@ export const workPacingService = {
     // return axios.delete<WorkPacingConfig>('/api/work-pacing');
     await wait(MOCK_LATENCY_MS);
 
-    localStorage.removeItem(STORAGE_KEYS.CONFIG);
+    try {
+      localStorage.removeItem(STORAGE_KEYS.CONFIG);
+    } catch (error) {
+      console.warn('No se pudo restablecer la configuración de plazos en almacenamiento local:', error);
+    }
     return { overrides: {}, updatedAt: null };
   },
 };

@@ -39,7 +39,7 @@ export default function StudentLayout() {
   const [signOutError, setSignOutError] = useState<string | null>(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const { signOut } = useAuth()
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     // Consultar estado de aprobación del marco teórico
@@ -80,14 +80,24 @@ export default function StudentLayout() {
           </span>
         </div>
 
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 text-sm text-texto/60 hover:text-texto transition-colors"
-          aria-label="Cerrar sesión"
-        >
-          <LogOut size={18} />
-          <span className="hidden sm:inline">Salir</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {user?.email && (
+            <span
+              className="hidden md:inline text-xs text-texto/60 font-medium truncate max-w-[200px]"
+              title={user.email}
+            >
+              {user.email}
+            </span>
+          )}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 text-sm text-texto/60 hover:text-texto transition-colors"
+            aria-label="Cerrar sesión"
+          >
+            <LogOut size={18} />
+            <span className="hidden sm:inline">Salir</span>
+          </button>
+        </div>
       </header>
 
       {signOutError && (

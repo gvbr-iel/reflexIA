@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react'
-import { GraduationCap, Presentation, ShieldCheck, UserX } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { CheckCircle2, GraduationCap, Presentation, ShieldCheck, UserX } from 'lucide-react'
 
 import type { WhitelistStats as Stats } from '../../../models/whitelist'
 
@@ -52,13 +52,13 @@ export default function WhitelistStats({ stats, isLoading }: WhitelistStatsProps
   return (
     <section
       aria-label="Resumen de la whitelist"
-      className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4"
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5 xl:gap-4"
     >
       <StatCard
-        icon={<ShieldCheck size={20} />}
+        icon={<CheckCircle2 size={20} />}
         label="Accesos activos"
         value={stats.active}
-        detail={`de ${stats.total} correos registrados`}
+        detail={`de ${stats.total} registrados`}
         isLoading={isLoading}
       />
       <StatCard
@@ -72,6 +72,13 @@ export default function WhitelistStats({ stats, isLoading }: WhitelistStatsProps
         icon={<Presentation size={20} />}
         label="Profesores guía"
         value={stats.teachers}
+        detail="con acceso activo"
+        isLoading={isLoading}
+      />
+      <StatCard
+        icon={<ShieldCheck size={20} />}
+        label="Administradores"
+        value={stats.admins}
         detail="con acceso activo"
         isLoading={isLoading}
       />
