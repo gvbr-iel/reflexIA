@@ -128,6 +128,7 @@ function computeStats(entries: WhitelistEntry[]): WhitelistStats {
     revoked: entries.length - active.length,
     students: active.filter((e) => e.role === 'student').length,
     teachers: active.filter((e) => e.role === 'teacher').length,
+    admins: active.filter((e) => e.role === 'admin').length,
   };
 }
 

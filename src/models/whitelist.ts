@@ -72,6 +72,7 @@ export interface WhitelistStats {
   revoked: number;
   students: number;
   teachers: number;
+  admins: number;
 }
 
 // ─────────────────────────────────────────────
