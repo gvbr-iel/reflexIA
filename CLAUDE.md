@@ -27,8 +27,9 @@ npm run build          # Compilación completa (tsc && vite build)
 **Rutas y layouts.** `src/App.tsx` define rutas anidadas por rol (`/admin`, `/docente`, `/estudiante`) y la ruta pública `/iniciar-sesion`. La guarda `RequireStudent` (alias `RequireAuth`) protege las rutas según `allowedRoles`. Cada rol tiene un layout en `src/layouts/` con cabecera (que muestra el email del usuario activo y botón de salida) y menú lateral de 240 px (`w-60`).
 - `/admin` → `/admin/whitelist`: Gestión de la whitelist (`WhiteListView`).
 - `/docente/reflexiones`: Revisión, edición y validación de la retroalimentación de la IA (`ReflectionsView`, HU-02).
-- `/docente/plazos`: Regulación de plazos e intentos (`DeadlinesView`, HU-06). `/docente` es una vista preliminar.
 - `/docente/innovaciones`: Biblioteca de innovaciones, compartida con estudiantes (`InnovationsView`, HU-07).
+- `/docente`: Panel de seguimiento de estudiantes (`TeacherDashboardView`), con datos de ejemplo del mock `services/teacherDashboardService.ts`.
+- `/docente/plazos`: Regulación de plazos e intentos (`DeadlinesView`, HU-06).
 - `/estudiante`: Dashboard de progreso (`StudentDashboardView`).
 - `/estudiante/marco-teorico`: Evaluación diagnóstica (`TheoryQuizView`, HU-04).
 - `/estudiante/talleres`: Repositorio de talleres con bloqueo condicional (`RepositoryView`).
@@ -64,5 +65,6 @@ npm run build          # Compilación completa (tsc && vite build)
 - **HU-05 (Datos sensibles):** Detección en frontend vía OpenRouter con rotación automática de modelos gratuitos.
 - **HU-06 (Plazos e intentos):** Panel docente en `/docente/plazos` con límites de intentos y fechas de entrega.
 - **HU-07 (Biblioteca de innovaciones):** Catálogo categorizado con búsqueda, filtros y detalle, para estudiantes y profesores.
+- **Panel docente (`/docente`):** Seguimiento semanal con 4 tarjetas de resumen, filtros por situación (todos, vencidos, en curso, completados) y tabla de avance por estudiante (tarjetas en móvil). Usa un mock local con 8 estudiantes ficticios (`teacherDashboardService`); aún no lee los avances reales, que viven en el `localStorage` de cada estudiante.
 - **HU-08 (Autenticación multi-rol):** Login unificado en `/iniciar-sesion` con Firebase Authentication, verificación en Firestore y redirección por perfil.
 - **Pendientes:** todas las HU tienen su primera versión en frontend. Falta el backend (IA real, base de datos compartida entre cuentas) y los ajustes que lista cada guía `HU0X_GUIA.md`.
