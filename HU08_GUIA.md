@@ -1,145 +1,161 @@
-# HU-08: Inicio de sesión institucional con Firebase
+# HU-08: Inicio de sesión institucional multi-rol con Firebase
 
 ## Historia de usuario
 
-**Como** estudiante de Práctica Profesional,  
-**quiero** iniciar sesión de forma segura con mi correo institucional y
-contraseña,  
-**para** acceder individualmente a mis talleres y resguardar la privacidad de
-mis datos personales, sin usar identificadores sensibles como el RUT.
+**Como** usuario de la plataforma ReflexIA (estudiante, profesor guía o administrador),  
+**quiero** iniciar sesión de forma segura con mi correo institucional `@ucen.cl` y contraseña,  
+**para** acceder al espacio correspondiente a mi rol, gestionar mis actividades formativas o administrativas y resguardar la privacidad de los datos personales, sin emplear identificadores sensibles como el RUT.
+
+---
 
 ## Criterios de aceptación
 
-1. El formulario solicita correo institucional `@ucen.cl` y contraseña.
-2. Firebase Authentication valida las credenciales. Cloud Firestore verifica
-   que el correo tenga una entrada de whitelist activa y el rol `student`.
-3. No se solicita ni almacena RUT.
-4. El inicio de sesión exitoso lleva al panel `/estudiante`; las rutas
-   `/estudiante/*` están protegidas por sesión y autorización.
-5. Los errores de credenciales y whitelist se presentan con un mensaje genérico
-   para no revelar si una cuenta está registrada. Los errores de conexión o
-   configuración informan que no se pudo validar el acceso.
+1. **Formulario unificado:** Solicita correo institucional `@ucen.cl` y contraseña.
+2. **Validación en dos etapas:**
+   - **Autenticación (Firebase Auth):** Valida la identidad y contraseña del usuario.
+   - **Autorización (Cloud Firestore):** Verifica que el correo figure en la colección `whitelist` con estado `active` y determina su rol asignado (`student`, `teacher` o `admin`).
+3. **Redirección por perfil:**
+   - Rol `student` → Redirige a `/estudiante` (progreso reflexivo y talleres).
+   - Rol `teacher` → Redirige a `/docente` (panel de plazos e intentos).
+   - Rol `admin` → Redirige a `/admin/whitelist` (gestión de la whitelist).
+4. **Protección de rutas (`RequireStudent` / `RequireAuth`):**
+   - Cada ruta está protegida según `allowedRoles`.
+   - Si un usuario autenticado intenta entrar a un área que no le corresponde (por ejemplo, un estudiante entrando a `/admin`), el sistema lo redirige limpiamente a la página de inicio de su respectivo rol.
+   - Si no hay sesión autenticada, redirige a `/iniciar-sesion`.
+5. **Observabilidad en tiempo real:** La autorización se monitorea en vivo mediante un listener de Firestore (`watchAccess`). Si un administrador revoca el acceso de un usuario, su sesión activa se cierra de manera inmediata.
+6. **Privacidad estricta:** No se solicita, procesa ni almacena RUT ni datos sensibles ajenos a la actividad pedagógica (RNF-01 / RNF-02).
+7. **Cierre de sesión seguro:** Cada layout (Estudiante, Docente, Admin) incluye botón **Salir** y muestra el correo del usuario activo en la cabecera.
 
-## Recorrido de autenticación
+---
 
-1. El estudiante abre `/iniciar-sesion` y envía su correo y contraseña a
-   Firebase Authentication.
-2. La aplicación valida el dominio institucional y consulta en Firestore el
-   documento de la whitelist identificado por el correo normalizado.
-3. Solo continúa si el documento existe, tiene `status: "active"` y
-   `role: "student"`. Si el registro no autoriza el acceso, se cierra la sesión.
-4. `AuthContext` mantiene el estado de sesión. `RequireStudent` protege las
-   rutas del estudiante y redirige a `/iniciar-sesion` cuando no hay una sesión
-   autorizada.
-5. La autorización se observa en tiempo real. Al revocar el acceso en Firestore,
-   la aplicación cierra la sesión del estudiante.
-6. El botón **Salir** cierra la sesión de Firebase.
+## Recorrido de autenticación y autorización
 
-Las rutas de administración y docente no forman parte del flujo de autenticación
-estudiantil de esta historia. La whitelist Firestore exige el custom claim
-`admin: true` para leer la lista o administrarla. No se implementó un login
-administrativo ni la asignación de ese claim desde la aplicación. Hasta definir
-ese flujo, una persona administradora debe gestionar la whitelist desde Firebase
-Console o una herramienta interna confiable.
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant LoginView as LoginView (/iniciar-sesion)
+    participant AuthContext as AuthContext / authService
+    participant FirebaseAuth as Firebase Authentication
+    participant Firestore as Cloud Firestore (whitelist)
+    participant AppRouter as Router / RequireStudent
 
-## Arquitectura y archivos
-
-- `src/services/firebase.ts`: inicialización del cliente Firebase desde
-  variables de entorno.
-- `src/services/authService.ts`: inicio/cierre de sesión y traducción de
-  credenciales o autorización a errores de dominio.
-- `src/services/whitelistService.ts`: altas, importación, listado, revocación y
-  verificación en Cloud Firestore.
-- `src/context/AuthContext.tsx` y `src/hooks/useAuth.ts`: estado de sesión para
-  la aplicación.
-- `src/components/RequireStudent.tsx`: guardia para las rutas de estudiante.
-- `src/views/auth/LoginView.tsx`: formulario accesible de correo y contraseña.
-- `src/utils/institutionalEmail.ts`: validación compartida del dominio
-  institucional.
-- `src/utils/userStorage.ts`: separa las claves locales de talleres por UID.
-- `firestore.rules`: reglas de acceso y validación de documentos de whitelist.
-
-La whitelist ya no usa `localStorage`. En cambio, los borradores, intentos y
-resultados de talleres siguen siendo un mock local. Sus claves se particionan
-por UID para que distintas cuentas en un mismo navegador no compartan esos
-datos. El contenido de las reflexiones no se sincroniza con Firestore en esta
-historia; el almacenamiento local no equivale a cifrado ni a respaldo remoto.
-
-## Configuración de Firebase
-
-1. Crea o selecciona un proyecto en Firebase Console y registra una aplicación
-   web.
-2. En **Authentication → Sign-in method**, habilita **Email/Password**.
-3. Crea la base de datos de Cloud Firestore.
-4. Copia `.env.example` a `.env` y completa estas variables con los valores de
-   configuración de la aplicación web:
-
-   ```dotenv
-   VITE_FIREBASE_API_KEY=
-   VITE_FIREBASE_AUTH_DOMAIN=
-   VITE_FIREBASE_PROJECT_ID=
-   VITE_FIREBASE_STORAGE_BUCKET=
-   VITE_FIREBASE_MESSAGING_SENDER_ID=
-   VITE_FIREBASE_APP_ID=
-   ```
-
-   Son valores de configuración del cliente, no claves privadas. No agregues
-   secretos de cuentas de servicio ni credenciales de Firebase Admin SDK al
-   frontend o a variables `VITE_*`. Reinicia Vite después de modificar `.env`.
-5. Publica el contenido de [`firestore.rules`](./firestore.rules) desde
-   **Firestore Database → Rules**, o despliega las reglas con Firebase CLI
-   después de seleccionar el proyecto:
-
-   ```bash
-   firebase deploy --only firestore:rules
-   ```
-
-Las reglas permiten que un estudiante autenticado consulte solo su propio
-documento de whitelist. Solo una cuenta cuyo token incluya el custom claim
-`admin: true` puede listar o administrar otros documentos. El claim debe
-asignarse mediante Firebase Admin SDK desde un entorno confiable, nunca desde el
-navegador.
-
-Sin la configuración de Firebase, la aplicación falla cerrada: el inicio de
-sesión no está disponible y las rutas protegidas no muestran el contenido.
-
-## Alta y autorización de estudiantes
-
-No hay registro público en la aplicación. Para habilitar a un estudiante:
-
-1. Crea su cuenta en **Authentication → Users** con su correo `@ucen.cl` y
-   define o comunica su contraseña mediante un canal seguro.
-2. En Firestore, crea un documento en la colección `whitelist`. El ID debe ser
-   el correo normalizado (minúsculas y sin espacios), por ejemplo
-   `estudiante@ucen.cl`.
-3. Usa los campos siguientes:
-
-   ```json
-   {
-     "email": "estudiante@ucen.cl",
-     "role": "student",
-     "status": "active",
-     "addedAt": "2026-10-04T12:00:00.000Z",
-     "revokedAt": null
-   }
-   ```
-
-Para revocar acceso, cambia `status` a `"revoked"`. El estudiante no puede
-modificar su propio documento; el cambio es detectado por la sesión activa y se
-le solicita iniciar sesión nuevamente. No se debe agregar RUT ni otro
-identificador personal a este documento.
-
-## Verificación local
-
-```bash
-npm install
-npm run dev
-npm run build
+    Usuario->>LoginView: Ingresa email@ucen.cl y contraseña
+    LoginView->>AuthContext: signInUser(email, password)
+    AuthContext->>FirebaseAuth: signInWithEmailAndPassword
+    FirebaseAuth-->>AuthContext: Credenciales válidas (UID)
+    AuthContext->>Firestore: Consultar whitelist/{email}
+    alt Documento no existe o status == 'revoked'
+        Firestore-->>AuthContext: Acceso denegado
+        AuthContext->>FirebaseAuth: Cerrar sesión preventiva
+        AuthContext-->>LoginView: Error de autorización
+        LoginView-->>Usuario: "No encontramos este correo en la lista autorizada o su acceso ha sido revocado."
+    else Documento activo con rol asignado
+        Firestore-->>AuthContext: { status: 'active', role: 'student' | 'teacher' | 'admin' }
+        AuthContext-->>LoginView: { allowed: true, role }
+        LoginView->>AppRouter: Redirección dinámica según rol
+        AppRouter-->>Usuario: Visualiza /estudiante, /docente o /admin
+    end
 ```
 
-El build comprueba TypeScript y genera la aplicación; no demuestra autenticación
-real. Para probar el flujo hacen falta un proyecto Firebase, las variables
-configuradas, las reglas publicadas, una cuenta Authentication y su documento
-activo en la whitelist. En pantallas estrechas, el formulario debe permanecer
-utilizable desde 360 px. Sin configuración se comprobó que el acceso deniegue
-las rutas protegidas.
+---
+
+## Arquitectura y archivos involucrados
+
+- **`src/services/firebase.ts`**: Inicializa la aplicación Firebase (Auth y Firestore). Cuenta con valores de respaldo (*fallbacks*) de configuración pública del cliente, lo que garantiza que cualquier integrante del equipo pueda clonar el repositorio y ejecutar el entorno de desarrollo (`npm run dev`) sin necesidad de configurar un archivo `.env` manual para Firebase.
+- **`src/services/authService.ts`**: Administra los métodos de inicio de sesión (`signInWithEmailAndPassword`) y cierre de sesión (`signOut`), traduciendo errores de Firebase a mensajes amigables y resolviendo el rol del usuario desde la whitelist.
+- **`src/services/whitelistService.ts`**: Gestiona las operaciones de verificación individual (`checkAccess`), escucha en tiempo real (`watchAccess`), consultas, altas y revocaciones contra la colección `whitelist` de Firestore.
+- **`src/context/AuthContext.tsx` y `src/hooks/useAuth.ts`**: Proveen el estado de autenticación (`status`, `user`, `role`, `error`) a toda la aplicación React.
+- **`src/components/RequireStudent.tsx` (alias `RequireAuth`)**: Guarda de rutas que valida que el usuario esté autenticado y que su rol pertenezca a `allowedRoles`.
+- **`src/views/auth/LoginView.tsx`**: Formulario institucional accesible, con validación de dominio institucional y redirección por rol.
+- **`src/utils/userStorage.ts`**: Aísla el almacenamiento local de borradores e intentos de talleres por el `uid` del usuario de Firebase, previniendo colisiones entre cuentas distintas en el mismo navegador y protegiendo la lectura ante recargas de página (F5).
+- **`firestore.rules`**: Reglas de seguridad que rigen la lectura y escritura en la base de datos Firestore.
+
+---
+
+## Configuración de Firebase y Variables de Entorno
+
+El cliente web de Firebase está preconfigurado para el entorno del proyecto. No obstante, si se desea conectar a un proyecto propio o sobreescribir los valores por variables de entorno:
+
+1. Habilita **Authentication → Email/Password** en Firebase Console.
+2. Crea la base de datos **Cloud Firestore**.
+3. (Opcional) Copia `.env.example` a `.env` y define las variables:
+
+```dotenv
+VITE_FIREBASE_API_KEY=tu_api_key
+VITE_FIREBASE_AUTH_DOMAIN=tu_auth_domain
+VITE_FIREBASE_PROJECT_ID=tu_project_id
+VITE_FIREBASE_STORAGE_BUCKET=tu_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
+VITE_FIREBASE_APP_ID=tu_app_id
+```
+
+> **Nota:** La única clave privada que requiere confidencialidad absoluta es `VITE_OPENROUTER_API_KEY` (usada en HU-05 para IA). Las credenciales de Firebase Client SDK son identificadores públicos de cliente web protegidos mediante las **Reglas de Seguridad de Firestore**.
+
+---
+
+## Reglas de Seguridad en Cloud Firestore (`firestore.rules`)
+
+Publica el contenido de [`firestore.rules`](./firestore.rules) desde **Firestore Database → Rules** en Firebase Console, o despliega con Firebase CLI:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+### Lógica de permisos de las reglas:
+- **Lectura individual:** Cualquier usuario autenticado puede leer únicamente su propio documento en la whitelist (`request.auth.token.email.lower() == email`), lo que permite que estudiantes y docentes verifiquen su rol y estado de autorización activa.
+- **Administración completa:** Solo usuarios administradores pueden listar, crear, modificar o revocar documentos en la colección `whitelist`. Se reconoce como administrador a:
+  - Cuentas con el custom claim `admin: true`.
+  - El correo institucional autorizado `admin@ucen.cl`.
+  - Cuentas cuyo documento de whitelist tenga `role == 'admin' && status == 'active'`.
+
+---
+
+## Alta y habilitación de usuarios por rol
+
+Debido a que no existe registro público por motivos de seguridad institucional, para dar de alta a un usuario se deben realizar dos pasos en Firebase Console:
+
+### 1. Crear credenciales en Firebase Authentication
+En **Authentication → Users → Add user**:
+- **Email:** correo institucional `@ucen.cl` (ej: `alumno@ucen.cl`, `docente@ucen.cl`, `admin@ucen.cl`).
+- **Password:** contraseña institucional o provisional (mínimo 6 caracteres).
+
+### 2. Registrar autorización en Cloud Firestore
+En **Firestore Database → colección `whitelist`**:
+- **ID del documento:** Correo en minúsculas (ej: `alumno@ucen.cl`).
+- **Campos:**
+
+```json
+{
+  "email": "alumno@ucen.cl",
+  "role": "student",
+  "status": "active",
+  "addedAt": "2026-10-05T12:00:00.000Z",
+  "revokedAt": null
+}
+```
+
+> **Valores posibles para el campo `role`:**
+> - `"student"`: Acceso exclusivo a `/estudiante` (Marco teórico y talleres).
+> - `"teacher"`: Acceso exclusivo a `/docente` (Plazos e intentos).
+> - `"admin"`: Acceso a `/admin/whitelist` (Gestión autónoma de la whitelist).
+
+---
+
+## Comprobación y Verificación Local
+
+```bash
+# Comprobación estricta de tipos TypeScript
+npm run lint
+
+# Compilación de producción
+npm run build
+
+# Servidor de desarrollo
+npm run dev
+```
+
+El flujo completo puede probarse con las tres cuentas de prueba configuradas en Firestore:
+- `alumno@ucen.cl` → ingresa a `/estudiante`
+- `docente@ucen.cl` → ingresa a `/docente`
+- `admin@ucen.cl` → ingresa a `/admin/whitelist`
