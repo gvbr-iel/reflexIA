@@ -12,18 +12,20 @@
  * Textos de interfaz en español (R10).
  */
 
-import { useNavigate } from 'react-router-dom';
-import type { QuizAttempt, TheoryApprovalStatus, QuizConfig } from '../../../models/theoryQuiz';
+import { useNavigate } from 'react-router-dom'
+import { ArrowRight, Check, Minus, RotateCcw, X } from 'lucide-react'
+import Button from '../../../components/Button'
+import type { QuizAttempt, TheoryApprovalStatus, QuizConfig } from '../../../models/theoryQuiz'
 
 interface ScoreCardProps {
   /** Último intento completado. */
-  attempt: QuizAttempt;
+  attempt: QuizAttempt
   /** Estado de aprobación del estudiante. */
-  approval: TheoryApprovalStatus;
+  approval: TheoryApprovalStatus
   /** Configuración del cuestionario. */
-  config: QuizConfig;
+  config: QuizConfig
   /** Callback para volver a la intro y reintentar. */
-  onRetry: () => void;
+  onRetry: () => void
 }
 
 export default function ScoreCard({
@@ -32,52 +34,35 @@ export default function ScoreCard({
   config,
   onRetry,
 }: ScoreCardProps) {
-  const navigate = useNavigate();
-  const { score, totalQuestions, answers, questions, status } = attempt;
-  const percentage = Math.round((score / totalQuestions) * 100);
-  const passed = score >= config.passingScore;
+  const navigate = useNavigate()
+  const { score, totalQuestions, answers, questions, status } = attempt
+  const percentage = Math.round((score / totalQuestions) * 100)
+  const passed = score >= config.passingScore
   const hasAttemptsRemaining = approval.result
     ? approval.result.hasAttemptsRemaining
-    : false;
-  const attemptsUsed = approval.result?.attemptsUsed ?? attempt.attemptNumber;
-  const timedOut = status === 'timed-out';
-
-  // Colores según resultado (tokens de AI_GUIDELINES §4)
-  const resultColor = passed ? 'var(--perf-excellent)' : 'var(--perf-fail)';
-  const resultBgColor = passed
-    ? 'color-mix(in srgb, var(--perf-excellent) 8%, var(--color-surface))'
-    : 'color-mix(in srgb, var(--perf-fail) 8%, var(--color-surface))';
+    : false
+  const attemptsUsed = approval.result?.attemptsUsed ?? attempt.attemptNumber
+  const timedOut = status === 'timed-out'
 
   // Ángulo para el indicador circular SVG
-  const circumference = 2 * Math.PI * 54; // radio = 54
-  const strokeOffset = circumference - (percentage / 100) * circumference;
+  const circumference = 2 * Math.PI * 54 // radio = 54
+  const strokeOffset = circumference - (percentage / 100) * circumference
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '2rem',
-      maxWidth: '48rem',
-      margin: '0 auto',
-      padding: '1.5rem 1rem',
-    }}>
+    <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-6">
       {/* Tarjeta principal de resultado */}
-      <div style={{
-        backgroundColor: resultBgColor,
-        borderRadius: '1rem',
-        border: `1px solid ${resultColor}`,
-        padding: '2rem',
-        textAlign: 'center',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '1.5rem',
-      }}>
+      <div
+        className={`flex flex-col items-center gap-6 rounded-2xl border p-6 text-center sm:p-8 ${
+          passed
+            ? 'border-accent-ia/30 bg-accent-ia/5'
+            : 'border-perf-fail/30 bg-perf-fail/5'
+        }`}
+      >
         {/* Indicador circular de puntaje */}
-        <div style={{ position: 'relative', width: '8rem', height: '8rem' }}>
+        <div className="relative h-32 w-32">
           <svg
             viewBox="0 0 120 120"
-            style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}
+            className="h-full w-full -rotate-90"
             aria-hidden="true"
           >
             {/* Fondo del círculo */}
@@ -86,8 +71,9 @@ export default function ScoreCard({
               cy="60"
               r="54"
               fill="none"
-              stroke="var(--color-border)"
+              stroke="currentColor"
               strokeWidth="8"
+              className="text-border"
             />
             {/* Progreso */}
             <circle
@@ -95,37 +81,25 @@ export default function ScoreCard({
               cy="60"
               r="54"
               fill="none"
-              stroke={resultColor}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeOffset}
-              style={{ transition: 'stroke-dashoffset 0.8s ease-out' }}
+              className={`transition-[stroke-dashoffset] duration-700 ease-out ${
+                passed ? 'stroke-accent-ia' : 'stroke-perf-fail'
+              }`}
             />
           </svg>
           {/* Texto del porcentaje */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <span style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 'var(--text-2xl)',
-              fontWeight: 700,
-              color: resultColor,
-            }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span
+              className={`font-heading text-2xl font-bold ${
+                passed ? 'text-accent-ia' : 'text-perf-fail'
+              }`}
+            >
               {percentage}%
             </span>
-            <span style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--text-xs)',
-              color: 'var(--color-text)',
-              opacity: 0.7,
-            }}>
+            <span className="text-xs text-texto/70">
               {score}/{totalQuestions}
             </span>
           </div>
@@ -133,27 +107,18 @@ export default function ScoreCard({
 
         {/* Estado y mensaje */}
         <div>
-          <h2 style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: 'var(--text-xl)',
-            fontWeight: 700,
-            color: resultColor,
-            marginBottom: '0.5rem',
-          }}>
+          <h2
+            className={`mb-2 font-heading text-xl font-bold sm:text-2xl ${
+              passed ? 'text-accent-ia' : 'text-perf-fail'
+            }`}
+          >
             {passed
               ? '¡Evaluación aprobada!'
               : timedOut
                 ? 'Tiempo agotado'
                 : 'Evaluación no aprobada'}
           </h2>
-          <p style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 'var(--text-base)',
-            color: 'var(--color-text)',
-            lineHeight: 1.6,
-            maxWidth: '28rem',
-            margin: '0 auto',
-          }}>
+          <p className="mx-auto max-w-md text-base leading-relaxed text-texto/80">
             {passed
               ? 'Has demostrado dominio del marco teórico. Los talleres prácticos están desbloqueados.'
               : timedOut
@@ -163,102 +128,40 @@ export default function ScoreCard({
         </div>
 
         {/* Información de intentos */}
-        <div style={{
-          display: 'flex',
-          gap: '1.5rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}>
-          <div style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.5rem',
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-          }}>
-            <span style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--text-sm)',
-              color: 'var(--color-text)',
-            }}>
-              Intento {attemptsUsed} de {config.maxAttempts}
-            </span>
+        <div className="flex flex-wrap justify-center gap-3">
+          <div className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-texto">
+            Intento {attemptsUsed} de {config.maxAttempts}
           </div>
-          <div style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.5rem',
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-          }}>
-            <span style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--text-sm)',
-              color: 'var(--color-text)',
-            }}>
-              Mínimo para aprobar: {config.passingScore}/{totalQuestions}
-            </span>
+          <div className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-texto">
+            Mínimo para aprobar: {config.passingScore}/{totalQuestions}
           </div>
         </div>
 
         {/* Botones de acción */}
-        <div style={{
-          display: 'flex',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          marginTop: '0.5rem',
-        }}>
+        <div className="mt-2 flex flex-wrap justify-center gap-3">
           {passed ? (
-            <button
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<ArrowRight size={18} />}
               onClick={() => navigate('/estudiante/talleres')}
-              style={{
-                padding: '0.875rem 2rem',
-                borderRadius: '0.75rem',
-                border: 'none',
-                backgroundColor: 'var(--color-accent-ia)',
-                color: '#FFFFFF',
-                fontFamily: 'var(--font-heading)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
+              className="bg-accent-ia hover:bg-accent-ia/90 focus-visible:ring-accent-ia/50"
             >
-              Continuar a los talleres →
-            </button>
+              Continuar a los talleres
+            </Button>
           ) : hasAttemptsRemaining ? (
-            <button
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<RotateCcw size={18} />}
               onClick={onRetry}
-              style={{
-                padding: '0.875rem 2rem',
-                borderRadius: '0.75rem',
-                border: 'none',
-                backgroundColor: 'var(--color-primary)',
-                color: '#FFFFFF',
-                fontFamily: 'var(--font-heading)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
             >
-              Reintentar evaluación ({config.maxAttempts - attemptsUsed} restante{config.maxAttempts - attemptsUsed !== 1 ? 's' : ''})
-            </button>
+              Reintentar evaluación ({config.maxAttempts - attemptsUsed} restante
+              {config.maxAttempts - attemptsUsed !== 1 ? 's' : ''})
+            </Button>
           ) : (
-            <div style={{
-              padding: '1rem 1.5rem',
-              borderRadius: '0.75rem',
-              backgroundColor: 'color-mix(in srgb, var(--perf-fail) 8%, var(--color-surface))',
-              border: '1px solid var(--perf-fail)',
-            }}>
-              <p style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-text)',
-                textAlign: 'center',
-                lineHeight: 1.6,
-              }}>
-                Has agotado tus {config.maxAttempts} intentos. Contacta a tu profesor guía para recibir orientación.
-              </p>
+            <div className="rounded-xl border border-perf-fail bg-perf-fail/10 p-4 text-center text-sm leading-relaxed text-texto">
+              Has agotado tus {config.maxAttempts} intentos. Contacta a tu profesor guía para recibir orientación.
             </div>
           )}
         </div>
@@ -266,123 +169,83 @@ export default function ScoreCard({
 
       {/* Detalle por pregunta */}
       <div>
-        <h3 style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: 'var(--text-lg)',
-          fontWeight: 600,
-          color: 'var(--color-text)',
-          marginBottom: '1rem',
-        }}>
+        <h3 className="mb-4 font-heading text-lg font-semibold text-texto">
           Revisión de respuestas
         </h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="flex flex-col gap-3">
           {questions.map((question, index) => {
-            const answer = answers.find((a) => a.questionId === question.id);
-            const isCorrect = answer?.isCorrect ?? false;
+            const answer = answers.find((a) => a.questionId === question.id)
+            const isCorrect = answer?.isCorrect ?? false
             const selectedOption = question.options.find(
               (o) => o.id === answer?.selectedOptionId,
-            );
+            )
             const correctOption = question.options.find(
               (o) => o.id === question.correctOptionId,
-            );
-            const wasNotAnswered = !answer || answer.selectedOptionId === '';
+            )
+            const wasNotAnswered = !answer || answer.selectedOptionId === ''
 
             return (
               <details
                 key={question.id}
-                style={{
-                  borderRadius: '0.75rem',
-                  border: `1px solid ${isCorrect ? 'var(--perf-excellent)' : wasNotAnswered ? 'var(--color-border)' : 'var(--perf-fail)'}`,
-                  overflow: 'hidden',
-                }}
+                className={`overflow-hidden rounded-xl border transition-colors ${
+                  isCorrect
+                    ? 'border-accent-ia/30 bg-surface'
+                    : wasNotAnswered
+                      ? 'border-border bg-surface'
+                      : 'border-perf-fail/30 bg-surface'
+                }`}
               >
                 <summary
-                  style={{
-                    padding: '1rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    backgroundColor: isCorrect
-                      ? 'color-mix(in srgb, var(--perf-excellent) 5%, var(--color-surface))'
+                  className={`flex cursor-pointer items-center gap-3 p-4 text-sm font-medium transition-colors ${
+                    isCorrect
+                      ? 'bg-accent-ia/5 text-texto'
                       : wasNotAnswered
-                        ? 'var(--color-surface)'
-                        : 'color-mix(in srgb, var(--perf-fail) 5%, var(--color-surface))',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-text)',
-                  }}
+                        ? 'bg-bg text-texto/80'
+                        : 'bg-perf-fail/5 text-texto'
+                  }`}
                 >
                   {/* Ícono de estado */}
                   <span
-                    style={{
-                      width: '1.5rem',
-                      height: '1.5rem',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: '#FFFFFF',
-                      backgroundColor: isCorrect
-                        ? 'var(--perf-excellent)'
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                      isCorrect
+                        ? 'bg-accent-ia'
                         : wasNotAnswered
-                          ? 'var(--perf-none)'
-                          : 'var(--perf-fail)',
-                    }}
+                          ? 'bg-perf-none'
+                          : 'bg-perf-fail'
+                    }`}
                     aria-hidden="true"
                   >
-                    {isCorrect ? '✓' : wasNotAnswered ? '–' : '✗'}
+                    {isCorrect ? <Check size={14} /> : wasNotAnswered ? <Minus size={14} /> : <X size={14} />}
                   </span>
-                  <span style={{ flex: 1 }}>
+                  <span className="flex-1">
                     <strong>Pregunta {index + 1}:</strong> {question.statement.slice(0, 80)}
                     {question.statement.length > 80 ? '…' : ''}
                   </span>
                 </summary>
 
-                <div style={{
-                  padding: '1rem 1rem 1rem 3.25rem',
-                  backgroundColor: 'var(--color-surface)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'var(--text-sm)',
-                  color: 'var(--color-text)',
-                  lineHeight: 1.6,
-                }}>
+                <div className="flex flex-col gap-2 border-t border-border/50 bg-surface p-4 pl-12 text-sm leading-relaxed text-texto">
                   {wasNotAnswered ? (
-                    <p style={{ fontStyle: 'italic', opacity: 0.7 }}>
-                      No respondida.
-                    </p>
+                    <p className="italic text-texto/70">No respondida.</p>
                   ) : (
                     <p>
                       <strong>Tu respuesta:</strong> {selectedOption?.label ?? '—'}
                     </p>
                   )}
                   {!isCorrect && (
-                    <p style={{ color: 'var(--perf-excellent)' }}>
+                    <p className="text-accent-ia">
                       <strong>Respuesta correcta:</strong> {correctOption?.label ?? '—'}
                     </p>
                   )}
-                  <p style={{
-                    marginTop: '0.25rem',
-                    padding: '0.75rem',
-                    borderRadius: '0.5rem',
-                    backgroundColor: 'var(--color-bg)',
-                    borderLeft: '3px solid var(--color-accent-ia)',
-                  }}>
+                  <p className="mt-1 rounded-lg border-l-4 border-accent-ia bg-bg p-3 text-xs leading-relaxed text-texto/85">
                     {question.explanation}
                   </p>
                 </div>
               </details>
-            );
+            )
           })}
         </div>
       </div>
     </div>
-  );
+  )
 }
