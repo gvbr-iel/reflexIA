@@ -30,7 +30,7 @@ import type {
 } from '../models/theoryQuiz';
 
 import { DEFAULT_QUIZ_CONFIG } from '../models/theoryQuiz';
-import { getUserStorageKey } from '../utils/userStorage';
+import { readUserStorage, writeUserStorage } from '../utils/userStorage';
 
 // ─────────────────────────────────────────────
 // Claves de localStorage (mock temporal)
@@ -428,27 +428,6 @@ function pickRandom<T>(array: T[], count: number): T[] {
   return shuffled.slice(0, count);
 }
 
-/**
- * Lee un valor de localStorage y lo parsea como JSON.
- * Retorna `null` si la clave no existe o el JSON es inválido.
- */
-function readStorage<T>(key: string): T | null {
-  const scopedKey = getUserStorageKey(key);
-  try {
-    const raw = localStorage.getItem(scopedKey);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Escribe un valor serializado como JSON en localStorage.
- */
-function writeStorage<T>(key: string, value: T): void {
-  localStorage.setItem(getUserStorageKey(key), JSON.stringify(value));
-}
-
 // ─────────────────────────────────────────────
 // Servicio público
 // ─────────────────────────────────────────────
@@ -517,9 +496,9 @@ export const theoryQuizService = {
     };
 
     // Persistir el intento en el historial
-    const history = readStorage<QuizAttempt[]>(STORAGE_KEYS.ATTEMPTS) ?? [];
+    const history = readUserStorage<QuizAttempt[]>(STORAGE_KEYS.ATTEMPTS) ?? [];
     history.push(attempt);
-    writeStorage(STORAGE_KEYS.ATTEMPTS, history);
+    writeUserStorage(STORAGE_KEYS.ATTEMPTS, history);
 
     // Calcular estado de aprobación
     const bestScore = Math.max(...history.map((h) => h.score));
@@ -539,7 +518,7 @@ export const theoryQuizService = {
       approvedAt: passed ? now : null,
     };
 
-    writeStorage(STORAGE_KEYS.APPROVAL, approval);
+    writeUserStorage(STORAGE_KEYS.APPROVAL, approval);
 
     return { attempt, approval };
   },
@@ -554,7 +533,7 @@ export const theoryQuizService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.get<TheoryApprovalStatus>('/api/theory-quiz/approval');
 
-    const stored = readStorage<TheoryApprovalStatus>(STORAGE_KEYS.APPROVAL);
+    const stored = readUserStorage<TheoryApprovalStatus>(STORAGE_KEYS.APPROVAL);
 
     return stored ?? {
       isApproved: false,
@@ -573,7 +552,7 @@ export const theoryQuizService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.get<QuizAttempt[]>('/api/theory-quiz/attempts');
 
-    return readStorage<QuizAttempt[]>(STORAGE_KEYS.ATTEMPTS) ?? [];
+    return readUserStorage<QuizAttempt[]>(STORAGE_KEYS.ATTEMPTS) ?? [];
   },
 
   /**

@@ -127,3 +127,6 @@ estudiantes están documentados en [HU08_GUIA.md](./HU08_GUIA.md).
 | `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | Asistente de incidentes críticos del taller indicado, dentro de la sección Talleres |
 | `/estudiante/innovaciones` | StudentLayout | InnovationsView | Biblioteca de innovaciones (placeholder, RF-07) |
 | `*` (fallback) | — | — | Redirige a la página de presentación `/` |
+
+Los layouts y vistas se cargan bajo demanda según la ruta; mientras se
+carga una pantalla, la aplicación muestra un estado accesible de carga.

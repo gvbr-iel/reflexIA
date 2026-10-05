@@ -34,7 +34,7 @@ import type {
 } from '../models/criticalIncident';
 
 import { DEFAULT_WORKSHOP_CONFIG } from '../models/criticalIncident';
-import { getUserStorageKey } from '../utils/userStorage';
+import { readUserStorage, writeUserStorage } from '../utils/userStorage';
 
 // ─────────────────────────────────────────────
 // Claves de localStorage (mock temporal)
@@ -177,30 +177,6 @@ const REFERENCES: TheoryReference[] = [
 // Utilidades internas
 // ─────────────────────────────────────────────
 
-/**
- * Lee un valor de localStorage y lo parsea como JSON.
- * Retorna `null` si la clave no existe o el JSON es inválido.
- */
-function readStorage<T>(key: string): T | null {
-  const scopedKey = getUserStorageKey(key);
-  try {
-    const raw = localStorage.getItem(scopedKey);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Escribe un valor serializado como JSON en localStorage.
- * Si falla (por ejemplo, almacenamiento lleno) lanza el error: el hook
- * debe mostrarlo, porque un borrador que no se guardó no puede darse
- * por guardado.
- */
-function writeStorage<T>(key: string, value: T): void {
-  localStorage.setItem(getUserStorageKey(key), JSON.stringify(value));
-}
-
 /** Lanza un error si el taller no existe. */
 function assertWorkshopExists(workshopId: string): void {
   if (!WORKSHOP_DEFINITIONS.some((w) => w.id === workshopId)) {
@@ -273,9 +249,9 @@ export const criticalIncidentService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.get<FetchWorkshopsResponse>('/api/critical-incidents/workshops');
 
-    const drafts = readStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
-    const attempts = readStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
-    const results = readStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
+    const drafts = readUserStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
+    const attempts = readUserStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
+    const results = readUserStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
 
     return {
       workshops: buildWorkshops(drafts, attempts, results),
@@ -296,7 +272,7 @@ export const criticalIncidentService = {
 
     assertWorkshopExists(workshopId);
 
-    const drafts = readStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
+    const drafts = readUserStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
     return drafts[workshopId] ?? null;
   },
 
@@ -333,9 +309,9 @@ export const criticalIncidentService = {
       isAutoSaved,
     };
 
-    const drafts = readStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
+    const drafts = readUserStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
     drafts[payload.workshopId] = draft;
-    writeStorage(STORAGE_KEYS.DRAFTS, drafts);
+    writeUserStorage(STORAGE_KEYS.DRAFTS, drafts);
 
     return draft;
   },
@@ -353,9 +329,9 @@ export const criticalIncidentService = {
 
     assertWorkshopExists(workshopId);
 
-    const drafts = readStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
+    const drafts = readUserStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
     delete drafts[workshopId];
-    writeStorage(STORAGE_KEYS.DRAFTS, drafts);
+    writeUserStorage(STORAGE_KEYS.DRAFTS, drafts);
   },
 
   /**
@@ -388,9 +364,9 @@ export const criticalIncidentService = {
   ): Promise<void> {
     assertWorkshopExists(workshopId);
 
-    const drafts = readStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
-    const attempts = readStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
-    const results = readStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
+    const drafts = readUserStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
+    const attempts = readUserStorage<AttemptStore>(STORAGE_KEYS.ATTEMPTS) ?? {};
+    const results = readUserStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
 
     const workshop = buildWorkshops(drafts, attempts, results).find(
       (w) => w.id === workshopId,
@@ -400,7 +376,7 @@ export const criticalIncidentService = {
     }
 
     results[workshopId] = { outcome, resolvedAt: new Date().toISOString() };
-    writeStorage(STORAGE_KEYS.RESULTS, results);
+    writeUserStorage(STORAGE_KEYS.RESULTS, results);
   },
 
   /**
@@ -411,12 +387,12 @@ export const criticalIncidentService = {
   async clearWorkshopResult(workshopId: string): Promise<void> {
     assertWorkshopExists(workshopId);
 
-    const results = readStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
+    const results = readUserStorage<ResultStore>(STORAGE_KEYS.RESULTS) ?? {};
     const fromIndex = WORKSHOP_DEFINITIONS.findIndex((w) => w.id === workshopId);
 
     WORKSHOP_DEFINITIONS.slice(fromIndex).forEach((w) => {
       delete results[w.id];
     });
-    writeStorage(STORAGE_KEYS.RESULTS, results);
+    writeUserStorage(STORAGE_KEYS.RESULTS, results);
   },
 };
