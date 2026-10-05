@@ -48,16 +48,18 @@ export interface PacingNotice {
   message: string;
 }
 
-/** Datos de las tarjetas de resumen (se calculan con lo que está guardado). */
+/** Datos del resumen (se calculan con lo que está guardado). */
 export interface PacingSummary {
   /** La actividad con el plazo más cercano que aún no vence (null si no hay). */
   nextDeadline: { title: string; deadline: string } | null;
   /** Cuántas actividades ya pasaron su plazo. */
   overdueCount: number;
-  /** Cuántas actividades tienen valores distintos a los de por defecto. */
+  /**
+   * Cuántas actividades tienen valores distintos a los de por defecto.
+   * No se muestra en una tarjeta: la vista lo usa para habilitar el botón
+   * "Restablecer" solo cuando hay algo que restablecer.
+   */
   customizedCount: number;
-  /** Total de actividades (marco teórico + 4 talleres). */
-  totalActivities: number;
 }
 
 /** Todo lo que el hook le entrega a la vista. */
@@ -252,7 +254,7 @@ function computeSummary(activities: PacingActivity[], saved: PacingValues): Paci
     }
   }
 
-  return { nextDeadline, overdueCount, customizedCount, totalActivities: activities.length };
+  return { nextDeadline, overdueCount, customizedCount };
 }
 
 // ─────────────────────────────────────────────
