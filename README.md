@@ -14,7 +14,7 @@ ReflexIA es una aplicación web orientada a la práctica profesional docente de 
 | **RF-04** | [HU-04](./HU04_GUIA.md) | Estudiante | ✅ **Implementado** | Evaluación diagnóstica del marco teórico con banco de 30 preguntas, temporizador dinámico, calificación inmediata en Tailwind CSS y bloqueo automático de los talleres prácticos hasta aprobar. |
 | **RF-05** | [HU-05](./HU05_GUIA.md) | Asistente IA | ✅ **Implementado** | Detección automática en frontend de nombres propios, escuelas y datos sensibles en relatos mediante la API de OpenRouter con rotación de modelos gratuitos y destaque visual sin alterar el texto. |
 | **RF-06** | [HU-06](./HU06_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de control en `/docente/plazos` para definir fechas límite y límites de intentos de revisión por actividad (marco teórico y talleres 1 a 4). |
-| **RF-07** | HU-07 | Estudiante y Docente | ⏳ *Pendiente* | Biblioteca digital categorizada para consultar ejemplos de actuaciones mejoradas e innovaciones pedagógicas (vista preliminar `InnovationsView.tsx`). |
+| **RF-07** | [HU-07](./HU07_GUIA.md) | Estudiante y Docente | ✅ **Implementado** | Biblioteca ilustrativa categorizada, con búsqueda combinable y detalle de casos disponible para estudiantes y profesores. |
 | **RF-08** | [HU-08](./HU08_GUIA.md) | Todos los roles | ✅ **Implementado** | Inicio de sesión seguro con Firebase Authentication y autorización activa en Firestore, con redirección inteligente por rol a `/estudiante`, `/docente` o `/admin`. |
 
 ---
@@ -57,7 +57,7 @@ src/
     ├── student-dashboard/   # Dashboard "Mi progreso" del estudiante
     ├── teacher-dashboard/   # Panel del profesor guía: seguimiento de estudiantes (datos de ejemplo)
     ├── reflections/         # Revisión de reflexiones (placeholder)
-    ├── innovations/         # Espacio de innovaciones (placeholder)
+    ├── innovations/         # HU-07: Biblioteca de innovaciones pedagógicas
     ├── repository/          # Repositorio de talleres prácticos
     └── landingpage/         # Página pública de bienvenida
 ```
@@ -74,11 +74,12 @@ src/
 | `/docente` | TeacherLayout | TeacherDashboardView | ✅ Listo (datos de ejemplo) | Seguimiento semanal de estudiantes: resumen, filtros por situación y avance en marco teórico y talleres |
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | ⏳ Placeholder | Listado y retroalimentación de reflexiones |
 | `/docente/plazos` | TeacherLayout | DeadlinesView | ✅ Listo | Regulación del ritmo de trabajo: plazos e intentos |
+| `/docente/innovaciones` | TeacherLayout | InnovationsView | ✅ Listo | Biblioteca de consulta compartida con estudiantes |
 | `/estudiante` | StudentLayout | StudentDashboardView | ✅ Listo | Dashboard "Mi progreso reflexivo" |
 | `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | ✅ Listo | Evaluación diagnóstica obligatoria del marco teórico |
 | `/estudiante/talleres` | StudentLayout | RepositoryView | ✅ Listo | Repositorio de talleres con bloqueo condicional |
 | `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | ✅ Listo | Asistente de incidentes críticos del taller seleccionado |
-| `/estudiante/innovaciones` | StudentLayout | InnovationsView | ⏳ Placeholder | Espacio de consulta de innovaciones |
+| `/estudiante/innovaciones` | StudentLayout | InnovationsView | ✅ Listo | Biblioteca categorizada de actuaciones mejoradas e innovaciones |
 | `*` (fallback) | — | — | ✅ Listo | Redirección por defecto a la página de bienvenida `/` |
 
 ---

@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { FileText, Clock, LayoutDashboard, Menu, X, LogOut } from 'lucide-react'
+import { FileText, Clock, Lightbulb, LayoutDashboard, Menu, X, LogOut } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 /* ------------------------------------------------
@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { label: 'Panel docente', path: '/docente', icon: <LayoutDashboard size={20} /> },
   { label: 'Reflexiones', path: '/docente/reflexiones', icon: <FileText size={20} /> },
   { label: 'Plazos e intentos', path: '/docente/plazos', icon: <Clock size={20} /> },
+  { label: 'Innovaciones', path: '/docente/innovaciones', icon: <Lightbulb size={20} /> },
 ]
 
 export default function TeacherLayout() {
