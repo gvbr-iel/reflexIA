@@ -87,7 +87,11 @@ export default function DeadlinesView() {
       ) : (
         <>
           {/* Tarjetas de resumen: próximo cierre, vencidos y personalizadas. */}
-          <PacingStats summary={pacing.summary} isLoading={pacing.isLoading} />
+          <PacingStats
+            summary={pacing.summary}
+            activityCount={pacing.activities.length}
+            isLoading={pacing.isLoading}
+          />
 
           {/* ---- Lista de actividades ---- */}
           <section aria-labelledby="pacing-list-title" className="space-y-4">

@@ -29,9 +29,12 @@ export default function TeacherLayout() {
       <header className="bg-surface border-b border-border h-14 px-4 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="md:hidden p-1.5 rounded-lg hover:bg-bg transition-colors"
             aria-label={sidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={sidebarOpen}
+            aria-controls="teacher-navigation"
           >
             {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -72,7 +75,7 @@ export default function TeacherLayout() {
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}
         >
-          <nav className="space-y-1">
+          <nav id="teacher-navigation" className="space-y-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -80,15 +83,25 @@ export default function TeacherLayout() {
                 end
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  `relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-secondary/10 text-secondary'
+                      ? 'bg-primary/10 text-primary'
                       : 'text-texto/70 hover:bg-secondary/5 hover:text-secondary'
                   }`
                 }
               >
-                {item.icon}
-                {item.label}
+                {({ isActive }) => (
+                  <>
+                    {item.icon}
+                    {item.label}
+                    {isActive && (
+                      <span
+                        className="absolute left-0 h-6 w-1 rounded-r-full bg-accent-ia"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
