@@ -150,7 +150,7 @@ Igual que en la whitelist, el servicio no devuelve textos de interfaz, solo cód
 El hook arma las 5 actividades así:
 
 - El **marco teórico** se define en el propio hook: sin plazo por defecto y con los intentos de `DEFAULT_QUIZ_CONFIG` (HU-04).
-- Los **talleres** salen de `criticalIncidentService.fetchWorkshops()` (HU-03): su título, tema, fecha límite e intentos. El hook solo **lee**; no modifica nada de ese servicio. Así no se repiten los datos de los talleres.
+- Los **talleres** salen de `criticalIncidentService.fetchWorkshopPacingDefaults()` (HU-03): devuelve su título, tema, fecha límite e intentos por defecto, sin leer el progreso de un estudiante ni requerir una sesión estudiantil. El hook solo **lee**; no modifica nada del servicio de HU-03. Así el profesor puede abrir el panel sin autenticarse como estudiante y no se repiten los datos de los talleres.
 
 Esta dependencia importa para las modificaciones futuras (ver abajo, punto "Ojo con los valores por defecto").
 
@@ -296,7 +296,7 @@ Además, `useTheoryQuiz` parte con `useState(DEFAULT_QUIZ_CONFIG)`; conviene que
 
 ### 2. Ojo con los valores por defecto
 
-Hoy `useWorkPacing` obtiene los **valores originales** de los talleres llamando a `criticalIncidentService.fetchWorkshops()`. Si esa función empieza a devolver los valores **ya modificados** por el profesor (modificación anterior), el panel los tomaría como si fueran los originales: se perdería la etiqueta **Modificado** y **Restablecer** dejaría de devolver a lo original.
+Hoy `useWorkPacing` obtiene los **valores originales** de los talleres llamando a `criticalIncidentService.fetchWorkshopPacingDefaults()`. Si esa función empieza a devolver los valores **ya modificados** por el profesor (modificación anterior), el panel los tomaría como si fueran los originales: se perdería la etiqueta **Modificado** y **Restablecer** dejaría de devolver a lo original.
 
 Solución recomendada: que los valores por defecto vivan en **un solo lugar**, por ejemplo una constante `DEFAULT_PACING` en `models/workPacing.ts` con la fecha y los intentos originales de cada actividad. Los servicios de HU-03 y HU-04 y el hook del panel la leerían, y desaparecería la duplicación de fechas fijas. Es la modificación más importante para mantener el proyecto **coherente**.
 

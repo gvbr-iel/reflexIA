@@ -142,7 +142,9 @@ function toMessage(error: unknown): string {
  * Arma la lista de las 5 actividades: primero el marco teórico y después los
  * talleres, en orden. Los datos de los talleres vienen del servicio de HU-03.
  */
-function buildActivities(workshops: Workshop[]): PacingActivity[] {
+function buildActivities(
+  workshops: Pick<Workshop, 'id' | 'number' | 'title' | 'topic' | 'deadline' | 'maxAttempts'>[],
+): PacingActivity[] {
   // El marco teórico no existe en la lista de talleres, así que lo creamos.
   // No tiene plazo por defecto y usa los intentos que define HU-04.
   const theory: PacingActivity = {
@@ -292,10 +294,9 @@ export function useWorkPacing(): UseWorkPacingReturn {
       setIsLoading(true);
       setError(null);
 
-      // Pedimos las dos cosas a la vez: los talleres (HU-03) y lo que el
-      // profesor había guardado (HU-06).
-      const [{ workshops }, config] = await Promise.all([
-        criticalIncidentService.fetchWorkshops(),
+      // Pedimos los datos base de los talleres y la configuración guardada.
+      const [workshops, config] = await Promise.all([
+        criticalIncidentService.fetchWorkshopPacingDefaults(),
         workPacingService.fetchConfig(),
       ]);
 
