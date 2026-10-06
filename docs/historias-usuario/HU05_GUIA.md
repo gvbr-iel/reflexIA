@@ -156,7 +156,7 @@ Se completó la documentación consolidada del módulo de anonimización (RF-05 
      ```env
      VITE_OPENROUTER_API_KEY=sk-or-v1-tu-clave-aqui
      ```
-   - *Alternativa de respaldo:* Reemplazar los valores de `OPENROUTER_API_KEYS` en [`src/models/sensitiveData.ts`](src/models/sensitiveData.ts).
+   - *Alternativa de respaldo:* Reemplazar los valores de `OPENROUTER_API_KEYS` en [`src/models/sensitiveData.ts`](../../src/models/sensitiveData.ts).
 2. **Iniciar la aplicación:**
    ```bash
    npm run dev
@@ -201,7 +201,6 @@ Se completó la documentación consolidada del módulo de anonimización (RF-05 
 | **Seguridad de API Keys** | En esta versión solo frontend, la llamada se realiza directamente desde el cliente. Para producción, esta lógica y las credenciales deben delegarse a un microservicio o proxy de backend para resguardar las claves privadas. | RNF de Seguridad |
 | **Vigencia de modelos gratuitos** | La lista `OPENROUTER_MODELS` incluye modelos gratuitos vigentes de OpenRouter encabezados por `openrouter/free` (auto-router gratuito) y respaldados por Nemotron, LiquidAI, Gemma y Qwen. Si la disponibilidad de modelos sin costo cambia en la plataforma externa, se deben actualizar los identificadores en `src/models/sensitiveData.ts`. | Mantenimiento |
 | **Detección offline complementaria** | Si el usuario no tiene conexión o se agotan las cuotas de OpenRouter, actualmente se informa el error. Como mejora futura, se podría incorporar un validador local básico por expresiones regulares o listas de nombres comunes chilenos como salvaguarda secundaria. | Mejora futura |
-
 
 
 

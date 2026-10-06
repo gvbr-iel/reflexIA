@@ -47,7 +47,7 @@ npm run build          # Compilación completa (tsc && vite build)
 
 **Invariante de HU-03.** Guardar un borrador **nunca** descuenta intentos de revisión: `criticalIncidentService.saveDraft` solo escribe la clave de borradores. Lo que sí descuenta 1 intento es pedir un impulso a la IA (`criticalIncidentService.requestImpulse`, HU-02).
 
-**HU-02 (retroalimentación con IA).** Los impulsos los genera `utils/impulseGenerator.ts`, una simulación local sin red que **nunca redacta ni corrige** el texto del alumno. El panel docente trabaja con reflexiones de ejemplo (`views/reflections/data/reflections.ts`) porque el almacenamiento local por UID impide leer los envíos de otra cuenta; solo la revisión del docente se guarda de verdad. La propuesta original de la IA (`aiFeedback`) nunca se modifica: sirve para auditar. Detalle en `HU02_GUIA.md`.
+**HU-02 (retroalimentación con IA).** Los impulsos los genera `utils/impulseGenerator.ts`, una simulación local sin red que **nunca redacta ni corrige** el texto del alumno. El panel docente trabaja con reflexiones de ejemplo (`views/reflections/data/reflections.ts`) porque el almacenamiento local por UID impide leer los envíos de otra cuenta; solo la revisión del docente se guarda de verdad. La propuesta original de la IA (`aiFeedback`) nunca se modifica: sirve para auditar. Detalle en [`HU02_GUIA.md`](./docs/historias-usuario/HU02_GUIA.md).
 
 ## Convenciones de diseño y código
 

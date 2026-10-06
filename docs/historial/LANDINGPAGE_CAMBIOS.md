@@ -16,15 +16,15 @@ profesional docente y los perfiles a los que se dirige el proyecto.
   todavía no está implementado.
 - Se configuró la ruta `/` para mostrar la landing y el fallback de rutas
   desconocidas para regresar a ella.
-- Se actualizó el mapa de rutas del `README.md`.
+- Se actualizó el mapa de rutas del [`README.md`](../../README.md).
 - El contenido distingue el propósito del proyecto de las funciones de un
   prototipo que aún pueden estar en desarrollo o demostración.
 
 ## Archivos modificados
 
-- `src/views/landingpage/LandingPage.tsx`
-- `src/App.tsx`
-- `README.md`
+- [`src/views/landingpage/LandingPage.tsx`](../../src/views/landingpage/LandingPage.tsx)
+- [`src/App.tsx`](../../src/App.tsx)
+- [`README.md`](../../README.md)
 
 ## Validación
 

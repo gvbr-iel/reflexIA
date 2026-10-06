@@ -127,7 +127,8 @@ npm run dev
 | HU-07 Innovaciones | Biblioteca de casos | `/estudiante/innovaciones`, `/docente/innovaciones` | `views/innovations/data/innovations.ts` → `hooks/useInnovations.ts` → `InnovationsView.tsx` |
 | HU-08 Autenticación | Login por rol | `/iniciar-sesion` | `services/firebase.ts`, `services/authService.ts` → `context/AuthContext.tsx` → `hooks/useAuth.ts` → `components/RequireStudent.tsx`, `views/auth/LoginView.tsx` |
 
-Cada HU tiene una guía detallada en la raíz: `HU01_GUIA.md` a `HU08_GUIA.md`.
+Cada HU tiene una guía detallada en [`../historias-usuario/`](../historias-usuario/):
+`HU01_GUIA.md` a `HU08_GUIA.md`.
 
 ---
 

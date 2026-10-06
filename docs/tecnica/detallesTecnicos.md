@@ -32,14 +32,14 @@ Ruta → guarda de autenticación → layout de rol → vista
 
 | Componente | Archivo | Responsabilidad |
 |---|---|---|
-| `App` | [`src/App.tsx`](./src/App.tsx) | Declara las rutas públicas y privadas. Carga layouts y vistas con `React.lazy` y muestra un estado de carga con `Suspense` mientras se descargan. Redirige `/admin` a la whitelist y las rutas desconocidas al inicio. |
-| `AuthProvider` | [`src/context/AuthContext.tsx`](./src/context/AuthContext.tsx) | Proveedor global de autenticación. Mantiene usuario, rol y estado de autorización; verifica el acceso en la whitelist y observa cambios que puedan revocar la sesión. |
-| `ErrorBoundary` | [`src/components/ErrorBoundary.tsx`](./src/components/ErrorBoundary.tsx) | Captura errores de renderizado de componentes descendientes y presenta una interfaz de respaldo en vez de dejar la aplicación en blanco. |
-| `AdminLayout` | [`src/layouts/AdminLayout.tsx`](./src/layouts/AdminLayout.tsx) | Estructura del administrador, navegación a la whitelist, identidad de la sesión, menú adaptable y cierre de sesión. Renderiza la vista hija mediante el outlet de React Router. |
-| `TeacherLayout` | [`src/layouts/TeacherLayout.tsx`](./src/layouts/TeacherLayout.tsx) | Estructura y navegación para panel, reflexiones, plazos e innovaciones del profesor guía. Incluye menú móvil y cierre de sesión. |
-| `StudentLayout` | [`src/layouts/StudentLayout.tsx`](./src/layouts/StudentLayout.tsx) | Estructura del estudiante y navegación a progreso, marco teórico, talleres e innovaciones. Incluye el menú adaptable y el acceso a la sesión actual. |
+| `App` | [`src/App.tsx`](../../src/App.tsx) | Declara las rutas públicas y privadas. Carga layouts y vistas con `React.lazy` y muestra un estado de carga con `Suspense` mientras se descargan. Redirige `/admin` a la whitelist y las rutas desconocidas al inicio. |
+| `AuthProvider` | [`src/context/AuthContext.tsx`](../../src/context/AuthContext.tsx) | Proveedor global de autenticación. Mantiene usuario, rol y estado de autorización; verifica el acceso en la whitelist y observa cambios que puedan revocar la sesión. |
+| `ErrorBoundary` | [`src/components/ErrorBoundary.tsx`](../../src/components/ErrorBoundary.tsx) | Captura errores de renderizado de componentes descendientes y presenta una interfaz de respaldo en vez de dejar la aplicación en blanco. |
+| `AdminLayout` | [`src/layouts/AdminLayout.tsx`](../../src/layouts/AdminLayout.tsx) | Estructura del administrador, navegación a la whitelist, identidad de la sesión, menú adaptable y cierre de sesión. Renderiza la vista hija mediante el outlet de React Router. |
+| `TeacherLayout` | [`src/layouts/TeacherLayout.tsx`](../../src/layouts/TeacherLayout.tsx) | Estructura y navegación para panel, reflexiones, plazos e innovaciones del profesor guía. Incluye menú móvil y cierre de sesión. |
+| `StudentLayout` | [`src/layouts/StudentLayout.tsx`](../../src/layouts/StudentLayout.tsx) | Estructura del estudiante y navegación a progreso, marco teórico, talleres e innovaciones. Incluye el menú adaptable y el acceso a la sesión actual. |
 
-En [`src/main.tsx`](./src/main.tsx), la aplicación se monta dentro de
+En [`src/main.tsx`](../../src/main.tsx), la aplicación se monta dentro de
 `StrictMode`, `ErrorBoundary`, `BrowserRouter` y `AuthProvider`, en ese orden.
 Cada envoltorio habilita una responsabilidad transversal: diagnóstico en
 desarrollo, recuperación de errores de interfaz, navegación y sesión global.
@@ -51,12 +51,12 @@ de una feature.
 
 | Componente | Archivo | Responsabilidad |
 |---|---|---|
-| `Button` | [`src/components/Button.tsx`](./src/components/Button.tsx) | Botón visual compartido con variantes, estado de carga, icono y atributos de interacción consistentes. |
-| `Dropzone` | [`src/components/Dropzone.tsx`](./src/components/Dropzone.tsx) | Zona reutilizable para seleccionar o arrastrar archivos; refleja visualmente el estado de arrastre. |
-| `Modal` | [`src/components/Modal.tsx`](./src/components/Modal.tsx) | Contenedor modal común con título, cuerpo y pie opcional; gestiona el cierre mediante teclado y los efectos asociados al ciclo de vida. |
-| `RequireStudent` | [`src/components/RequireStudent.tsx`](./src/components/RequireStudent.tsx) | Guarda de rutas por estado de autenticación y rol permitido. Muestra carga/error, permite reintentar autorización y redirige al login o al inicio del rol correspondiente cuando no se puede entrar. Aunque su nombre histórico dice “Student”, protege también rutas de administración y docencia. |
-| `Table` | [`src/components/Table.tsx`](./src/components/Table.tsx) | Tabla genérica tipada para mostrar datos tabulares y sus columnas. |
-| `WorkshopStatusBadge` | [`src/components/WorkshopStatusBadge.tsx`](./src/components/WorkshopStatusBadge.tsx) | Etiqueta visual del estado de un taller dentro del flujo del estudiante. |
+| `Button` | [`src/components/Button.tsx`](../../src/components/Button.tsx) | Botón visual compartido con variantes, estado de carga, icono y atributos de interacción consistentes. |
+| `Dropzone` | [`src/components/Dropzone.tsx`](../../src/components/Dropzone.tsx) | Zona reutilizable para seleccionar o arrastrar archivos; refleja visualmente el estado de arrastre. |
+| `Modal` | [`src/components/Modal.tsx`](../../src/components/Modal.tsx) | Contenedor modal común con título, cuerpo y pie opcional; gestiona el cierre mediante teclado y los efectos asociados al ciclo de vida. |
+| `RequireStudent` | [`src/components/RequireStudent.tsx`](../../src/components/RequireStudent.tsx) | Guarda de rutas por estado de autenticación y rol permitido. Muestra carga/error, permite reintentar autorización y redirige al login o al inicio del rol correspondiente cuando no se puede entrar. Aunque su nombre histórico dice “Student”, protege también rutas de administración y docencia. |
+| `Table` | [`src/components/Table.tsx`](../../src/components/Table.tsx) | Tabla genérica tipada para mostrar datos tabulares y sus columnas. |
+| `WorkshopStatusBadge` | [`src/components/WorkshopStatusBadge.tsx`](../../src/components/WorkshopStatusBadge.tsx) | Etiqueta visual del estado de un taller dentro del flujo del estudiante. |
 
 Los iconos importados desde `lucide-react` son componentes de terceros que se
 usan como contenido visual; no son componentes propios del proyecto.
@@ -68,17 +68,17 @@ los hooks de feature con la interfaz.
 
 | Vista | Archivo | Responsabilidad |
 |---|---|---|
-| `LandingPage` | [`src/views/landingpage/LandingPage.tsx`](./src/views/landingpage/LandingPage.tsx) | Presentación pública de ReflexIA y acceso al inicio de sesión. |
-| `LoginView` | [`src/views/auth/LoginView.tsx`](./src/views/auth/LoginView.tsx) | Formulario de inicio de sesión; valida el correo institucional, invoca autenticación y navega según el rol recibido. |
-| `WhiteListView` | [`src/views/admin-whitelist/WhiteListView.tsx`](./src/views/admin-whitelist/WhiteListView.tsx) | Coordina métricas, filtros, tabla y modales de alta, carga masiva y revocación de la whitelist. |
-| `TeacherDashboardView` | [`src/views/teacher-dashboard/TeacherDashboardView.tsx`](./src/views/teacher-dashboard/TeacherDashboardView.tsx) | Panel de seguimiento docente con resumen, filtros y progreso de estudiantes. |
-| `ReflectionsView` | [`src/views/reflections/ReflectionsView.tsx`](./src/views/reflections/ReflectionsView.tsx) | Revisión docente de reflexiones: filtros, propuesta original de IA, edición y validación de impulsos. |
-| `DeadlinesView` | [`src/views/work-pacing/DeadlinesView.tsx`](./src/views/work-pacing/DeadlinesView.tsx) | Configuración de fechas límite e intentos para marco teórico y talleres. |
-| `StudentDashboardView` | [`src/views/student-dashboard/StudentDashboardView.tsx`](./src/views/student-dashboard/StudentDashboardView.tsx) | Inicio del estudiante y resumen de su progreso reflexivo. |
-| `TheoryQuizView` | [`src/views/theory-verification/TheoryQuizView.tsx`](./src/views/theory-verification/TheoryQuizView.tsx) | Pantalla del cuestionario diagnóstico y presentación de introducción, preguntas o resultado. |
-| `RepositoryView` | [`src/views/repository/RepositoryView.tsx`](./src/views/repository/RepositoryView.tsx) | Lista de talleres, sus estados y acceso condicionado a cada taller. |
-| `CriticalIncidentView` | [`src/views/critical-incidents/CriticalIncidentView.tsx`](./src/views/critical-incidents/CriticalIncidentView.tsx) | Entrada al asistente de incidentes; valida el parámetro de ruta, la aprobación teórica y el estado del taller. |
-| `InnovationsView` | [`src/views/innovations/InnovationsView.tsx`](./src/views/innovations/InnovationsView.tsx) | Biblioteca de innovaciones con búsqueda, filtro de categoría y detalle del caso. |
+| `LandingPage` | [`src/views/landingpage/LandingPage.tsx`](../../src/views/landingpage/LandingPage.tsx) | Presentación pública de ReflexIA y acceso al inicio de sesión. |
+| `LoginView` | [`src/views/auth/LoginView.tsx`](../../src/views/auth/LoginView.tsx) | Formulario de inicio de sesión; valida el correo institucional, invoca autenticación y navega según el rol recibido. |
+| `WhiteListView` | [`src/views/admin-whitelist/WhiteListView.tsx`](../../src/views/admin-whitelist/WhiteListView.tsx) | Coordina métricas, filtros, tabla y modales de alta, carga masiva y revocación de la whitelist. |
+| `TeacherDashboardView` | [`src/views/teacher-dashboard/TeacherDashboardView.tsx`](../../src/views/teacher-dashboard/TeacherDashboardView.tsx) | Panel de seguimiento docente con resumen, filtros y progreso de estudiantes. |
+| `ReflectionsView` | [`src/views/reflections/ReflectionsView.tsx`](../../src/views/reflections/ReflectionsView.tsx) | Revisión docente de reflexiones: filtros, propuesta original de IA, edición y validación de impulsos. |
+| `DeadlinesView` | [`src/views/work-pacing/DeadlinesView.tsx`](../../src/views/work-pacing/DeadlinesView.tsx) | Configuración de fechas límite e intentos para marco teórico y talleres. |
+| `StudentDashboardView` | [`src/views/student-dashboard/StudentDashboardView.tsx`](../../src/views/student-dashboard/StudentDashboardView.tsx) | Inicio del estudiante y resumen de su progreso reflexivo. |
+| `TheoryQuizView` | [`src/views/theory-verification/TheoryQuizView.tsx`](../../src/views/theory-verification/TheoryQuizView.tsx) | Pantalla del cuestionario diagnóstico y presentación de introducción, preguntas o resultado. |
+| `RepositoryView` | [`src/views/repository/RepositoryView.tsx`](../../src/views/repository/RepositoryView.tsx) | Lista de talleres, sus estados y acceso condicionado a cada taller. |
+| `CriticalIncidentView` | [`src/views/critical-incidents/CriticalIncidentView.tsx`](../../src/views/critical-incidents/CriticalIncidentView.tsx) | Entrada al asistente de incidentes; valida el parámetro de ruta, la aprobación teórica y el estado del taller. |
+| `InnovationsView` | [`src/views/innovations/InnovationsView.tsx`](../../src/views/innovations/InnovationsView.tsx) | Biblioteca de innovaciones con búsqueda, filtro de categoría y detalle del caso. |
 
 ## 5. Componentes por feature
 
@@ -222,57 +222,57 @@ participan en el enrutamiento y composición, pero son componentes, no hooks.
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useAuth` | [`src/hooks/useAuth.ts`](./src/hooks/useAuth.ts) | Acceso tipado a usuario, rol, estado, inicio/cierre de sesión y reintento de autorización. Lanza un error claro si se invoca fuera de `AuthProvider`, evitando consumir un contexto inexistente. |
-| `useWorkshops` | [`src/hooks/useWorkshops.ts`](./src/hooks/useWorkshops.ts) | Fuente compartida del estado de los cuatro talleres. Proporciona carga inicial, reintento y actualización silenciosa para mantener sincronizadas la lista y la vista de trabajo. |
+| `useAuth` | [`src/hooks/useAuth.ts`](../../src/hooks/useAuth.ts) | Acceso tipado a usuario, rol, estado, inicio/cierre de sesión y reintento de autorización. Lanza un error claro si se invoca fuera de `AuthProvider`, evitando consumir un contexto inexistente. |
+| `useWorkshops` | [`src/hooks/useWorkshops.ts`](../../src/hooks/useWorkshops.ts) | Fuente compartida del estado de los cuatro talleres. Proporciona carga inicial, reintento y actualización silenciosa para mantener sincronizadas la lista y la vista de trabajo. |
 
 ### 8.2 Administración de whitelist
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useWhitelist` | [`src/views/admin-whitelist/hooks/useWhitelist.ts`](./src/views/admin-whitelist/hooks/useWhitelist.ts) | Carga entradas, calcula estadísticas, filtra por correo/estado/rol y coordina altas, importaciones, revocaciones y restablecimientos. Centraliza mensajes y estados pendientes para que la vista se mantenga presentacional. |
-| `useBulkUpload` | [`src/views/admin-whitelist/hooks/useBulkUpload.ts`](./src/views/admin-whitelist/hooks/useBulkUpload.ts) | Lee CSV/TXT o texto pegado, normaliza y clasifica cada línea, detecta duplicados y entradas inválidas, prepara la vista previa y determina qué se importará. Permite corregir antes de escribir en Firestore. |
+| `useWhitelist` | [`src/views/admin-whitelist/hooks/useWhitelist.ts`](../../src/views/admin-whitelist/hooks/useWhitelist.ts) | Carga entradas, calcula estadísticas, filtra por correo/estado/rol y coordina altas, importaciones, revocaciones y restablecimientos. Centraliza mensajes y estados pendientes para que la vista se mantenga presentacional. |
+| `useBulkUpload` | [`src/views/admin-whitelist/hooks/useBulkUpload.ts`](../../src/views/admin-whitelist/hooks/useBulkUpload.ts) | Lee CSV/TXT o texto pegado, normaliza y clasifica cada línea, detecta duplicados y entradas inválidas, prepara la vista previa y determina qué se importará. Permite corregir antes de escribir en Firestore. |
 
 ### 8.3 Talleres e incidentes críticos
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useTheoryGate` | [`src/views/critical-incidents/hooks/useTheoryGate.ts`](./src/views/critical-incidents/hooks/useTheoryGate.ts) | Consulta si el estudiante aprobó el marco teórico. Es el punto único de integración entre HU-04 y el acceso a los talleres; ante error falla cerrado e informa el problema. |
-| `useIncidentWizard` | [`src/views/critical-incidents/hooks/useIncidentWizard.ts`](./src/views/critical-incidents/hooks/useIncidentWizard.ts) | Gestiona los cuatro campos y pasos, validación, carga del taller y borrador, guardado manual/automático y limpieza del borrador. Guardar borrador no consume intentos. |
-| `useTheoryReferences` | [`src/views/critical-incidents/hooks/useTheoryReferences.ts`](./src/views/critical-incidents/hooks/useTheoryReferences.ts) | Carga referencias para el paso activo y expone carga, error y reintento. Descarta respuestas de pasos anteriores si el usuario ya avanzó. |
-| `useSensitiveDataDetector` | [`src/views/critical-incidents/hooks/useSensitiveDataDetector.ts`](./src/views/critical-incidents/hooks/useSensitiveDataDetector.ts) | Orquesta el análisis de datos sensibles, controla carga/error/resultados y evita solicitudes concurrentes u obsoletas. Su resultado bloquea el impulso cuando detecta exposición. |
-| `useImpulse` | [`src/views/critical-incidents/hooks/useImpulse.ts`](./src/views/critical-incidents/hooks/useImpulse.ts) | Carga historial y contador de intentos; valida mínimos de texto y privacidad; guarda el borrador antes de solicitar el impulso. Solo una solicitud aceptada consume un intento. |
-| `useWorkshopResultSimulator` | [`src/views/critical-incidents/dev/useWorkshopResultSimulator.ts`](./src/views/critical-incidents/dev/useWorkshopResultSimulator.ts) | Herramienta exclusiva de desarrollo para simular y restablecer resultados de talleres y refrescar la lista. No representa la revisión real del profesor. |
+| `useTheoryGate` | [`src/views/critical-incidents/hooks/useTheoryGate.ts`](../../src/views/critical-incidents/hooks/useTheoryGate.ts) | Consulta si el estudiante aprobó el marco teórico. Es el punto único de integración entre HU-04 y el acceso a los talleres; ante error falla cerrado e informa el problema. |
+| `useIncidentWizard` | [`src/views/critical-incidents/hooks/useIncidentWizard.ts`](../../src/views/critical-incidents/hooks/useIncidentWizard.ts) | Gestiona los cuatro campos y pasos, validación, carga del taller y borrador, guardado manual/automático y limpieza del borrador. Guardar borrador no consume intentos. |
+| `useTheoryReferences` | [`src/views/critical-incidents/hooks/useTheoryReferences.ts`](../../src/views/critical-incidents/hooks/useTheoryReferences.ts) | Carga referencias para el paso activo y expone carga, error y reintento. Descarta respuestas de pasos anteriores si el usuario ya avanzó. |
+| `useSensitiveDataDetector` | [`src/views/critical-incidents/hooks/useSensitiveDataDetector.ts`](../../src/views/critical-incidents/hooks/useSensitiveDataDetector.ts) | Orquesta el análisis de datos sensibles, controla carga/error/resultados y evita solicitudes concurrentes u obsoletas. Su resultado bloquea el impulso cuando detecta exposición. |
+| `useImpulse` | [`src/views/critical-incidents/hooks/useImpulse.ts`](../../src/views/critical-incidents/hooks/useImpulse.ts) | Carga historial y contador de intentos; valida mínimos de texto y privacidad; guarda el borrador antes de solicitar el impulso. Solo una solicitud aceptada consume un intento. |
+| `useWorkshopResultSimulator` | [`src/views/critical-incidents/dev/useWorkshopResultSimulator.ts`](../../src/views/critical-incidents/dev/useWorkshopResultSimulator.ts) | Herramienta exclusiva de desarrollo para simular y restablecer resultados de talleres y refrescar la lista. No representa la revisión real del profesor. |
 
 ### 8.4 Evaluación teórica
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useTheoryQuiz` | [`src/views/theory-verification/hooks/useTheoryQuiz.ts`](./src/views/theory-verification/hooks/useTheoryQuiz.ts) | Controla las fases del cuestionario, preguntas/respuestas, navegación, temporizador y autoenvío, puntaje, historial, aprobación e intentos permitidos. Mantiene separada la lógica de evaluación del motor visual. |
+| `useTheoryQuiz` | [`src/views/theory-verification/hooks/useTheoryQuiz.ts`](../../src/views/theory-verification/hooks/useTheoryQuiz.ts) | Controla las fases del cuestionario, preguntas/respuestas, navegación, temporizador y autoenvío, puntaje, historial, aprobación e intentos permitidos. Mantiene separada la lógica de evaluación del motor visual. |
 
 ### 8.5 Revisión docente
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useReflections` | [`src/views/reflections/hooks/useReflections.ts`](./src/views/reflections/hooks/useReflections.ts) | Carga reflexiones, calcula métricas, genera opciones de taller, filtra por texto/estado/taller y mantiene la reflexión seleccionada. Al aplicar una revisión actualiza la lista sin volver a cargar todo. |
-| `useReflectionReview` | [`src/views/reflections/hooks/useReflectionReview.ts`](./src/views/reflections/hooks/useReflectionReview.ts) | Mantiene borradores editables de los impulsos y comentario, detecta cambios y campos incompletos, permite guardar o validar y conserva intacta la propuesta original de IA para comparación/auditoría. |
+| `useReflections` | [`src/views/reflections/hooks/useReflections.ts`](../../src/views/reflections/hooks/useReflections.ts) | Carga reflexiones, calcula métricas, genera opciones de taller, filtra por texto/estado/taller y mantiene la reflexión seleccionada. Al aplicar una revisión actualiza la lista sin volver a cargar todo. |
+| `useReflectionReview` | [`src/views/reflections/hooks/useReflectionReview.ts`](../../src/views/reflections/hooks/useReflectionReview.ts) | Mantiene borradores editables de los impulsos y comentario, detecta cambios y campos incompletos, permite guardar o validar y conserva intacta la propuesta original de IA para comparación/auditoría. |
 
 ### 8.6 Panel de seguimiento docente
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useTeacherDashboard` | [`src/views/teacher-dashboard/hooks/useTeacherDashboard.ts`](./src/views/teacher-dashboard/hooks/useTeacherDashboard.ts) | Carga el seguimiento, clasifica estudiantes como atrasados, en curso o completados, calcula resúmenes y conteos, y filtra el panel. Expone explícitamente carga, error, reintento y estado vacío. |
+| `useTeacherDashboard` | [`src/views/teacher-dashboard/hooks/useTeacherDashboard.ts`](../../src/views/teacher-dashboard/hooks/useTeacherDashboard.ts) | Carga el seguimiento, clasifica estudiantes como atrasados, en curso o completados, calcula resúmenes y conteos, y filtra el panel. Expone explícitamente carga, error, reintento y estado vacío. |
 
 ### 8.7 Biblioteca de innovaciones
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useInnovations` | [`src/views/innovations/hooks/useInnovations.ts`](./src/views/innovations/hooks/useInnovations.ts) | Controla texto buscado, categoría y caso seleccionado; deriva categorías únicas y casos coincidentes sin distinguir tildes ni mayúsculas. |
+| `useInnovations` | [`src/views/innovations/hooks/useInnovations.ts`](../../src/views/innovations/hooks/useInnovations.ts) | Controla texto buscado, categoría y caso seleccionado; deriva categorías únicas y casos coincidentes sin distinguir tildes ni mayúsculas. |
 
 ### 8.8 Plazos e intentos
 
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
-| `useWorkPacing` | [`src/views/work-pacing/hooks/useWorkPacing.ts`](./src/views/work-pacing/hooks/useWorkPacing.ts) | Carga la configuración de cinco actividades, mantiene valores guardados y borrador, valida el orden de plazos y límites de intentos, calcula métricas, y coordina guardar, descartar y restablecer. Evita guardar configuraciones incompletas o inválidas. |
+| `useWorkPacing` | [`src/views/work-pacing/hooks/useWorkPacing.ts`](../../src/views/work-pacing/hooks/useWorkPacing.ts) | Carga la configuración de cinco actividades, mantiene valores guardados y borrador, valida el orden de plazos y límites de intentos, calcula métricas, y coordina guardar, descartar y restablecer. Evita guardar configuraciones incompletas o inválidas. |
 
 ## 9. Patrones importantes para entender el código
 

@@ -18,7 +18,7 @@
  * Este servicio NO conoce HU-03 ni HU-04: solo guarda lo configurado, y
  * por actividad. Los valores por defecto los resuelve el hook
  * `useWorkPacing`. Hoy los servicios de talleres y de marco teórico todavía
- * no leen esta configuración (ver HU06_GUIA.md, "Modificaciones futuras").
+ * no leen esta configuración (ver ../../docs/historias-usuario/HU06_GUIA.md, "Modificaciones futuras").
  */
 
 import type { PacingValues, WorkPacingConfig } from '../models/workPacing';

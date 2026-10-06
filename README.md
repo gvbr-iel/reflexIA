@@ -8,14 +8,14 @@ ReflexIA es una aplicación web orientada a la práctica profesional docente de 
 
 | Código | Historia | Rol Principal | Estado | Descripción |
 |---|---|---|---|---|
-| **RF-01** | [HU-01](./HU01_GUIA.md) | Administrador | ✅ **Implementado** | Gestión autónoma de la lista de correos autorizados en Cloud Firestore mediante altas individuales, cargas masivas con vista previa, filtros de búsqueda, revocación inmediata y resumen de métricas para 3 roles (`student`, `teacher`, `admin`). |
-| **RF-02** | [HU-02](./HU02_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de revisión en `/docente/reflexiones` para ver la propuesta de la IA, editar los impulsos y validarlos, y panel "El Impulso" en el asistente del estudiante con contador de intentos. Los impulsos y las reflexiones son simulados en frontend. |
-| **RF-03** | [HU-03](./HU03_GUIA.md) | Estudiante | ✅ **Implementado** | Asistente paso a paso (*Step Wizard*) con referencias teóricas en pantalla para guiar el registro, análisis y autoguardado de borradores locales particionados por usuario. |
-| **RF-04** | [HU-04](./HU04_GUIA.md) | Estudiante | ✅ **Implementado** | Evaluación diagnóstica del marco teórico con banco de 30 preguntas, temporizador dinámico, calificación inmediata en Tailwind CSS y bloqueo automático de los talleres prácticos hasta aprobar. |
-| **RF-05** | [HU-05](./HU05_GUIA.md) | Asistente IA | ✅ **Implementado** | Detección automática en frontend de nombres propios, escuelas y datos sensibles en relatos mediante la API de OpenRouter con rotación de modelos gratuitos y destaque visual sin alterar el texto. |
-| **RF-06** | [HU-06](./HU06_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de control en `/docente/plazos` para definir fechas límite y límites de intentos de revisión por actividad (marco teórico y talleres 1 a 4). |
-| **RF-07** | [HU-07](./HU07_GUIA.md) | Estudiante y Docente | ✅ **Implementado** | Biblioteca ilustrativa categorizada, con búsqueda combinable y detalle de casos disponible para estudiantes y profesores. |
-| **RF-08** | [HU-08](./HU08_GUIA.md) | Todos los roles | ✅ **Implementado** | Inicio de sesión seguro con Firebase Authentication y autorización activa en Firestore, con redirección inteligente por rol a `/estudiante`, `/docente` o `/admin`. |
+| **RF-01** | [HU-01](./docs/historias-usuario/HU01_GUIA.md) | Administrador | ✅ **Implementado** | Gestión autónoma de la lista de correos autorizados en Cloud Firestore mediante altas individuales, cargas masivas con vista previa, filtros de búsqueda, revocación inmediata y resumen de métricas para 3 roles (`student`, `teacher`, `admin`). |
+| **RF-02** | [HU-02](./docs/historias-usuario/HU02_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de revisión en `/docente/reflexiones` para ver la propuesta de la IA, editar los impulsos y validarlos, y panel "El Impulso" en el asistente del estudiante con contador de intentos. Los impulsos y las reflexiones son simulados en frontend. |
+| **RF-03** | [HU-03](./docs/historias-usuario/HU03_GUIA.md) | Estudiante | ✅ **Implementado** | Asistente paso a paso (*Step Wizard*) con referencias teóricas en pantalla para guiar el registro, análisis y autoguardado de borradores locales particionados por usuario. |
+| **RF-04** | [HU-04](./docs/historias-usuario/HU04_GUIA.md) | Estudiante | ✅ **Implementado** | Evaluación diagnóstica del marco teórico con banco de 30 preguntas, temporizador dinámico, calificación inmediata en Tailwind CSS y bloqueo automático de los talleres prácticos hasta aprobar. |
+| **RF-05** | [HU-05](./docs/historias-usuario/HU05_GUIA.md) | Asistente IA | ✅ **Implementado** | Detección automática en frontend de nombres propios, escuelas y datos sensibles en relatos mediante la API de OpenRouter con rotación de modelos gratuitos y destaque visual sin alterar el texto. |
+| **RF-06** | [HU-06](./docs/historias-usuario/HU06_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de control en `/docente/plazos` para definir fechas límite y límites de intentos de revisión por actividad (marco teórico y talleres 1 a 4). |
+| **RF-07** | [HU-07](./docs/historias-usuario/HU07_GUIA.md) | Estudiante y Docente | ✅ **Implementado** | Biblioteca ilustrativa categorizada, con búsqueda combinable y detalle de casos disponible para estudiantes y profesores. |
+| **RF-08** | [HU-08](./docs/historias-usuario/HU08_GUIA.md) | Todos los roles | ✅ **Implementado** | Inicio de sesión seguro con Firebase Authentication y autorización activa en Firestore, con redirección inteligente por rol a `/estudiante`, `/docente` o `/admin`. |
 
 ---
 
@@ -85,6 +85,8 @@ src/
 ---
 
 ## 🚀 Puesta en Marcha Local
+
+La documentación complementaria está organizada por tema en [`docs/`](./docs/README.md).
 
 ### Prerrequisitos
 - Node.js 18+ y npm instalados.
@@ -156,9 +158,9 @@ subas a Git) y repite allí estos pasos.
    usuarios; crea primero cada cuenta en Firebase Authentication y luego
    autoriza su correo con el rol correspondiente en la vista.
 
-La guía [whitelist.md](./whitelist.md) detalla los registros de referencia para
+La guía [whitelist.md](./docs/configuracion/whitelist.md) detalla los registros de referencia para
 estudiante, profesor guía y administrador, y
-[HU08_GUIA.md](./HU08_GUIA.md) describe el flujo de alta. Los registros de
+[HU08_GUIA.md](./docs/historias-usuario/HU08_GUIA.md) describe el flujo de alta. Los registros de
 ejemplo no crean cuentas automáticamente: confirma que cada correo esté
 controlado y autorizado antes de usarlo.
 

@@ -254,4 +254,4 @@ Formato: `<tipo>: <descripción corta en infinitivo>`
 - Valores finales de la **paleta** y **stack de estilos** (secciones 4 y 9). La tipografía ya quedó definida en la sección 5.
 
 La configuración de acceso y los detalles de HU-08 están consolidados en
-[`HU08_GUIA.md`](./HU08_GUIA.md).
+[`HU08_GUIA.md`](./docs/historias-usuario/HU08_GUIA.md).
