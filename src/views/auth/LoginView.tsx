@@ -7,9 +7,28 @@ import { useAuth } from '../../hooks/useAuth'
 import { StudentAuthError } from '../../services/authService'
 import { INSTITUTIONAL_DOMAIN, type WhitelistRole } from '../../models/whitelist'
 
+/* ------------------------------------------------
+   LoginView — HU-08 / RF-08
+
+   Formulario único de inicio de sesión para los tres
+   roles. Flujo:
+     1. El usuario escribe correo @ucen.cl y contraseña.
+     2. signIn() (de AuthContext) valida con Firebase y
+        con la whitelist, y devuelve el rol.
+     3. Se redirige al panel de ese rol.
+   Si ya hay una sesión abierta, redirige de inmediato.
+
+   No pide RUT (Ley 21.719, AI_GUIDELINES §8).
+   ------------------------------------------------ */
+
+/**
+ * Mensaje para credenciales incorrectas o correo no autorizado. Es el mismo
+ * en ambos casos a propósito: así no se revela qué correos existen.
+ */
 const GENERIC_CREDENTIAL_ERROR =
   'No pudimos iniciar sesión. Verifica tus credenciales y que tu correo esté autorizado.'
 
+/** Ruta del panel de cada rol, a donde se va después de iniciar sesión. */
 function getRoleRedirect(role: WhitelistRole | null): string {
   switch (role) {
     case 'teacher':
@@ -25,16 +44,21 @@ function getRoleRedirect(role: WhitelistRole | null): string {
 export default function LoginView() {
   const { signIn, status, role, retryAuthorization } = useAuth()
   const navigate = useNavigate()
+  // Campos "controlados": React guarda lo que el usuario escribe en el estado.
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // true mientras se espera la respuesta de Firebase (el botón muestra carga).
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Si ya hay sesión, no tiene sentido mostrar el login: se va al panel del rol.
   if (status === 'authenticated') {
     return <Navigate to={getRoleRedirect(role)} replace />
   }
 
+  /** Envía el formulario: inicia sesión y redirige, o muestra el error correspondiente. */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    // Evita que el navegador recargue la página al enviar el formulario.
     event.preventDefault()
     setError(null)
     setIsSubmitting(true)
@@ -43,10 +67,12 @@ export default function LoginView() {
       const userRole = await signIn(email, password)
       navigate(getRoleRedirect(userRole), { replace: true })
     } catch (cause) {
+      // Los errores inesperados (no del servicio) se registran en la consola.
       if (!(cause instanceof StudentAuthError)) {
         console.error('No se pudo iniciar sesión:', cause)
       }
 
+      // Se traduce el código del error a un mensaje que explica cómo corregirlo (regla R10).
       if (cause instanceof StudentAuthError && cause.code === 'invalid-email') {
         setError(`Ingresa un correo institucional válido que termine en ${INSTITUTIONAL_DOMAIN}.`)
       } else if (cause instanceof StudentAuthError && cause.code === 'unavailable') {
@@ -55,6 +81,7 @@ export default function LoginView() {
         setError(GENERIC_CREDENTIAL_ERROR)
       }
     } finally {
+      // Pase lo que pase, se quita el estado de carga del botón.
       setIsSubmitting(false)
     }
   }
@@ -160,6 +187,7 @@ export default function LoginView() {
             </p>
           </div>
 
+          {/* Si Firebase no responde, se ofrece reintentar la verificación. */}
           {status === 'error' && (
             <div className="mt-4 space-y-3">
               <p role="status" className="text-sm text-texto/70">
