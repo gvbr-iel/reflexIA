@@ -127,6 +127,7 @@ export function useImpulse({
   const latestLoadRef = useRef(0);
   // Evita actualizar el estado si la vista se cierra mientras la IA responde.
   const isMountedRef = useRef(true);
+  // Marca el componente como montado y, al desmontar, como desmontado.
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -136,6 +137,7 @@ export function useImpulse({
 
   // Avisos al asistente por referencia, para no recrear los callbacks.
   const onAttemptRegisteredRef = useRef(onAttemptRegistered);
+  // Mantiene la referencia apuntando a la versión más reciente del callback.
   useEffect(() => {
     onAttemptRegisteredRef.current = onAttemptRegistered;
   });
@@ -164,6 +166,7 @@ export function useImpulse({
     }
   }, [workshopId]);
 
+  // Carga los intentos al abrir el taller (y si cambia de taller).
   useEffect(() => {
     loadAttempts();
   }, [loadAttempts]);
@@ -176,8 +179,10 @@ export function useImpulse({
   const viewedAttempt = attempts.find((a) => a.attemptNumber === viewedAttemptNumber) ?? null;
   const viewedFeedback = viewedAttempt?.feedback ?? null;
 
+  // Pasos que aún no alcanzan el mínimo de caracteres.
   const shortSteps = INCIDENT_STEPS.filter((step) => values[step.id].trim().length < minCharacters);
 
+  // Se puede pedir un impulso solo si se cumplen TODAS estas condiciones.
   const canRequest =
     !isLoadingAttempts &&
     loadError === null &&
@@ -186,6 +191,7 @@ export function useImpulse({
     !hasSensitiveData &&
     shortSteps.length === 0;
 
+  // Si no se puede pedir, se explica el motivo (regla R10: decir cómo corregirlo).
   let blockedReason: string | null = null;
   if (!isRequesting && !isLoadingAttempts && loadError === null) {
     if (isExhausted) {
@@ -205,8 +211,10 @@ export function useImpulse({
     setViewedAttemptNumber(attemptNumber);
   }, []);
 
+  /** Oculta el mensaje de error de la última solicitud. */
   const dismissRequestError = useCallback(() => setRequestError(null), []);
 
+  /** Pide un impulso a la IA: cuenta como un intento de revisión (no como un borrador). */
   const requestImpulse = useCallback(async () => {
     if (!canRequest) return;
 

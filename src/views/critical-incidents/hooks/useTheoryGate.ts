@@ -30,11 +30,13 @@ export interface UseTheoryGateReturn {
   refresh: () => Promise<void>;
 }
 
+/** Hook que responde "¿el estudiante aprobó el marco teórico?" (único punto de consulta). */
 export function useTheoryGate(): UseTheoryGateReturn {
   const [isApproved, setIsApproved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /** Consulta la aprobación. Ante un error, por seguridad se considera "no aprobado". */
   const refresh = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -53,6 +55,7 @@ export function useTheoryGate(): UseTheoryGateReturn {
     }
   }, []);
 
+  // Consulta una vez al abrir la pantalla.
   useEffect(() => {
     refresh();
   }, [refresh]);

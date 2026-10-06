@@ -28,6 +28,10 @@ export interface UseTheoryReferencesReturn {
   retry: () => Promise<void>;
 }
 
+/**
+ * Hook con las referencias bibliográficas del paso actual del asistente.
+ * @param step - Paso del incidente; al cambiar, se cargan sus referencias.
+ */
 export function useTheoryReferences(step: IncidentStep): UseTheoryReferencesReturn {
   const [references, setReferences] = useState<TheoryReference[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +40,7 @@ export function useTheoryReferences(step: IncidentStep): UseTheoryReferencesRetu
   // Identifica la consulta más reciente; las anteriores se ignoran.
   const latestRequestRef = useRef(0);
 
+  /** Pide al servicio las referencias del paso. */
   const load = useCallback(async () => {
     const requestId = ++latestRequestRef.current;
 
@@ -60,6 +65,7 @@ export function useTheoryReferences(step: IncidentStep): UseTheoryReferencesRetu
     }
   }, [step]);
 
+  // "load" depende de "step": cada vez que cambia el paso, este efecto vuelve a cargar.
   useEffect(() => {
     load();
   }, [load]);
