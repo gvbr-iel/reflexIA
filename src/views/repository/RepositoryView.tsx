@@ -15,6 +15,9 @@
  * incidentes críticos (`useWorkshops`), y cada botón abre el asistente
  * del taller elegido (/estudiante/talleres/:workshopId), sin salir de la
  * sección Talleres.
+ *
+ * Nota: el estado de aprobación se consulta aquí con theoryQuizService; lo
+ * ideal según la regla R4 sería hacerlo a través de un hook.
  */
 
 import { useState, useEffect } from 'react'
@@ -54,8 +57,10 @@ function formatDeadline(isoDate: string): string {
 
 export default function RepositoryView() {
   const navigate = useNavigate()
+  // Resultado del marco teórico (null mientras se consulta).
   const [approval, setApproval] = useState<TheoryApprovalStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  // Talleres con su estado, desde el hook global (misma fuente que el asistente).
   const {
     workshops,
     isLoading: isLoadingWorkshops,
@@ -63,6 +68,7 @@ export default function RepositoryView() {
     retry: retryWorkshops,
   } = useWorkshops()
 
+  // Al abrir la pantalla se consulta si el marco teórico está aprobado.
   useEffect(() => {
     theoryQuizService.getApprovalStatus()
       .then((res) => setApproval(res))
@@ -70,6 +76,7 @@ export default function RepositoryView() {
       .finally(() => setLoading(false))
   }, [])
 
+  // ── Mientras se consulta la aprobación ──
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">

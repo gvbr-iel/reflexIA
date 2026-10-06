@@ -9,6 +9,9 @@
  * 3. Propuesta de Innovación Pedagógica (RF-07).
  *
  * Cumple con RNF-04: acceso en máximo 2 clics a cualquier taller o marco teórico.
+ *
+ * Nota: los datos se consultan aquí con theoryQuizService; lo ideal según la
+ * regla R4 sería hacerlo a través de un hook.
  */
 
 import { useState, useEffect } from 'react'
@@ -31,13 +34,16 @@ import Button from '../../components/Button'
 
 export default function StudentDashboardView() {
   const navigate = useNavigate()
+  // Resultado del marco teórico y configuración del cuestionario (null mientras cargan).
   const [approval, setApproval] = useState<TheoryApprovalStatus | null>(null)
   const [config, setConfig] = useState<QuizConfig | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Al abrir el panel se piden ambos datos a la vez.
   useEffect(() => {
     async function loadData() {
       try {
+        // Promise.all espera las dos consultas en paralelo (más rápido que una tras otra).
         const [appr, conf] = await Promise.all([
           theoryQuizService.getApprovalStatus(),
           theoryQuizService.getConfig(),
@@ -53,6 +59,8 @@ export default function StudentDashboardView() {
     loadData()
   }, [])
 
+  // Valores listos para mostrar. "?." evita errores si el dato aún es null,
+  // y "??" pone un valor por defecto mientras tanto.
   const isApproved = approval?.isApproved ?? false
   const attemptsUsed = approval?.result?.attemptsUsed ?? 0
   const maxAttempts = config?.maxAttempts ?? 3
