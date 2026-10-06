@@ -36,6 +36,7 @@ export default function DevWorkshopResultToggle({
   const isLocked = workshop.status === 'locked'
   const isCompleted = workshop.status === 'completed'
 
+  /** Texto que explica qué se puede simular con el taller elegido. */
   function message(): string {
     if (isLocked) {
       return `${workshop!.title} está bloqueado: completa el taller anterior para simular su resultado.`

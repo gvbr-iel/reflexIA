@@ -18,18 +18,28 @@ import { useWhitelist } from './hooks/useWhitelist'
    carga masiva, revisión de estado, filtros y
    revocación inmediata de accesos.
    Se monta dentro de AdminLayout (R6).
+
+   Flujo de capas: WhiteListView → useWhitelist (lógica)
+   → whitelistService (Firestore). La vista solo conecta
+   los datos del hook con los componentes; el único
+   estado propio es qué ventana (modal) está abierta.
    ------------------------------------------------ */
 export default function WhiteListView() {
+  // Toda la lógica y los datos de la pantalla.
   const whitelist = useWhitelist()
+  // Qué ventana está abierta: carga masiva, autorizar correo o revocar.
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isAddOpen, setIsAddOpen] = useState(false)
+  // Correo que se quiere revocar (null = ventana de revocar cerrada).
   const [entryToRevoke, setEntryToRevoke] = useState<WhitelistEntry | null>(null)
 
+  /** Cierra la ventana de confirmación y revoca el acceso. */
   function handleConfirmRevoke(entry: WhitelistEntry) {
     setEntryToRevoke(null)
     whitelist.revokeAccess(entry)
   }
 
+  // Mensaje de la tabla vacía: distinto si hay filtros o si la lista está vacía de verdad.
   const emptyMessage = whitelist.hasActiveFilters
     ? 'Ningún correo coincide con los filtros. Prueba con otra búsqueda o limpia los filtros.'
     : 'Aún no hay correos autorizados. Usa "Carga masiva" para agregarlos.'

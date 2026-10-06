@@ -48,8 +48,10 @@ export default function DraftManager({
   onSave,
   onDiscard,
 }: DraftManagerProps) {
+  // Controla la ventana que confirma si se quiere descartar el borrador.
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
+  /** Texto del estado del guardado ("Guardando…", "Borrador guardado a las…", etc.). */
   function statusMessage(): string {
     if (saveStatus === 'saving') return 'Guardando borrador…'
     if (saveStatus === 'error') {
@@ -63,6 +65,7 @@ export default function DraftManager({
     return 'Aún no has guardado un borrador.'
   }
 
+  /** Cierra la confirmación y descarta el borrador. */
   function handleConfirmDiscard() {
     setIsConfirmOpen(false)
     onDiscard()

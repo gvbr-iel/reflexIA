@@ -11,6 +11,15 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+/* ------------------------------------------------
+   LandingPage — página pública de presentación (/)
+
+   Explica qué es ReflexIA y lleva al inicio de sesión.
+   No necesita sesión ni datos externos: el contenido
+   está en las dos listas de abajo y se dibuja con .map().
+   ------------------------------------------------ */
+
+/** Pasos del ciclo reflexivo que se muestran en la página. */
 const cycleSteps = [
   {
     number: '01',
@@ -42,6 +51,7 @@ const cycleSteps = [
   },
 ]
 
+/** Principios del proyecto (sección "El proyecto"). */
 const projectPrinciples = [
   {
     title: 'Reflexión con fundamento',
@@ -66,6 +76,7 @@ const projectPrinciples = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen overflow-hidden bg-bg text-texto">
+      {/* ===== Cabecera: logo y botón para iniciar sesión ===== */}
       <header className="border-b border-border bg-surface">
         <nav
           aria-label="Navegación principal"
@@ -97,6 +108,7 @@ export default function LandingPage() {
       </header>
 
       <main>
+        {/* ===== Portada: título, llamado a la acción y pasos del ciclo reflexivo ===== */}
         <section className="relative isolate">
           <div
             aria-hidden="true"
@@ -196,6 +208,7 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ===== El proyecto: principios de ReflexIA (#proyecto) ===== */}
         <section id="proyecto" className="scroll-mt-8 border-y border-border bg-surface py-16 sm:py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
@@ -233,6 +246,7 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ===== Roles: un proceso compartido entre estudiante y profesor guía ===== */}
         <section className="py-16 sm:py-20">
           <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 md:grid-cols-[0.8fr_1.2fr] md:items-center lg:px-8">
             <div>
@@ -292,6 +306,7 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ===== Llamado final a iniciar sesión ===== */}
         <section className="bg-primary py-14 text-white sm:py-16">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center lg:px-8">
             <div className="max-w-2xl">
@@ -314,6 +329,7 @@ export default function LandingPage() {
         </section>
       </main>
 
+      {/* ===== Pie de página ===== */}
       <footer className="border-t border-border bg-surface py-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 text-sm text-texto/60 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span className="font-heading font-bold text-primary">

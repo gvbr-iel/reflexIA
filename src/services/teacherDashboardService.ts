@@ -33,6 +33,7 @@ import { getPerformanceStatus } from '../utils/performanceStatus';
 /** Latencia simulada para que se vean los estados de carga. */
 const MOCK_LATENCY_MS = 600;
 
+/** Espera `ms` milisegundos; simula el tiempo de respuesta de un servidor. */
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

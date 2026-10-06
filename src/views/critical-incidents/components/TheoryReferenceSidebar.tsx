@@ -36,8 +36,10 @@ export default function TheoryReferenceSidebar({
   error,
   onRetry,
 }: TheoryReferenceSidebarProps) {
+  // En pantallas angostas las referencias se pliegan; esto indica si están abiertas.
   const [isOpen, setIsOpen] = useState(false)
 
+  /** Dibuja el contenido según el estado: carga, error, vacío o la lista de referencias. */
   function renderContent() {
     /* ---- Estado de carga ---- */
     if (isLoading) {

@@ -9,7 +9,9 @@ import type { WhitelistNotice } from '../hooks/useWhitelist'
    ------------------------------------------------ */
 
 interface ActionNoticeProps {
+  /** Aviso a mostrar (null = no se muestra nada). */
   notice: WhitelistNotice | null
+  /** Se llama al presionar la X para cerrarlo antes de tiempo. */
   onDismiss: () => void
 }
 

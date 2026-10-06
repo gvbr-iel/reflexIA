@@ -201,6 +201,7 @@ function SensitiveDataDetectedView({
   detectedWords: SensitiveWord[];
   onDismiss: () => void;
 }) {
+  // Cuántas palabras se detectaron de cada categoría (nombres, colegios, etc.).
   const categoryCounts = useMemo(() => {
     const counts: Partial<Record<SensitiveCategory, number>> = {};
     for (const item of detectedWords) {

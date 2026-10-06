@@ -43,6 +43,7 @@ const MOCK_LATENCY_MS = 400;
 /** Motivo de un error; el hook lo traduce a un mensaje para el usuario. */
 export type WorkPacingErrorCode = 'invalid-attempts' | 'invalid-deadline';
 
+/** Error de validación del servicio de plazos, con un código que indica qué falló. */
 export class WorkPacingError extends Error {
   readonly code: WorkPacingErrorCode;
 
@@ -57,6 +58,7 @@ export class WorkPacingError extends Error {
 // Funciones auxiliares
 // ─────────────────────────────────────────────
 
+/** Espera `ms` milisegundos; simula el tiempo de respuesta de un servidor. */
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -79,6 +81,7 @@ function readConfig(): WorkPacingConfig {
   return { ...EMPTY_CONFIG, overrides: {} };
 }
 
+/** Guarda la configuración en localStorage; si el navegador lo impide, solo avisa en la consola. */
 function writeConfig(config: WorkPacingConfig): void {
   try {
     localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));

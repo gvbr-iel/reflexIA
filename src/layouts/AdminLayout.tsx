@@ -7,23 +7,33 @@ import { useAuth } from '../hooks/useAuth'
    AdminLayout — marco visual del Administrador
    Header + sidebar con navegación + área de contenido.
    Responsive: sidebar colapsable en móvil.
+
+   Las pantallas hijas (definidas en App.tsx) se
+   dibujan dentro de <Outlet />, en el área de contenido.
    ------------------------------------------------ */
 
+/** Un enlace del menú lateral. */
 interface NavItem {
+  /** Texto visible. */
   label: string
+  /** Ruta a la que lleva. */
   path: string
+  /** Ícono de lucide-react. */
   icon: ReactNode
 }
 
+/** Enlaces del menú del administrador. */
 const navItems: NavItem[] = [
   { label: 'Whitelist', path: '/admin/whitelist', icon: <Users size={20} /> },
 ]
 
 export default function AdminLayout() {
+  // En móvil el menú lateral empieza oculto y se abre con el botón de hamburguesa.
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
+  /** Cierra la sesión y vuelve al login. */
   async function handleSignOut() {
     try {
       await signOut()
@@ -97,6 +107,8 @@ export default function AdminLayout() {
           `}
         >
           <nav className="space-y-1">
+            {/* NavLink sabe si su ruta está activa (isActive) para resaltarla.
+                "end" hace que solo se marque con la ruta exacta. */}
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -120,6 +132,7 @@ export default function AdminLayout() {
 
         {/* ===== Contenido principal ===== */}
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          {/* Aquí se dibuja la pantalla hija de la ruta actual. */}
           <Outlet />
         </main>
       </div>

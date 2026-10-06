@@ -151,6 +151,7 @@ export function useIncidentWizard(
   // Referencia al último estado, para el temporizador y la salida de la
   // vista sin recrear los efectos en cada tecla.
   const latestRef = useRef({ values, currentStepId, isDirty });
+  // Sin lista de dependencias: se actualiza después de cada render.
   useEffect(() => {
     latestRef.current = { values, currentStepId, isDirty };
   });
@@ -164,6 +165,7 @@ export function useIncidentWizard(
   // (por ejemplo, para actualizar el estado del taller en el selector).
   // Va en una referencia para no recrear los callbacks si el aviso cambia.
   const onDraftChangeRef = useRef(onDraftChange);
+  // Mantiene la referencia apuntando a la versión más reciente del callback.
   useEffect(() => {
     onDraftChangeRef.current = onDraftChange;
   });
@@ -223,11 +225,17 @@ export function useIncidentWizard(
     }
   }, [workshopId]);
 
+  // Carga el borrador al abrir el taller (y si cambia de taller).
   useEffect(() => {
     load();
   }, [load]);
 
   // ── Guardado del borrador ─────────────────
+  /**
+   * Guarda el borrador. Nunca descuenta intentos de revisión (invariante de HU-03).
+   * @param isAuto - true si lo dispara el autoguardado; false si fue el botón.
+   * @param stepOverride - Paso a guardar como actual (al cambiar de paso).
+   */
   const persist = useCallback(
     async (isAuto: boolean, stepOverride?: IncidentStep) => {
       if (isSavingRef.current) return;
@@ -277,6 +285,7 @@ export function useIncidentWizard(
   // Guardado al salir de la vista o cerrar la pestaña, para no perder
   // lo escrito desde el último guardado automático.
   useEffect(() => {
+    /** Guarda lo pendiente sin esperar la respuesta (la pestaña puede estar cerrándose). */
     function flush() {
       const { values: latest, currentStepId: step, isDirty: dirty } =
         latestRef.current;
@@ -295,6 +304,7 @@ export function useIncidentWizard(
   }, [workshopId]);
 
   // ── Acciones: contenido ───────────────────
+  /** Actualiza el texto de un paso y marca que hay cambios sin guardar. */
   const setFieldValue = useCallback((step: IncidentStep, text: string) => {
     editVersionRef.current += 1;
     setValues((prev) => ({ ...prev, [step]: text }));
@@ -302,6 +312,7 @@ export function useIncidentWizard(
   }, []);
 
   // ── Acciones: navegación ──────────────────
+  /** Cambia de paso (sin validar); lo usan goNext, goBack y goToStep. */
   const moveToStep = useCallback(
     (target: IncidentStep) => {
       setShowValidation(false);
@@ -312,6 +323,7 @@ export function useIncidentWizard(
     [isDirty, persist],
   );
 
+  /** Avanza al siguiente paso solo si el actual está completo; si no, muestra la validación. */
   const goNext = useCallback(() => {
     if (!canAdvance) {
       setShowValidation(true);
@@ -321,11 +333,13 @@ export function useIncidentWizard(
     if (next) moveToStep(next.id);
   }, [canAdvance, currentIndex, moveToStep]);
 
+  /** Vuelve al paso anterior (siempre se permite). */
   const goBack = useCallback(() => {
     const previous = INCIDENT_STEPS[currentIndex - 1];
     if (previous) moveToStep(previous.id);
   }, [currentIndex, moveToStep]);
 
+  /** Un paso es accesible si todos los anteriores están completos (orden lineal). */
   const canGoToStep = useCallback(
     (step: IncidentStep) => {
       const targetIndex = INCIDENT_STEPS.findIndex((s) => s.id === step);
@@ -336,6 +350,7 @@ export function useIncidentWizard(
     [values],
   );
 
+  /** Salta a un paso desde la barra de pasos, si está permitido. */
   const goToStep = useCallback(
     (step: IncidentStep) => {
       if (step === currentStepId || !canGoToStep(step)) return;
@@ -345,8 +360,10 @@ export function useIncidentWizard(
   );
 
   // ── Acciones: borrador ────────────────────
+  /** Botón "Guardar borrador": guardado manual. */
   const saveDraft = useCallback(() => persist(false), [persist]);
 
+  /** Borra el borrador guardado y deja el formulario vacío. */
   const discardDraft = useCallback(async () => {
     try {
       await criticalIncidentService.clearDraft(workshopId);

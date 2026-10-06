@@ -31,13 +31,16 @@ import ImpulsePanel from './ImpulsePanel'
    ------------------------------------------------ */
 
 interface IncidentWizardProps {
+  /** Taller que se está trabajando (e.g. "workshop-1"). */
   workshopId: string
   /** Se llama tras guardar o descartar el borrador del taller. */
   onDraftChange?: () => void
 }
 
 export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWizardProps) {
+  // Lógica del formulario por pasos y del borrador.
   const wizard = useIncidentWizard(workshopId, onDraftChange)
+  // Detección de datos sensibles con IA (HU-05).
   const sensitiveDetector = useSensitiveDataDetector()
   // "El Impulso": pide orientaciones a la IA y lleva el contador de intentos.
   // Guarda el borrador antes de pedir (no descuenta intentos) y avisa al

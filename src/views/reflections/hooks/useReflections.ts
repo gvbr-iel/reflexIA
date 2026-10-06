@@ -113,6 +113,7 @@ export function useReflections(): UseReflectionsReturn {
   // Identifica la consulta más reciente; las anteriores se ignoran.
   const latestRequestRef = useRef(0);
 
+  /** Pide al servicio todas las reflexiones del profesor guía. */
   const load = useCallback(async () => {
     const requestId = ++latestRequestRef.current;
 
@@ -136,12 +137,15 @@ export function useReflections(): UseReflectionsReturn {
     }
   }, []);
 
+  // Carga las reflexiones una vez, al abrir la pantalla.
   useEffect(() => {
     load();
   }, [load]);
 
+  // Cuántas reflexiones hay en cada estado de revisión (para las tarjetas de resumen).
   const stats = useMemo(() => countByStatus(reflections), [reflections]);
 
+  // Talleres que aparecen en las reflexiones, sin repetir y ordenados (opciones del filtro).
   const workshopOptions = useMemo(() => {
     const byId = new Map<string, WorkshopFilterOption>();
     reflections.forEach((reflection) => {
@@ -153,6 +157,7 @@ export function useReflections(): UseReflectionsReturn {
     return [...byId.values()].sort((a, b) => a.number - b.number);
   }, [reflections]);
 
+  // Reflexiones que cumplen los tres filtros: taller, estado y texto buscado.
   const filteredReflections = useMemo(() => {
     const query = normalizeSearchText(filters.query.trim());
 
@@ -172,6 +177,10 @@ export function useReflections(): UseReflectionsReturn {
     filters.status !== DEFAULT_REFLECTION_FILTERS.status ||
     filters.query !== DEFAULT_REFLECTION_FILTERS.query;
 
+  /**
+   * Cambia un solo filtro. Es genérica: `K` es el nombre del filtro y
+   * TypeScript exige que `value` tenga el tipo correcto para ese filtro.
+   */
   const updateFilter = useCallback(
     <K extends keyof ReflectionFilters>(key: K, value: ReflectionFilters[K]) => {
       setFilters((current) => ({ ...current, [key]: value }));
@@ -181,6 +190,7 @@ export function useReflections(): UseReflectionsReturn {
 
   const clearFilters = useCallback(() => setFilters(DEFAULT_REFLECTION_FILTERS), []);
 
+  // Reflexión abierta en el panel de revisión (null si no hay ninguna).
   const selectedReflection = useMemo(
     () => reflections.find((reflection) => reflection.id === selectedId) ?? null,
     [reflections, selectedId],
@@ -189,6 +199,7 @@ export function useReflections(): UseReflectionsReturn {
   const selectReflection = useCallback((reflectionId: string) => setSelectedId(reflectionId), []);
   const clearSelection = useCallback(() => setSelectedId(null), []);
 
+  /** Reemplaza una reflexión en la lista después de guardarla o validarla. */
   const updateReflection = useCallback((updated: Reflection) => {
     setReflections((current) =>
       current.map((reflection) => (reflection.id === updated.id ? updated : reflection)),

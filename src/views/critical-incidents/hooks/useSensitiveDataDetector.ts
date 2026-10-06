@@ -44,6 +44,7 @@ export interface UseSensitiveDataDetectorReturn {
   clearResults: () => void;
 }
 
+/** Hook que analiza el relato con la IA y guarda los datos sensibles encontrados (HU-05). */
 export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -55,6 +56,7 @@ export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
   const latestRequestRef = useRef(0);
   const isAnalyzingRef = useRef(false);
 
+  /** Borra el resultado del análisis (por ejemplo, cuando el texto cambia). */
   const clearResults = useCallback(() => {
     // Invalida cualquier petición que pudiera estar en vuelo
     latestRequestRef.current += 1;
@@ -67,6 +69,7 @@ export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
     setHasAnalyzed(false);
   }, []);
 
+  /** Envía el texto a la IA y guarda las palabras sensibles detectadas. */
   const analyze = useCallback(async (text: string) => {
     // Protección contra llamadas concurrentes mientras un análisis ya está en curso
     if (isAnalyzingRef.current) {

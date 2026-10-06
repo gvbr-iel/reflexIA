@@ -7,14 +7,23 @@ import { useAuth } from '../hooks/useAuth'
    TeacherLayout — marco visual del Profesor guía
    Header + sidebar con navegación + área de contenido.
    Responsive: sidebar colapsable en móvil.
+
+   Las pantallas hijas (panel, reflexiones, plazos e
+   innovaciones, definidas en App.tsx) se dibujan
+   dentro de <Outlet />, en el área de contenido.
    ------------------------------------------------ */
 
+/** Un enlace del menú lateral. */
 interface NavItem {
+  /** Texto visible. */
   label: string
+  /** Ruta a la que lleva. */
   path: string
+  /** Ícono de lucide-react. */
   icon: ReactNode
 }
 
+/** Enlaces del menú del profesor guía. */
 const navItems: NavItem[] = [
   { label: 'Panel docente', path: '/docente', icon: <LayoutDashboard size={20} /> },
   { label: 'Reflexiones', path: '/docente/reflexiones', icon: <FileText size={20} /> },
@@ -23,10 +32,12 @@ const navItems: NavItem[] = [
 ]
 
 export default function TeacherLayout() {
+  // En móvil el menú lateral empieza oculto y se abre con el botón de hamburguesa.
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
+  /** Cierra la sesión y vuelve al login. */
   async function handleSignOut() {
     try {
       await signOut()
@@ -114,6 +125,8 @@ export default function TeacherLayout() {
                   }`
                 }
               >
+                {/* El contenido también recibe isActive: así se dibuja la barra
+                    verde a la izquierda solo en el enlace activo. */}
                 {({ isActive }) => (
                   <>
                     {item.icon}
@@ -133,6 +146,7 @@ export default function TeacherLayout() {
 
         {/* ===== Contenido principal ===== */}
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          {/* Aquí se dibuja la pantalla hija de la ruta actual. */}
           <Outlet />
         </main>
       </div>

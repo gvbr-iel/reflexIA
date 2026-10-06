@@ -9,18 +9,24 @@ import type { WhitelistStats as Stats } from '../../../models/whitelist'
    ------------------------------------------------ */
 
 interface WhitelistStatsProps {
+  /** Números ya calculados por useWhitelist. */
   stats: Stats
+  /** true muestra bloques grises animados mientras carga. */
   isLoading: boolean
 }
 
 interface StatCardProps {
   icon: ReactNode
+  /** Título pequeño (e.g. "Accesos activos"). */
   label: string
+  /** Número principal. */
   value: number
+  /** Texto que aclara el número. */
   detail: string
   isLoading: boolean
 }
 
+/** Una tarjeta del resumen: ícono, título, número y aclaración. */
 function StatCard({ icon, label, value, detail, isLoading }: StatCardProps) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-border bg-surface p-4 md:p-5">

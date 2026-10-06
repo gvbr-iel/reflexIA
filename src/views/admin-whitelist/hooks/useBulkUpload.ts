@@ -74,11 +74,14 @@ export interface UseBulkUploadReturn {
 // Constantes y funciones auxiliares
 // ─────────────────────────────────────────────
 
+/** Extensiones de archivo aceptadas. */
 const ACCEPTED_EXTENSIONS = ['.csv', '.txt'];
 
+/** Contenido de la plantilla que se descarga como ejemplo (\n = salto de línea). */
 const TEMPLATE_CSV =
   'correo\nestudiante.ejemplo01@ucen.cl\nestudiante.ejemplo02@ucen.cl\n';
 
+/** Contadores en cero, uno por cada estado posible de una línea. */
 const EMPTY_COUNTS: BulkPreviewCounts = {
   new: 0,
   reactivate: 0,
@@ -92,13 +95,17 @@ const EMPTY_COUNTS: BulkPreviewCounts = {
 function extractCandidates(text: string): Array<{ line: number; value: string }> {
   const candidates: Array<{ line: number; value: string }> = [];
 
+  // Se recorre el texto línea por línea (\r?\n sirve para Windows y Mac/Linux).
   text.split(/\r?\n/).forEach((rawLine, index) => {
+    // Cada línea se corta en celdas por coma, punto y coma o tabulación,
+    // y se quitan espacios y comillas de los extremos.
     const cells = rawLine
       .split(/[,;\t]/)
       .map((cell) => cell.trim().replace(/^"|"$/g, '').trim())
       .filter(Boolean);
     if (cells.length === 0) return;
 
+    // Solo interesan las celdas que parecen correos (tienen "@").
     const withAt = cells.filter((cell) => cell.includes('@'));
     if (withAt.length > 0) {
       withAt.forEach((value) => candidates.push({ line: index + 1, value }));
@@ -114,13 +121,16 @@ function extractCandidates(text: string): Array<{ line: number; value: string }>
 
 /** Clasifica cada candidato según el formato y la whitelist actual. */
 function buildPreview(text: string, entries: WhitelistEntry[]): BulkPreviewRow[] {
+  // Estado actual de cada correo en la whitelist (activo o revocado).
   const statusByEmail = new Map(entries.map((e) => [e.email, e.status]));
+  // Correos ya vistos en esta misma carga, para marcar los repetidos.
   const seen = new Set<string>();
 
   return extractCandidates(text).map(({ line, value }) => {
     const validation = validateInstitutionalEmail(value);
     if (validation !== 'valid') return { line, value, status: validation };
 
+    // Correo válido: se decide qué pasará con él al importar.
     const email = normalizeEmail(value);
     let status: BulkRowStatus;
     if (seen.has(email)) status = 'duplicate';
@@ -148,6 +158,7 @@ export function useBulkUpload(entries: WhitelistEntry[]): UseBulkUploadReturn {
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [pastedText, setPastedText] = useState('');
 
+  /** Valida la extensión, lee el texto del archivo y confirma que tenga correos. */
   const loadFile = useCallback(async (selected: File) => {
     setFileError(null);
 
@@ -186,6 +197,7 @@ export function useBulkUpload(entries: WhitelistEntry[]): UseBulkUploadReturn {
     setFileError(null);
   }, []);
 
+  // Texto que se analiza: el del archivo o el pegado, según la pestaña elegida.
   const sourceText = mode === 'file' ? file?.text ?? '' : pastedText;
 
   const rows = useMemo(() => buildPreview(sourceText, entries), [sourceText, entries]);
@@ -210,6 +222,7 @@ export function useBulkUpload(entries: WhitelistEntry[]): UseBulkUploadReturn {
     [rows],
   );
 
+  /** Descarga la plantilla CSV: crea un archivo en memoria (Blob) y simula un clic en un enlace. */
   const downloadTemplate = useCallback(() => {
     const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);

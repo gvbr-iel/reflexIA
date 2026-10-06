@@ -32,6 +32,7 @@ export interface UseWorkshopsReturn {
   refresh: () => Promise<void>;
 }
 
+/** Hook global con los talleres del estudiante y su estado. */
 export function useWorkshops(): UseWorkshopsReturn {
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +41,10 @@ export function useWorkshops(): UseWorkshopsReturn {
   // Identifica la consulta más reciente; las anteriores se ignoran.
   const latestRequestRef = useRef(0);
 
+  /**
+   * Pide los talleres al servicio.
+   * @param silent - true actualiza sin mostrar la carga (lo usa `refresh`).
+   */
   const load = useCallback(async (silent: boolean) => {
     const requestId = ++latestRequestRef.current;
 
@@ -68,10 +73,12 @@ export function useWorkshops(): UseWorkshopsReturn {
     }
   }, []);
 
+  // Carga los talleres una vez, al montar el componente que usa el hook.
   useEffect(() => {
     load(false);
   }, [load]);
 
+  // retry muestra la carga (botón "Reintentar"); refresh actualiza en silencio.
   const retry = useCallback(() => load(false), [load]);
   const refresh = useCallback(() => load(true), [load]);
 

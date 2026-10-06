@@ -139,7 +139,9 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
   }, []);
 
   // ── Carga inicial ─────────────────────────
+  // Al abrir la pantalla se piden a la vez: aprobación, historial de intentos y configuración.
   useEffect(() => {
+    /** Decide la fase inicial: resultado (si ya aprobó) o introducción. */
     async function loadInitialState() {
       try {
         setIsLoading(true);
@@ -180,6 +182,7 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
   }, []);
 
   // ── Lógica del temporizador ───────────────
+  /** Detiene el temporizador (al enviar, al volver a la intro o al agotarse el tiempo). */
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -188,6 +191,12 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     setIsTimerRunning(false);
   }, []);
 
+  /**
+   * Se ejecuta cuando el tiempo llega a cero: envía automáticamente las
+   * respuestas marcadas hasta ese momento (las vacías cuentan como incorrectas).
+   * Usa las referencias answersRef y questionsRef para leer los valores más
+   * recientes desde dentro del temporizador.
+   */
   const handleTimeUp = useCallback(async () => {
     stopTimer();
 
@@ -226,6 +235,10 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     }
   }, [currentAttemptNumber, stopTimer]);
 
+  /**
+   * Inicia la cuenta regresiva: cada 1 segundo (setInterval) resta 1 a
+   * timeRemaining. Al llegar a 0 llama a handleTimeUp.
+   */
   const startTimer = useCallback((durationSeconds: number) => {
     // Limpiar timer previo si existe
     if (timerRef.current) {
@@ -251,6 +264,7 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
 
   // ── Acciones públicas ─────────────────────
 
+  /** Pide 10 preguntas aleatorias, reinicia las respuestas y arranca el temporizador. */
   const startQuiz = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -277,6 +291,7 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     }
   }, [startTimer]);
 
+  /** Guarda la opción elegida para una pregunta (reemplaza la anterior si existía). */
   const selectAnswer = useCallback((questionId: string, optionId: string) => {
     setAnswers((prev) => ({
       ...prev,
@@ -284,16 +299,19 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     }));
   }, []);
 
+  /** Avanza a la siguiente pregunta (no pasa de la última). */
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) =>
       prev < questions.length - 1 ? prev + 1 : prev,
     );
   }, [questions.length]);
 
+  /** Vuelve a la pregunta anterior (no baja de la primera). */
   const goToPrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
   }, []);
 
+  /** Salta directamente a una pregunta por su posición (desde los números de navegación). */
   const goToQuestion = useCallback(
     (index: number) => {
       if (index >= 0 && index < questions.length) {
@@ -303,6 +321,10 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     [questions.length],
   );
 
+  /**
+   * Envía las respuestas al servicio, que corrige, guarda el intento y
+   * actualiza la aprobación. Después muestra la fase de resultado.
+   */
   const submitQuiz = useCallback(async () => {
     try {
       stopTimer();
@@ -337,6 +359,7 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     }
   }, [questions, answers, currentAttemptNumber, stopTimer]);
 
+  /** Vuelve a la pantalla de introducción (por ejemplo, para un nuevo intento). */
   const resetToIntro = useCallback(() => {
     stopTimer();
     setQuestions([]);

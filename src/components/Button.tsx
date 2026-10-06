@@ -4,20 +4,39 @@ import { type ButtonHTMLAttributes, type ReactNode } from 'react'
    Button — componente reutilizable global
    Variantes visuales, tamaños, estado de carga
    y soporte para íconos (lucide-react).
+
+   Regla R1 (AI_GUIDELINES §9): las vistas no crean
+   botones propios, siempre usan este componente.
+
+   Ejemplo:
+     <Button variant="outline" icon={<X size={16} />} onClick={cerrar}>
+       Cancelar
+     </Button>
    ------------------------------------------------ */
 
+/** Estilo visual del botón. `danger` usa el rojo semántico (solo acciones destructivas). */
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
+/** Tamaño del botón (cambia el relleno y la letra). */
 type Size = 'sm' | 'md' | 'lg'
 
+/**
+ * Props del botón. Al extender `ButtonHTMLAttributes`, también acepta todas
+ * las props normales de un <button> (onClick, type, disabled, aria-*…).
+ */
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   size?: Size
+  /** true muestra un ícono girando y desactiva el botón (por ejemplo, mientras se guarda). */
   isLoading?: boolean
+  /** Ícono opcional a la izquierda del texto. */
   icon?: ReactNode
+  /** true hace que el botón ocupe todo el ancho disponible. */
   fullWidth?: boolean
   children: ReactNode
 }
 
+/* Clases de Tailwind de cada variante y de cada tamaño. Usan solo los
+   tokens de color del proyecto (primary, secondary, perf-fail…). */
 const variantStyles: Record<Variant, string> = {
   primary:
     'bg-primary text-white hover:bg-primary/90 focus-visible:ring-primary/50',
@@ -46,6 +65,7 @@ export default function Button({
   children,
   disabled,
   className = '',
+  // "...rest" junta las demás props (onClick, type, aria-*…) para pasarlas al <button>.
   ...rest
 }: ButtonProps) {
   return (
@@ -63,6 +83,7 @@ export default function Button({
       `}
       {...rest}
     >
+      {/* Mientras carga se muestra un círculo girando en lugar del ícono. */}
       {isLoading ? (
         <svg
           className="animate-spin h-4 w-4"

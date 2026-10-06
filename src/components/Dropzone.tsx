@@ -8,11 +8,17 @@ import { Upload } from 'lucide-react'
    ------------------------------------------------ */
 
 interface DropzoneProps {
+  /** Recibe los archivos válidos que eligió el usuario. */
   onFilesSelected: (files: File[]) => void
-  accept?: string          /* ej: ".csv,.xlsx" */
-  maxSizeMB?: number       /* tamaño máximo por archivo */
+  /** Tipos aceptados, por ejemplo ".csv,.xlsx" (por defecto, cualquiera). */
+  accept?: string
+  /** Tamaño máximo por archivo, en megabytes. */
+  maxSizeMB?: number
+  /** true permite elegir varios archivos a la vez. */
   multiple?: boolean
+  /** Texto principal de la zona. */
   label?: string
+  /** Texto de ayuda pequeño (opcional). */
   hint?: string
 }
 
@@ -24,12 +30,16 @@ export default function Dropzone({
   label = 'Arrastra tu archivo aquí o haz clic para seleccionar',
   hint,
 }: DropzoneProps) {
+  // true mientras el usuario arrastra un archivo encima (cambia el color del borde).
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Referencia al <input type="file"> oculto: se "clickea" por código al tocar la zona.
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Megabytes → bytes (1 MB = 1024 × 1024 bytes).
   const maxSizeBytes = maxSizeMB * 1024 * 1024
 
+  /** Revisa el tamaño de cada archivo. Si uno se pasa, muestra el error y no acepta ninguno. */
   function validateFiles(files: FileList | File[]): File[] {
     const valid: File[] = []
     setError(null)
@@ -45,22 +55,27 @@ export default function Dropzone({
     return valid
   }
 
+  /** El usuario soltó archivos sobre la zona. */
   function handleDrop(e: DragEvent<HTMLDivElement>) {
+    // Evita que el navegador abra el archivo en la pestaña.
     e.preventDefault()
     setIsDragging(false)
     const files = validateFiles(e.dataTransfer.files)
     if (files.length > 0) onFilesSelected(files)
   }
 
+  /** El usuario eligió archivos con el selector del sistema. */
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return
     const files = validateFiles(e.target.files)
     if (files.length > 0) onFilesSelected(files)
+    // Se vacía el input para que elegir el mismo archivo otra vez vuelva a funcionar.
     e.target.value = ''
   }
 
   return (
     <div>
+      {/* Zona visible: funciona con clic, con teclado (Enter/Espacio) y arrastrando. */}
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
@@ -103,6 +118,7 @@ export default function Dropzone({
         </p>
       )}
 
+      {/* Input real de archivos, oculto: lo activa la zona de arriba. */}
       <input
         ref={inputRef}
         type="file"

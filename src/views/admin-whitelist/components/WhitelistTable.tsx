@@ -18,14 +18,20 @@ import {
    ------------------------------------------------ */
 
 interface WhitelistTableProps {
+  /** Correos ya filtrados. */
   entries: WhitelistEntry[]
   isLoading: boolean
+  /** Texto cuando no hay filas. */
   emptyMessage: string
+  /** Indica si un correo tiene una acción en curso (su botón muestra carga). */
   isPending: (id: string) => boolean
+  /** Abre la confirmación para revocar. */
   onRevoke: (entry: WhitelistEntry) => void
+  /** Restablece el acceso directamente (no necesita confirmación). */
   onRestore: (entry: WhitelistEntry) => void
 }
 
+/** Formato de fecha en español de Chile (e.g. "5 oct 2026"). */
 const dateFormatter = new Intl.DateTimeFormat('es-CL', {
   day: 'numeric',
   month: 'short',
@@ -36,6 +42,7 @@ function formatDate(iso: string): string {
   return dateFormatter.format(new Date(iso))
 }
 
+/** Perfil del correo con su ícono. */
 function RoleBadge({ role }: { role: WhitelistRole }) {
   const Icon =
     role === 'student' ? GraduationCap : role === 'teacher' ? Presentation : ShieldCheck
