@@ -104,6 +104,64 @@ npm run dev
 
 La plataforma incluye configuración pública de respaldo para Firebase Web Client en `src/services/firebase.ts`, por lo que es posible ejecutarla y probarla localmente de inmediato sin configuración manual adicional. Para usar la detección de datos sensibles por IA en incidentes críticos (HU-05), define `VITE_OPENROUTER_API_KEY` en tu archivo `.env`.
 
+### Ver la tabla de usuarios de administración en otro computador
+
+La vista `/admin/whitelist` consulta la colección `whitelist` de Cloud Firestore;
+no contiene usuarios precargados localmente. La configuración Firebase de
+respaldo de `src/services/firebase.ts` apunta al proyecto compartido
+`reflexia-a6203`. Por lo tanto, los registros solo aparecerán si existen en ese
+proyecto y la cuenta administradora está habilitada. Si se usa otro proyecto
+Firebase, configura sus variables `VITE_FIREBASE_*` en un `.env` local (no lo
+subas a Git) y repite allí estos pasos.
+
+1. En el computador nuevo, clona la rama que contiene los cambios, instala las
+   dependencias y levanta la aplicación:
+
+   ```bash
+   git clone https://github.com/gvbr-iel/reflexIA.git
+   cd reflexIA
+   git switch feature/hu-01-whitelist-defaults
+   npm install
+   npm run dev
+   ```
+
+2. En Firebase Console del proyecto configurado, habilita **Authentication →
+   Sign-in method → Email/Password** y comprueba que **Firestore Database**
+   esté creado. Publica las reglas de [`firestore.rules`](./firestore.rules)
+   desde **Firestore → Rules** (o con Firebase CLI:
+   `firebase deploy --only firestore:rules`, usando un usuario autorizado para
+   desplegar).
+3. En **Authentication → Users**, crea la cuenta institucional
+   `admin@ucen.cl` con una contraseña única y segura. Las contraseñas se crean
+   y entregan por un canal seguro; no se incluyen en este repositorio.
+4. En **Firestore Database → Data**, crea la colección `whitelist` y el
+   documento con ID `admin@ucen.cl`. Añade estos campos:
+
+   ```json
+   {
+     "email": "admin@ucen.cl",
+     "role": "admin",
+     "status": "active",
+     "addedAt": "<fecha y hora actual en ISO 8601>",
+     "revokedAt": null
+   }
+   ```
+
+   Usa una fecha ISO 8601 real como cadena, por ejemplo
+   `2026-10-06T13:45:00.000Z`; no copies literalmente el marcador de posición.
+5. Abre la URL local que muestra `npm run dev` (normalmente
+   `http://localhost:5173`), inicia sesión con la cuenta administradora y entra
+   a **Whitelist** o navega a `/admin/whitelist`. La tabla mostrará los
+   documentos de esa colección. Desde **Autorizar correo** puedes añadir otros
+   usuarios; crea primero cada cuenta en Firebase Authentication y luego
+   autoriza su correo con el rol correspondiente en la vista.
+
+La guía [whitelist.md](./whitelist.md) detalla los registros de referencia para
+estudiante, profesor guía y administrador, y
+[HU08_GUIA.md](./HU08_GUIA.md) describe el flujo de alta. Los registros de
+ejemplo no crean cuentas automáticamente: confirma que cada correo esté
+controlado y autorizado antes de usarlo.
+
 ### Comprobaciones de calidad
 ```bash
 # Verificación estricta de tipos TypeScript
