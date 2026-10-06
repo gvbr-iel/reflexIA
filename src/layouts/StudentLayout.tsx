@@ -18,14 +18,28 @@ import { useAuth } from '../hooks/useAuth'
    StudentLayout — marco visual del Estudiante
    Header + sidebar con navegación lineal de talleres
    + área de contenido. Responsive: sidebar colapsable.
+
+   El menú muestra si el marco teórico está aprobado y
+   pone un candado en Talleres mientras no lo esté
+   (dependencia HU-03 → HU-04). Las pantallas hijas se
+   dibujan dentro de <Outlet />.
+
+   Nota: este layout consulta theoryQuizService
+   directamente; lo ideal según la regla R4 sería
+   hacerlo a través de un hook.
    ------------------------------------------------ */
 
+/** Un enlace del menú lateral. */
 interface NavItem {
+  /** Texto visible. */
   label: string
+  /** Ruta a la que lleva. */
   path: string
+  /** Ícono de lucide-react. */
   icon: ReactNode
 }
 
+/** Enlaces del menú del estudiante, en el orden del ciclo reflexivo. */
 const navItems: NavItem[] = [
   { label: 'Mi progreso', path: '/estudiante', icon: <LayoutDashboard size={20} /> },
   { label: 'Marco teórico', path: '/estudiante/marco-teorico', icon: <BookOpen size={20} /> },
@@ -34,20 +48,24 @@ const navItems: NavItem[] = [
 ]
 
 export default function StudentLayout() {
+  // En móvil el menú lateral empieza oculto y se abre con el botón de hamburguesa.
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // null = aún no se sabe; true/false = marco teórico aprobado o no.
   const [isTheoryApproved, setIsTheoryApproved] = useState<boolean | null>(null)
   const [signOutError, setSignOutError] = useState<string | null>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
 
+  // Consulta si el marco teórico está aprobado. Depende de la ruta para volver
+  // a consultar al navegar (por ejemplo, al volver del cuestionario recién aprobado).
   useEffect(() => {
-    // Consultar estado de aprobación del marco teórico
     theoryQuizService.getApprovalStatus().then((status) => {
       setIsTheoryApproved(status.isApproved)
     })
   }, [location.pathname])
 
+  /** Cierra la sesión y vuelve al login; si falla, muestra un aviso. */
   async function handleSignOut() {
     setSignOutError(null)
     try {
@@ -127,6 +145,7 @@ export default function StudentLayout() {
         >
           <nav className="space-y-1">
             {navItems.map((item) => {
+              // Dos enlaces llevan indicadores extra: Marco teórico y Talleres.
               const isTheoryItem = item.path === '/estudiante/marco-teorico'
               const isTalleresItem = item.path === '/estudiante/talleres'
 
@@ -185,6 +204,7 @@ export default function StudentLayout() {
 
         {/* ===== Contenido principal ===== */}
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          {/* Aquí se dibuja la pantalla hija de la ruta actual. */}
           <Outlet />
         </main>
       </div>
