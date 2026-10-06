@@ -40,11 +40,15 @@ export default function RoleSelector({ name, legend, value, onChange }: RoleSele
         {WHITELIST_ROLES.map((role) => {
           const Icon = ROLE_ICONS[role]
           const isSelected = value === role
+          // En una columna (móvil) el ícono va a la izquierda. Con tres columnas
+          // (sm en adelante) cada tarjeta es angosta, así que el ícono va arriba y
+          // el texto usa todo el ancho: "Administrador" no cabe al lado del ícono.
           return (
             <label
               key={role}
               className={`
                 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors
+                sm:flex-col sm:items-start sm:gap-2
                 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/30
                 ${isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}
               `}
@@ -63,7 +67,7 @@ export default function RoleSelector({ name, legend, value, onChange }: RoleSele
               >
                 <Icon size={18} />
               </span>
-              <span className="min-w-0">
+              <span className="min-w-0 sm:w-full">
                 <span className="block text-sm font-medium text-texto">{ROLE_LABELS[role]}</span>
                 <span className="block text-xs text-texto/60">{ROLE_HINTS[role]}</span>
               </span>
