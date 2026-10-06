@@ -16,6 +16,7 @@ import { setSimulatedTheoryApproval } from './dev/theoryApprovalSimulator'
    ------------------------------------------------ */
 export default function CriticalIncidentView() {
   const navigate = useNavigate()
+  // Único punto donde se consulta si el marco teórico está aprobado (HU-03 → HU-04).
   const { isApproved, isLoading, error, refresh } = useTheoryGate()
 
   /* Solo desarrollo: alterna la aprobación simulada y vuelve a consultar. */
@@ -24,6 +25,7 @@ export default function CriticalIncidentView() {
     refresh()
   }
 
+  /** Elige qué mostrar: carga, error, bloqueo o el espacio de trabajo del taller. */
   function renderContent() {
     /* ---- Estado de carga ---- */
     if (isLoading) {
