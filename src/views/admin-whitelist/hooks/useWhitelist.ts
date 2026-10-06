@@ -28,9 +28,12 @@ import { normalizeEmail } from '../../../utils/institutionalEmail';
 // Tipos
 // ─────────────────────────────────────────────
 
+/** Filtro por estado: todos, activos o revocados. */
 export type StatusFilter = 'all' | WhitelistStatus;
+/** Filtro por perfil: todos, estudiantes, profesores o administradores. */
 export type RoleFilter = 'all' | WhitelistRole;
 
+/** Los tres filtros de la barra de búsqueda. */
 export interface WhitelistFilters {
   /** Texto buscado dentro del correo. */
   query: string;
@@ -84,11 +87,13 @@ export interface UseWhitelistReturn {
 // Constantes y funciones auxiliares
 // ─────────────────────────────────────────────
 
+/** Filtros vacíos: muestran todos los correos. */
 const EMPTY_FILTERS: WhitelistFilters = { query: '', status: 'all', role: 'all' };
 
 /** Tiempo que el aviso permanece visible. */
 const NOTICE_DURATION_MS = 6000;
 
+/** Mensaje para errores que no vienen del servicio (por ejemplo, sin conexión). */
 const GENERIC_ERROR =
   'No se pudo completar la acción. Verifica tu conexión e intenta nuevamente.';
 
@@ -120,6 +125,7 @@ function describeImport({ added, reactivated, skipped }: BulkImportResult): stri
   return `Carga masiva completada: ${parts.join(', ')}.`;
 }
 
+/** Calcula los números de las tarjetas de resumen. Los roles se cuentan solo entre los activos. */
 function computeStats(entries: WhitelistEntry[]): WhitelistStats {
   const active = entries.filter((e) => e.status === 'active');
   return {
@@ -144,20 +150,28 @@ function upsert(entries: WhitelistEntry[], updated: WhitelistEntry): WhitelistEn
 // Hook
 // ─────────────────────────────────────────────
 
+/** Hook con toda la lógica de la pantalla de whitelist (la vista solo la muestra). */
 export function useWhitelist(): UseWhitelistReturn {
   const [entries, setEntries] = useState<WhitelistEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<WhitelistFilters>(EMPTY_FILTERS);
+  // Ids de los correos que tienen una revocación o restablecimiento en curso.
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
   const [notice, setNotice] = useState<WhitelistNotice | null>(null);
 
   // Identifica la consulta más reciente; las anteriores se ignoran.
   const latestRequestRef = useRef(0);
+  // Contador para dar un id distinto a cada aviso.
   const noticeIdRef = useRef(0);
 
   // ── Carga ──────────────────────────────────
 
+  /**
+   * Pide la lista al servicio.
+   * @param silent - true actualiza "por detrás", sin mostrar la carga ni el
+   *   error (se usa después de una carga masiva).
+   */
   const load = useCallback(async (silent: boolean) => {
     const requestId = ++latestRequestRef.current;
 
@@ -186,6 +200,7 @@ export function useWhitelist(): UseWhitelistReturn {
     }
   }, []);
 
+  // Carga la lista una vez, al abrir la pantalla.
   useEffect(() => {
     load(false);
   }, [load]);
@@ -194,6 +209,7 @@ export function useWhitelist(): UseWhitelistReturn {
 
   // ── Avisos ─────────────────────────────────
 
+  /** Muestra un aviso de éxito o de error sobre la lista. */
   const showNotice = useCallback((tone: WhitelistNotice['tone'], message: string) => {
     noticeIdRef.current += 1;
     setNotice({ id: noticeIdRef.current, tone, message });
@@ -201,6 +217,8 @@ export function useWhitelist(): UseWhitelistReturn {
 
   const dismissNotice = useCallback(() => setNotice(null), []);
 
+  // Cada aviso nuevo se oculta solo después de NOTICE_DURATION_MS.
+  // La limpieza cancela el temporizador si llega otro aviso antes.
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(null), NOTICE_DURATION_MS);
@@ -209,6 +227,7 @@ export function useWhitelist(): UseWhitelistReturn {
 
   // ── Filtros ────────────────────────────────
 
+  // Cada setter cambia un solo filtro y conserva los otros dos (...current).
   const setQuery = useCallback((query: string) => {
     setFilters((current) => ({ ...current, query }));
   }, []);
@@ -226,6 +245,8 @@ export function useWhitelist(): UseWhitelistReturn {
   const hasActiveFilters =
     filters.query.trim() !== '' || filters.status !== 'all' || filters.role !== 'all';
 
+  // Lista filtrada: un correo aparece si cumple los tres filtros a la vez.
+  // useMemo la recalcula solo cuando cambian los correos o los filtros.
   const filteredEntries = useMemo(() => {
     const query = normalizeEmail(filters.query);
     return entries.filter(
@@ -242,6 +263,8 @@ export function useWhitelist(): UseWhitelistReturn {
 
   const isPending = useCallback((id: string) => pendingIds.has(id), [pendingIds]);
 
+  /** Marca o desmarca un correo como "en proceso". Se crea un Set nuevo porque
+      React solo detecta el cambio si el estado es otro objeto. */
   const setPending = useCallback((id: string, pending: boolean) => {
     setPendingIds((current) => {
       const next = new Set(current);
@@ -251,6 +274,7 @@ export function useWhitelist(): UseWhitelistReturn {
     });
   }, []);
 
+  /** Autoriza un correo. Devuelve un resultado para que el modal muestre el error si falla. */
   const addEntry = useCallback(
     async (payload: AddEntryPayload): Promise<ActionResult> => {
       try {
@@ -270,6 +294,7 @@ export function useWhitelist(): UseWhitelistReturn {
     [showNotice],
   );
 
+  /** Carga masiva: después recarga la lista en silencio para mostrar los cambios. */
   const importEntries = useCallback(
     async (payload: BulkImportPayload): Promise<ActionResult> => {
       try {
@@ -284,6 +309,7 @@ export function useWhitelist(): UseWhitelistReturn {
     [load, showNotice],
   );
 
+  /** Revoca o restablece un acceso, marcando el correo como "en proceso" mientras tanto. */
   const changeAccess = useCallback(
     async (entry: WhitelistEntry, revoke: boolean) => {
       setPending(entry.id, true);
