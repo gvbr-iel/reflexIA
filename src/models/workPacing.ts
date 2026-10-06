@@ -9,7 +9,7 @@
  *
  * Centralizado en src/models/ para que HU-03 (talleres) y HU-04 (marco
  * teórico) puedan leer esta configuración sin depender del feature
- * work-pacing/ cuando se conecten (ver HU06_GUIA.md, "Modificaciones futuras").
+ * work-pacing/ cuando se conecten (ver ../../docs/historias-usuario/HU06_GUIA.md, "Modificaciones futuras").
  */
 
 // ─────────────────────────────────────────────

@@ -96,7 +96,7 @@ VITE_FIREBASE_APP_ID=tu_app_id
 
 ## Reglas de Seguridad en Cloud Firestore (`firestore.rules`)
 
-Publica el contenido de [`firestore.rules`](./firestore.rules) desde **Firestore Database → Rules** en Firebase Console, o despliega con Firebase CLI:
+Publica el contenido de [`firestore.rules`](../../firestore.rules) desde **Firestore Database → Rules** en Firebase Console, o despliega con Firebase CLI:
 
 ```bash
 firebase deploy --only firestore:rules
@@ -121,7 +121,7 @@ En **Authentication → Users → Add user**:
 - **Password:** contraseña única y aleatoria, definida según la política vigente del proyecto Firebase. Entrégala al titular por un canal seguro; no la guardes en el repositorio.
 
 Los correos de ejemplo y el procedimiento para preparar los tres registros base
-están en [`whitelist.md`](./whitelist.md). Son una plantilla de configuración:
+están en [`whitelist.md`](../configuracion/whitelist.md). Son una plantilla de configuración:
 no crean usuarios en Firebase y deben reemplazarse si no son cuentas
 institucionales controladas y autorizadas.
 

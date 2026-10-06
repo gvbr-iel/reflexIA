@@ -3,7 +3,7 @@
 Esta guía define los registros base para habilitar un usuario por rol en una
 instalación de demostración. **No crea cuentas en Firebase ni representa
 usuarios ya provisionados.** Los correos son los ejemplos usados por
-`HU08_GUIA.md`; antes de utilizarlos, el equipo debe confirmar que son cuentas
+[`HU08_GUIA.md`](../historias-usuario/HU08_GUIA.md); antes de utilizarlos, el equipo debe confirmar que son cuentas
 institucionales controladas y autorizadas. En producción, reemplázalos por los
 correos reales aprobados.
 
@@ -55,8 +55,8 @@ formato ISO 8601; el valor del ejemplo no debe reutilizarse como fecha real de
 provisión.
 
 Los campos y roles deben respetar el contrato de
-[`src/models/whitelist.ts`](./src/models/whitelist.ts) y las validaciones de
-[`firestore.rules`](./firestore.rules). No agregues contraseñas ni otros datos
+[`src/models/whitelist.ts`](../../src/models/whitelist.ts) y las validaciones de
+[`firestore.rules`](../../firestore.rules). No agregues contraseñas ni otros datos
 personales a los documentos.
 
 ## Comprobación desde la vista de administración
