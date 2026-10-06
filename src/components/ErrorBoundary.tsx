@@ -2,13 +2,31 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle, Home, RotateCcw } from 'lucide-react'
 import Button from './Button'
 
+/* ------------------------------------------------
+   ErrorBoundary — "barrera" de errores global
+
+   Si un componente lanza un error mientras se dibuja,
+   React normalmente deja la pantalla en blanco. Esta
+   barrera atrapa el error y muestra un mensaje con
+   botones para recargar o volver al inicio.
+
+   Envuelve toda la app en main.tsx. Es un componente
+   de CLASE porque React solo permite atrapar errores
+   de render con los métodos de clase
+   getDerivedStateFromError y componentDidCatch
+   (no existe un hook equivalente).
+   ------------------------------------------------ */
+
 interface ErrorBoundaryProps {
   children: ReactNode
+  /** Pantalla alternativa opcional; si no se pasa, se usa la de este archivo. */
   fallback?: ReactNode
 }
 
 interface ErrorBoundaryState {
+  /** true después de atrapar un error. */
   hasError: boolean
+  /** El error atrapado (se muestra solo en modo desarrollo). */
   error: Error | null
 }
 
@@ -21,6 +39,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     }
   }
 
+  /** React lo llama cuando un hijo lanza un error: cambia el estado para mostrar la pantalla de error. */
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return {
       hasError: true,
@@ -28,14 +47,17 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     }
   }
 
+  /** Se llama después de atrapar el error: aquí solo se registra en la consola. */
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Error no capturado capturado por ErrorBoundary:', error, errorInfo)
   }
 
+  /** Recarga la página completa. */
   handleReload = () => {
     window.location.reload()
   }
 
+  /** Vuelve a la página de inicio (recarga completa, para empezar de cero). */
   handleGoHome = () => {
     window.location.href = '/'
   }
@@ -70,6 +92,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
               Puedes intentar recargar la página o volver a la pantalla de inicio.
             </p>
 
+            {/* Solo en desarrollo (npm run dev) se muestran los detalles técnicos. */}
             {import.meta.env.DEV && this.state.error && (
               <details className="mt-5 text-left rounded-lg border border-border bg-bg p-3.5 text-xs text-texto/80">
                 <summary className="cursor-pointer font-medium text-perf-fail hover:underline">
@@ -104,6 +127,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
       )
     }
 
+    // Sin errores: se dibuja la app normalmente.
     return this.props.children
   }
 }

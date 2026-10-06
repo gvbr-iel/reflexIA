@@ -12,14 +12,21 @@ import { X } from 'lucide-react'
    ------------------------------------------------ */
 
 interface ModalProps {
+  /** Controla si la ventana se ve. Con false el componente no dibuja nada. */
   isOpen: boolean
+  /** Se llama al cerrar: botón X, tecla Escape o clic en el fondo oscuro. */
   onClose: () => void
+  /** Título de la cabecera (también nombra el diálogo para lectores de pantalla). */
   title: string
+  /** Contenido del cuerpo. */
   children: ReactNode
+  /** Botones del pie (opcional), por ejemplo "Cancelar" y "Confirmar". */
   footer?: ReactNode
+  /** Ancho máximo de la ventana. */
   size?: 'sm' | 'md' | 'lg'
 }
 
+/** Ancho máximo de cada tamaño (clases de Tailwind). */
 const sizeStyles = {
   sm: 'max-w-sm',
   md: 'max-w-lg',
@@ -34,6 +41,8 @@ export default function Modal({
   footer,
   size = 'md',
 }: ModalProps) {
+  /** Cierra la ventana al presionar Escape. useCallback mantiene la misma
+      función entre renders para poder quitar el listener después. */
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -41,6 +50,8 @@ export default function Modal({
     [onClose],
   )
 
+  // Mientras está abierta: escucha la tecla Escape y bloquea el scroll de la página.
+  // La función de limpieza (return) deshace ambas cosas al cerrar.
   useEffect(() => {
     if (isOpen) {
       document.addEventListener('keydown', handleEscape)
@@ -52,8 +63,10 @@ export default function Modal({
     }
   }, [isOpen, handleEscape])
 
+  // Cerrada: no se dibuja nada.
   if (!isOpen) return null
 
+  // createPortal dibuja la ventana directamente dentro de <body>.
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"

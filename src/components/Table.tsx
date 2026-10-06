@@ -6,20 +6,35 @@ import { type ReactNode } from 'react'
    Estados de carga (skeleton) y vacío.
    ------------------------------------------------ */
 
+/**
+ * Definición de una columna.
+ * `T` es el tipo de cada fila (genérico): así la tabla sirve para cualquier dato.
+ */
 export interface Column<T> {
+  /** Campo de la fila que muestra esta columna. */
   key: keyof T & string
+  /** Título de la columna. */
   label: string
+  /** Dibujo personalizado de la celda (opcional). Sin él, se muestra el valor como texto. */
   render?: (value: T[keyof T], row: T) => ReactNode
 }
 
 interface TableProps<T> {
   columns: Column<T>[]
+  /** Filas a mostrar. */
   data: T[]
+  /** true muestra bloques grises animados (skeleton) en vez de las filas. */
   isLoading?: boolean
+  /** Texto cuando no hay filas. */
   emptyMessage?: string
+  /** Campo que identifica cada fila de forma única (se usa como "key" de React). */
   rowKey: keyof T & string
 }
 
+/**
+ * Tabla genérica: `<Table<Fila> columns={...} data={...} rowKey="id" />`.
+ * Desde "md" se ve como tabla; en móvil, cada fila es una tarjeta.
+ */
 export default function Table<T extends Record<string, unknown>>({
   columns,
   data,
