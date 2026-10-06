@@ -31,11 +31,13 @@ function formatTime(totalSeconds: number): string {
 }
 
 export default function QuizTimer({ timeRemaining, timeLimitSeconds }: QuizTimerProps) {
+  // Porcentaje de tiempo que queda, para el ancho de la barra.
   const percentage = useMemo(
     () => Math.max(0, (timeRemaining / timeLimitSeconds) * 100),
     [timeRemaining, timeLimitSeconds],
   )
 
+  // Nivel de urgencia según el tiempo restante (cambia el estilo del temporizador).
   const urgency = useMemo(() => {
     if (percentage <= 25) return 'critical'
     if (percentage <= 50) return 'warning'
