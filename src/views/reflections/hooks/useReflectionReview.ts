@@ -122,6 +122,7 @@ export function useReflectionReview(
   // Reflexión abierta ahora: un aviso de otra reflexión ya cerrada se descarta.
   const openReflectionIdRef = useRef<string | null>(null);
 
+  // Mantiene actualizada la referencia con la reflexión abierta.
   useEffect(() => {
     openReflectionIdRef.current = reflection?.id ?? null;
   }, [reflection?.id]);
@@ -138,8 +139,10 @@ export function useReflectionReview(
     setNotice(null);
   }, [reflection?.id]);
 
+  // true mientras se guarda o se valida (desactiva los botones).
   const isBusy = isSaving || isValidating;
 
+  // ¿El borrador del profesor es distinto de lo guardado? (hay cambios sin guardar)
   const isDirty = useMemo(
     () =>
       review !== null &&
@@ -147,6 +150,7 @@ export function useReflectionReview(
     [review, draftHints, draftComment],
   );
 
+  // ¿El borrador es distinto de la propuesta original de la IA? (habilita "Restaurar propuesta")
   const differsFromProposal = useMemo(
     () =>
       reflection !== null &&
@@ -155,47 +159,56 @@ export function useReflectionReview(
     [reflection, draftHints, draftComment],
   );
 
+  // Orientaciones que quedaron vacías: impiden guardar.
   const emptyHintIds = useMemo(
     () => draftHints.filter((hint) => hint.message.trim() === '').map((hint) => hint.id),
     [draftHints],
   );
   const isCommentEmpty = draftComment.trim() === '';
 
+  // Reglas de los botones: guardar exige cambios completos; validar exige no tener cambios pendientes.
   const canSave =
     reflection !== null && isDirty && emptyHintIds.length === 0 && !isCommentEmpty && !isBusy;
   const canValidate =
     reflection !== null && review?.status !== 'validated' && !isDirty && !isBusy;
 
+  /** Muestra un aviso solo si la reflexión sigue abierta (si el profesor cambió de reflexión, se descarta). */
   function showNotice(reflectionId: string, tone: ReviewNotice['tone'], message: string) {
     if (openReflectionIdRef.current !== reflectionId) return;
     noticeCounterRef.current += 1;
     setNotice({ id: noticeCounterRef.current, tone, message });
   }
 
+  /** Edita el texto de una orientación del borrador. */
   const updateHintMessage = useCallback((hintId: string, message: string) => {
     setDraftHints((current) =>
       current.map((hint) => (hint.id === hintId ? { ...hint, message } : hint)),
     );
   }, []);
 
+  /** Quita una orientación del borrador. */
   const removeHint = useCallback((hintId: string) => {
     setDraftHints((current) => current.filter((hint) => hint.id !== hintId));
   }, []);
 
+  /** Edita el comentario general del borrador. */
   const updateComment = useCallback((comment: string) => setDraftComment(comment), []);
 
+  /** Descarta los cambios: el borrador vuelve a lo último guardado. */
   const discardChanges = useCallback(() => {
     if (!review) return;
     setDraftHints(cloneHints(review.hints));
     setDraftComment(review.generalComment);
   }, [review]);
 
+  /** Vuelve a la propuesta original de la IA. */
   const restoreProposal = useCallback(() => {
     if (!reflection) return;
     setDraftHints(cloneHints(reflection.aiFeedback.hints));
     setDraftComment(reflection.aiFeedback.generalComment);
   }, [reflection]);
 
+  /** Guarda la edición del profesor (RF-02: puede editar la propuesta antes de validarla). */
   async function saveEdit() {
     if (!reflection || !canSave) return;
 
@@ -219,6 +232,7 @@ export function useReflectionReview(
     }
   }
 
+  /** Valida la retroalimentación: queda lista para entregar al estudiante. */
   async function validate() {
     if (!reflection || !canValidate) return;
 
@@ -234,6 +248,7 @@ export function useReflectionReview(
     }
   }
 
+  /** Cierra el aviso actual. */
   const dismissNotice = useCallback(() => setNotice(null), []);
 
   return {
