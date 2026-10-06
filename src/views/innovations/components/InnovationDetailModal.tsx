@@ -3,7 +3,15 @@ import Button from '../../../components/Button'
 import Modal from '../../../components/Modal'
 import type { InnovationCase } from '../models/innovation'
 
+/* ------------------------------------------------
+   InnovationDetailModal — HU-07
+   Ventana con el caso completo: contexto, desafío,
+   actuación mejorada, pasos para adaptarla y
+   resultados esperados. Usa el Modal global.
+   ------------------------------------------------ */
+
 interface InnovationDetailModalProps {
+  /** Caso a mostrar. Con null la ventana no se dibuja. */
   innovation: InnovationCase | null
   onClose: () => void
 }
@@ -12,6 +20,7 @@ export default function InnovationDetailModal({
   innovation,
   onClose,
 }: InnovationDetailModalProps) {
+  // Sin caso elegido no hay nada que mostrar.
   if (!innovation) return null
 
   return (

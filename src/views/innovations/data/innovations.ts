@@ -1,5 +1,14 @@
+/**
+ * @module views/innovations/data/innovations
+ *
+ * Casos de ejemplo de la biblioteca de innovaciones (HU-07). Son datos fijos
+ * (no vienen de una API): cuando exista backend, se reemplazarán por una
+ * llamada desde un servicio.
+ */
+
 import type { InnovationCase } from '../models/innovation'
 
+/** Lista de casos que muestra la biblioteca. */
 export const innovationCases: InnovationCase[] = [
   {
     id: 'learning-stations',

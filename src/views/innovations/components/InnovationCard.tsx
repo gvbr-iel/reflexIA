@@ -2,8 +2,16 @@ import { ArrowUpRight, Lightbulb } from 'lucide-react'
 import Button from '../../../components/Button'
 import type { InnovationCase } from '../models/innovation'
 
+/* ------------------------------------------------
+   InnovationCard — HU-07
+   Tarjeta de un caso: categoría, título, resumen,
+   etiquetas y botón para ver el detalle.
+   ------------------------------------------------ */
+
 interface InnovationCardProps {
+  /** Caso que muestra la tarjeta. */
   innovation: InnovationCase
+  /** Se llama al presionar "Ver caso", para abrir la ventana de detalle. */
   onOpen: (innovation: InnovationCase) => void
 }
 

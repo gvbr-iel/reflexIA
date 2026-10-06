@@ -4,7 +4,21 @@ import InnovationCard from './components/InnovationCard'
 import InnovationDetailModal from './components/InnovationDetailModal'
 import { useInnovations } from './hooks/useInnovations'
 
+/* ------------------------------------------------
+   InnovationsView — HU-07 / RF-07
+
+   Biblioteca de "actuaciones mejoradas": casos de
+   ejemplo que se pueden buscar, filtrar por categoría
+   y abrir en detalle. La comparten estudiantes
+   (/estudiante/innovaciones) y profesores guía
+   (/docente/innovaciones): la misma vista se monta en
+   los dos layouts.
+
+   La lógica vive en el hook useInnovations; aquí solo
+   se dibuja.
+   ------------------------------------------------ */
 export default function InnovationsView() {
+  // Se "desarma" el objeto que devuelve el hook para usar cada dato por su nombre.
   const {
     categories,
     filteredCases,
@@ -103,6 +117,8 @@ export default function InnovationsView() {
           </div>
         </div>
 
+        {/* Hay resultados: grilla de tarjetas. Sin resultados: estado vacío con
+            un botón para limpiar los filtros. */}
         {filteredCases.length > 0 ? (
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredCases.map((innovation) => (
@@ -128,6 +144,7 @@ export default function InnovationsView() {
         )}
       </section>
 
+      {/* Ventana de detalle: solo se ve cuando hay un caso elegido. */}
       <InnovationDetailModal
         innovation={selectedCase}
         onClose={() => setSelectedCase(null)}
