@@ -1,4 +1,4 @@
-# HU-07 — Espacio de consulta de actuaciones mejoradas e innovaciones
+ HU-07 — Espacio de consulta de actuaciones mejoradas e innovaciones
 
 ## Historia de usuario
 

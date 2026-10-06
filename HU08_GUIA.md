@@ -118,7 +118,12 @@ Debido a que no existe registro público por motivos de seguridad institucional,
 ### 1. Crear credenciales en Firebase Authentication
 En **Authentication → Users → Add user**:
 - **Email:** correo institucional `@ucen.cl` (ej: `alumno@ucen.cl`, `docente@ucen.cl`, `admin@ucen.cl`).
-- **Password:** contraseña institucional o provisional (mínimo 6 caracteres).
+- **Password:** contraseña única y aleatoria, definida según la política vigente del proyecto Firebase. Entrégala al titular por un canal seguro; no la guardes en el repositorio.
+
+Los correos de ejemplo y el procedimiento para preparar los tres registros base
+están en [`whitelist.md`](./whitelist.md). Son una plantilla de configuración:
+no crean usuarios en Firebase y deben reemplazarse si no son cuentas
+institucionales controladas y autorizadas.
 
 ### 2. Registrar autorización en Cloud Firestore
 En **Firestore Database → colección `whitelist`**:
@@ -155,7 +160,8 @@ npm run build
 npm run dev
 ```
 
-El flujo completo puede probarse con las tres cuentas de prueba configuradas en Firestore:
+Una vez creadas las cuentas en Firebase Authentication y sus documentos activos
+en Firestore, el flujo puede probarse con los correos de ejemplo:
 - `alumno@ucen.cl` → ingresa a `/estudiante`
 - `docente@ucen.cl` → ingresa a `/docente`
 - `admin@ucen.cl` → ingresa a `/admin/whitelist`
