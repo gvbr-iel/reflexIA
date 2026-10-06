@@ -78,6 +78,7 @@ export function useWorkshops(): UseWorkshopsReturn {
     load(false);
   }, [load]);
 
+  // retry muestra la carga (botón "Reintentar"); refresh actualiza en silencio.
   const retry = useCallback(() => load(false), [load]);
   const refresh = useCallback(() => load(true), [load]);
 
