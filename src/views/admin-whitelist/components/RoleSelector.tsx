@@ -11,17 +11,21 @@ import { ROLE_LABELS, WHITELIST_ROLES, type WhitelistRole } from '../../../model
 interface RoleSelectorProps {
   /** Identificador único del grupo de opciones. */
   name: string
+  /** Título del grupo de opciones. */
   legend: string
+  /** Rol elegido ahora. */
   value: WhitelistRole
   onChange: (role: WhitelistRole) => void
 }
 
+/** Ícono de cada rol. */
 const ROLE_ICONS = {
   student: GraduationCap,
   teacher: Presentation,
   admin: ShieldCheck,
 } as const
 
+/** Descripción corta que aparece bajo el nombre de cada rol. */
 const ROLE_HINTS: Record<WhitelistRole, string> = {
   student: 'Estudiante en práctica profesional',
   teacher: 'Docente de la asignatura',

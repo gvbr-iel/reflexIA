@@ -18,9 +18,12 @@ import RoleSelector from './RoleSelector'
 interface AddEmailModalProps {
   isOpen: boolean
   onClose: () => void
+  /** Autoriza el correo (viene de useWhitelist) y responde si salió bien o el error. */
   onSubmit: (email: string, role: WhitelistRole) => Promise<ActionResult>
 }
 
+/** Id del formulario: el botón "Autorizar" está en el pie del modal, fuera del
+    <form>, y se conecta con él mediante el atributo form={FORM_ID}. */
 const FORM_ID = 'add-email-form'
 
 export default function AddEmailModal({ isOpen, onClose, onSubmit }: AddEmailModalProps) {
@@ -29,6 +32,7 @@ export default function AddEmailModal({ isOpen, onClose, onSubmit }: AddEmailMod
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  /** Limpia el formulario y cierra, para que la próxima vez empiece vacío. */
   function handleClose() {
     setEmail('')
     setRole('student')
@@ -36,8 +40,10 @@ export default function AddEmailModal({ isOpen, onClose, onSubmit }: AddEmailMod
     onClose()
   }
 
+  /** Envía el correo; si sale bien cierra el modal, si no muestra el mensaje de error. */
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    // Validación mínima en el formulario; el formato y el dominio los valida el servicio.
     if (email.trim() === '') {
       setError('Escribe el correo institucional que quieres autorizar.')
       return

@@ -10,14 +10,19 @@ import { fieldClassName, labelClassName } from './fieldStyles'
    ------------------------------------------------ */
 
 interface FilterBarProps {
+  /** Valores actuales de los tres filtros. */
   filters: WhitelistFilters
+  /** Cada cambio se envía al hook, que es quien guarda los filtros. */
   onQueryChange: (query: string) => void
   onStatusChange: (status: StatusFilter) => void
   onRoleChange: (role: RoleFilter) => void
+  /** Vuelve todos los filtros a "Todos". */
   onClear: () => void
+  /** true si algún filtro está en uso (muestra "Limpiar filtros"). */
   hasActiveFilters: boolean
   /** Cantidad de resultados con los filtros actuales. */
   resultCount: number
+  /** Cantidad total de correos, sin filtrar. */
   totalCount: number
   isLoading: boolean
 }

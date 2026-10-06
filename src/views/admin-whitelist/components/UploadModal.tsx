@@ -37,9 +37,11 @@ interface UploadModalProps {
   onClose: () => void
   /** Whitelist actual, para detectar correos ya registrados. */
   entries: WhitelistEntry[]
+  /** Importa los correos (viene de useWhitelist) y responde si salió bien. */
   onImport: (payload: BulkImportPayload) => Promise<ActionResult>
 }
 
+/** Las dos pestañas para ingresar correos: subir un archivo o pegar texto. */
 const SOURCE_OPTIONS: Array<{ mode: BulkSourceMode; label: string; icon: typeof FileSpreadsheet }> = [
   { mode: 'file', label: 'Subir archivo', icon: FileSpreadsheet },
   { mode: 'paste', label: 'Pegar correos', icon: ClipboardList },
@@ -55,6 +57,7 @@ const ROW_STATUS: Record<BulkRowStatus, { label: string; icon: typeof Info; impo
   'invalid-domain': { label: 'No es @ucen.cl', icon: CircleAlert, importable: false },
 }
 
+/** Un número del resumen de la vista previa (por ejemplo, "12 se agregarán"). */
 function SummaryItem({ value, label }: { value: number; label: string }) {
   return (
     <div className="rounded-lg border border-border bg-bg px-3 py-2">
@@ -64,6 +67,7 @@ function SummaryItem({ value, label }: { value: number; label: string }) {
   )
 }
 
+/** Una línea de la vista previa: número de línea, correo y qué pasará con él. */
 function PreviewRow({ row }: { row: BulkPreviewRow }) {
   const { label, icon: Icon, importable } = ROW_STATUS[row.status]
   return (
@@ -87,6 +91,7 @@ function PreviewRow({ row }: { row: BulkPreviewRow }) {
 }
 
 export default function UploadModal({ isOpen, onClose, entries, onImport }: UploadModalProps) {
+  // La lectura del archivo y la vista previa viven en el hook useBulkUpload.
   const bulk = useBulkUpload(entries)
   const [isImporting, setIsImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -94,6 +99,7 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
   const [showErrors, setShowErrors] = useState(false)
   const errorsRef = useRef<HTMLDivElement>(null)
 
+  // Números que se muestran en el resumen y en el botón.
   const toImport = bulk.emailsToImport.length
   const errorCount = bulk.rejectedRows.length
   const alreadyRegistered = bulk.counts.existing + bulk.counts.duplicate
@@ -109,6 +115,7 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
     (a, b) => Number(ROW_STATUS[a.status].importable) - Number(ROW_STATUS[b.status].importable),
   )
 
+  /** Cierra y reinicia todo. No deja cerrar mientras se está importando. */
   function handleClose() {
     if (isImporting) return
     bulk.reset()
@@ -117,6 +124,7 @@ export default function UploadModal({ isOpen, onClose, entries, onImport }: Uplo
     onClose()
   }
 
+  /** Importa los correos válidos, o muestra los errores que hay que corregir primero. */
   async function handleImport() {
     setImportError(null)
 
