@@ -58,7 +58,41 @@ Este documento resume dónde se implementan los hooks principales del proyecto y
 | `useInnovations` | [src/views/innovations/hooks/useInnovations.ts](../../src/views/innovations/hooks/useInnovations.ts) | Biblioteca compartida de innovaciones. |
 | `useTeacherDashboard` | [src/views/teacher-dashboard/hooks/useTeacherDashboard.ts](../../src/views/teacher-dashboard/hooks/useTeacherDashboard.ts) | Panel de seguimiento del docente. |
 
-## 4) Relación con la configuración de rutas
+## 4) Hooks nativos de React y React Router
+
+Además de los hooks personalizados del proyecto, la app usa varios hooks nativos de React y de React Router para controlar estado, navegación y parámetros de ruta.
+
+### 4.1) Hooks de React
+
+| Hook | Uso típico en el proyecto | Ejemplos de archivo |
+|---|---|---|
+| `useState` | Estado local de formularios, modales, filtros, listas y controles de UI. | [src/views/auth/LoginView.tsx](../../src/views/auth/LoginView.tsx), [src/views/admin-whitelist/WhiteListView.tsx](../../src/views/admin-whitelist/WhiteListView.tsx) |
+| `useEffect` | Efectos de carga, suscripción, sincronización con cambios de estado o limpieza de recursos. | [src/context/AuthContext.tsx](../../src/context/AuthContext.tsx), [src/views/critical-incidents/components/IncidentWizard.tsx](../../src/views/critical-incidents/components/IncidentWizard.tsx) |
+| `useMemo` | Cálculos derivados para evitar recomputación innecesaria. | [src/views/critical-incidents/components/SensitiveDataPreview.tsx](../../src/views/critical-incidents/components/SensitiveDataPreview.tsx) |
+| `useRef` | Referencias a elementos del DOM o valores persistentes sin disparar render. | [src/components/Dropzone.tsx](../../src/components/Dropzone.tsx), [src/views/admin-whitelist/components/UploadModal.tsx](../../src/views/admin-whitelist/components/UploadModal.tsx) |
+| `useCallback` | Funciones memoizadas para dependencias estables dentro de contextos o efectos. | [src/context/AuthContext.tsx](../../src/context/AuthContext.tsx), [src/components/Modal.tsx](../../src/components/Modal.tsx) |
+
+### 4.2) Hooks de React Router
+
+| Hook | Uso típico en el proyecto | Ejemplos de archivo |
+|---|---|---|
+| `useNavigate` | Redirección del usuario tras login, acceso bloqueado o navegación programática. | [src/views/auth/LoginView.tsx](../../src/views/auth/LoginView.tsx), [src/views/critical-incidents/CriticalIncidentView.tsx](../../src/views/critical-incidents/CriticalIncidentView.tsx) |
+| `useLocation` | Detectar la ruta actual para condicionamientos de UI o autenticación. | [src/components/RequireStudent.tsx](../../src/components/RequireStudent.tsx), [src/layouts/StudentLayout.tsx](../../src/layouts/StudentLayout.tsx) |
+| `useParams` | Leer parámetros de la URL, como `:workshopId` en talleres. | [src/views/critical-incidents/components/WorkshopWorkspace.tsx](../../src/views/critical-incidents/components/WorkshopWorkspace.tsx) |
+
+### 4.3) Observación de arquitectura
+
+Estos hooks no viven en carpetas `hooks/` del proyecto, sino que son hooks del framework y se usan directamente en componentes y layouts para manejar:
+
+- estado local de la pantalla,
+- efectos de ciclo de vida,
+- navegación entre rutas,
+- lectura de parámetros de URL,
+- referencias a elementos o valores no reactivos.
+
+En otras palabras, los hooks personalizados encapsulan la lógica de negocio, mientras que los hooks de React y React Router gestionan la capa de render y navegación de la aplicación.
+
+## 5) Relación con la configuración de rutas
 
 La definición de rutas está en [src/App.tsx](../../src/App.tsx), donde se montan las vistas por rol y URL. Los hooks se implementan en carpetas específicas dentro de cada feature, siguiendo la convención:
 
@@ -71,7 +105,7 @@ Esto permite mantener la separación entre:
 - lógica de estado y efectos (hooks en `hooks/`),
 - acceso a datos y almacenamiento (servicios y utils).
 
-## 5) Conclusión
+## 6) Conclusión
 
 La mayor parte de la lógica reactiva del proyecto está encapsulada en hooks que viven junto a cada feature y se consumen desde las rutas definidas en [src/App.tsx](../../src/App.tsx). El patrón general es:
 
@@ -80,3 +114,4 @@ La mayor parte de la lógica reactiva del proyecto está encapsulada en hooks qu
 - docente: `useTeacherDashboard`, `useReflections`, `useWorkPacing`
 - estudiante: `useTheoryQuiz`, `useWorkshops`, `useTheoryGate`, `useIncidentWizard`, `useImpulse`
 - contenidos compartidos: `useInnovations`
+- hooks del framework: `useState`, `useEffect`, `useMemo`, `useRef`, `useCallback`, `useNavigate`, `useLocation`, `useParams`
