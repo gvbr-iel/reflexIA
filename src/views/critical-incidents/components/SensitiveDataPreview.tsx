@@ -46,6 +46,8 @@ export interface SensitiveDataPreviewProps {
   onRetry: () => void;
   /** Callback para cerrar o descartar la vista previa. */
   onDismiss: () => void;
+  /** Callback para cancelar la petición de análisis en curso. */
+  onCancel?: () => void;
 }
 
 /**
@@ -88,13 +90,14 @@ export default function SensitiveDataPreview({
   hasSensitiveData,
   onRetry,
   onDismiss,
+  onCancel,
 }: SensitiveDataPreviewProps) {
   // 1. Si no se está analizando, no hay error y no se ha analizado, no renderizar nada
   if (!isAnalyzing && !analysisError && !hasAnalyzed) {
     return null;
   }
 
-  // 2. Estado de carga: skeleton animado
+  // 2. Estado de carga: skeleton animado con opción de cancelar
   if (isAnalyzing) {
     return (
       <div
@@ -104,11 +107,23 @@ export default function SensitiveDataPreview({
         aria-label="Analizando relato en busca de datos sensibles"
         className="rounded-xl border border-border bg-surface p-4 md:p-5 space-y-3"
       >
-        <div className="flex items-center gap-2.5 text-primary">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm font-medium">
-            Analizando relato en busca de datos sensibles...
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-primary">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <p className="text-sm font-medium">
+              Analizando relato en busca de datos sensibles...
+            </p>
+          </div>
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onCancel}
+            >
+              Cancelar
+            </Button>
+          )}
         </div>
         <div className="space-y-2 animate-pulse pt-1">
           <div className="h-4 w-full rounded bg-border/50" />
@@ -164,7 +179,7 @@ export default function SensitiveDataPreview({
         <div className="flex items-center gap-3">
           <ShieldCheck size={22} className="text-accent-ia shrink-0" aria-hidden="true" />
           <p className="text-sm font-medium text-texto">
-            No se detectaron datos sensibles en este paso del relato.
+            No se detectaron datos sensibles en el relato.
           </p>
         </div>
         <button

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { ArrowLeft, ArrowRight, LockKeyhole, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CircleAlert, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 
 import Button from '../../components/Button'
@@ -51,6 +51,11 @@ export default function LoginView() {
   // true mientras se espera la respuesta de Firebase (el botón muestra carga).
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Validación en tiempo real: alerta cuando el usuario ha escrito y aún no termina en @ucen.cl.
+  const isDomainInvalid =
+    email.trim().length > 0 &&
+    !email.trim().toLowerCase().endsWith(INSTITUTIONAL_DOMAIN.toLowerCase())
+
   // Si ya hay sesión, no tiene sentido mostrar el login: se va al panel del rol.
   if (status === 'authenticated') {
     return <Navigate to={getRoleRedirect(role)} replace />
@@ -60,6 +65,10 @@ export default function LoginView() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     // Evita que el navegador recargue la página al enviar el formulario.
     event.preventDefault()
+    if (isDomainInvalid) {
+      setError(`Ingresa un correo institucional válido que termine en ${INSTITUTIONAL_DOMAIN}.`)
+      return
+    }
     setError(null)
     setIsSubmitting(true)
 
@@ -132,14 +141,29 @@ export default function LoginView() {
                 maxLength={254}
                 required
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value)
+                  if (error) setError(null)
+                }}
                 placeholder={`nombre${INSTITUTIONAL_DOMAIN}`}
-                aria-describedby="email-help"
-                className="min-h-12 w-full rounded-lg border border-border bg-surface px-4 py-3 text-base text-texto placeholder:text-texto/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                aria-invalid={isDomainInvalid}
+                aria-describedby={isDomainInvalid ? 'email-domain-alert' : undefined}
+                className={`min-h-12 w-full rounded-lg border bg-surface px-4 py-3 text-base text-texto placeholder:text-texto/40 focus:outline-none focus:ring-2 ${
+                  isDomainInvalid
+                    ? 'border-perf-fail focus:border-perf-fail focus:ring-perf-fail/20'
+                    : 'border-border focus:border-primary focus:ring-primary/20'
+                }`}
               />
-              <p id="email-help" className="mt-2 text-sm text-texto/60">
-                Debe terminar en {INSTITUTIONAL_DOMAIN}.
-              </p>
+              {isDomainInvalid && (
+                <p
+                  id="email-domain-alert"
+                  role="alert"
+                  className="mt-2 flex items-center gap-1.5 text-sm font-medium text-perf-fail"
+                >
+                  <CircleAlert size={15} className="shrink-0" aria-hidden="true" />
+                  Debe terminar en {INSTITUTIONAL_DOMAIN}.
+                </p>
+              )}
             </div>
 
             <div>
