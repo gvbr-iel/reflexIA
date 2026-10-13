@@ -60,10 +60,22 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
     retry: retryReferences,
   } = useTheoryReferences(wizard.currentStep.id)
 
-  // Limpia los resultados de detección sensible al cambiar de paso
+  // Limpia los resultados de detección sensible al cambiar de taller
   useEffect(() => {
     sensitiveDetector.clearResults()
-  }, [wizard.currentStep.id, sensitiveDetector.clearResults])
+  }, [workshopId, sensitiveDetector.clearResults])
+
+  // Pasa todo el relato (los 4 pasos) a OpenRouter en una sola llamada
+  const handleDetectSensitiveData = () => {
+    const fullNarrative = [
+      `Contexto:\n${(wizard.values.context ?? '').trim()}`,
+      `Descripción del incidente:\n${(wizard.values.description ?? '').trim()}`,
+      `Actores involucrados:\n${(wizard.values.actors ?? '').trim()}`,
+      `Relevancia pedagógica:\n${(wizard.values.relevance ?? '').trim()}`,
+    ].join('\n\n')
+
+    void sensitiveDetector.analyze(fullNarrative)
+  }
 
   /* ---- Estado de carga ---- */
   if (wizard.isLoading) {
@@ -132,23 +144,6 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           onChange={(text) => wizard.setFieldValue(wizard.currentStep.id, text)}
           error={wizard.stepError}
         />
-
-        {(sensitiveDetector.hasAnalyzed ||
-          sensitiveDetector.isAnalyzing ||
-          sensitiveDetector.analysisError) && (
-          <SensitiveDataPreview
-            originalText={sensitiveDetector.analyzedText ?? ''}
-            detectedWords={sensitiveDetector.detectedWords}
-            isAnalyzing={sensitiveDetector.isAnalyzing}
-            analysisError={sensitiveDetector.analysisError}
-            hasAnalyzed={sensitiveDetector.hasAnalyzed}
-            hasSensitiveData={sensitiveDetector.hasSensitiveData}
-            onRetry={() =>
-              sensitiveDetector.analyze(wizard.values[wizard.currentStep.id] || '')
-            }
-            onDismiss={sensitiveDetector.clearResults}
-          />
-        )}
       </div>
 
       <div className="xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-2 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
@@ -173,34 +168,53 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           </Button>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <Button
-              variant="outline"
-              size="md"
-              icon={<Shield size={18} />}
-              isLoading={sensitiveDetector.isAnalyzing}
-              onClick={() =>
-                sensitiveDetector.analyze(wizard.values[wizard.currentStep.id] || '')
-              }
-              disabled={!wizard.values[wizard.currentStep.id]?.trim()}
-            >
-              Detectar datos sensibles
-            </Button>
-
-            {!wizard.isLastStep && (
+            {!wizard.isLastStep ? (
               <Button onClick={wizard.goNext}>
                 Siguiente
                 <ArrowRight size={18} aria-hidden="true" />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="md"
+                icon={<Shield size={18} />}
+                isLoading={sensitiveDetector.isAnalyzing}
+                onClick={handleDetectSensitiveData}
+                disabled={!wizard.allStepsCompleted || sensitiveDetector.isAnalyzing}
+              >
+                Detectar datos sensibles
               </Button>
             )}
           </div>
         </div>
 
+        {/* Vista previa de datos sensibles del relato completo (solo en el paso final) */}
+        {wizard.isLastStep &&
+          (sensitiveDetector.hasAnalyzed ||
+            sensitiveDetector.isAnalyzing ||
+            sensitiveDetector.analysisError) && (
+            <SensitiveDataPreview
+              originalText={sensitiveDetector.analyzedText ?? ''}
+              detectedWords={sensitiveDetector.detectedWords}
+              isAnalyzing={sensitiveDetector.isAnalyzing}
+              analysisError={sensitiveDetector.analysisError}
+              hasAnalyzed={sensitiveDetector.hasAnalyzed}
+              hasSensitiveData={sensitiveDetector.hasSensitiveData}
+              onRetry={handleDetectSensitiveData}
+              onDismiss={sensitiveDetector.clearResults}
+              onCancel={sensitiveDetector.cancelAnalysis}
+            />
+          )}
+
         {wizard.isLastStep && wizard.allStepsCompleted && (
-          <p role="status" className="text-sm text-texto/70">
-            Completaste los 4 pasos. Puedes pedir un impulso a la IA para saber
-            qué aspectos profundizar, o guardar tu borrador y retomarlo cuando
-            quieras: guardar no descuenta intentos.
-          </p>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-texto space-y-1">
+            <p className="font-semibold text-primary">
+              ¡Completaste los 4 pasos del relato!
+            </p>
+            <p className="text-texto/80 leading-relaxed">
+              Puedes verificar que tu relato esté libre de datos sensibles con el botón superior antes de pedir un impulso a la IA o guardar tu borrador.
+            </p>
+          </div>
         )}
 
         <DraftManager
@@ -214,7 +228,10 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           }
           maxAttempts={impulse.maxAttempts}
           onSave={wizard.saveDraft}
-          onDiscard={wizard.discardDraft}
+          onDiscard={() => {
+            sensitiveDetector.clearResults()
+            return wizard.discardDraft()
+          }}
         />
 
         <ImpulsePanel impulse={impulse} />

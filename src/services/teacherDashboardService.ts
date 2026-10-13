@@ -29,6 +29,11 @@ import type {
   TeacherDashboardData,
 } from '../models/teacherDashboard';
 import { getPerformanceStatus } from '../utils/performanceStatus';
+import { readUserStorage } from '../utils/userStorage';
+import type { ReflectionReview } from '../models/reflection';
+import { sampleReflections } from '../views/reflections/data/reflections';
+
+const REVIEW_STORAGE_KEY = 'reflexia_reflection_reviews';
 
 /** Latencia simulada para que se vean los estados de carga. */
 const MOCK_LATENCY_MS = 600;
@@ -107,7 +112,11 @@ function getTheoryStatus(theory: TheoryOutcome): PerformanceStatus {
 }
 
 /** Arma las 5 actividades de un estudiante (marco teórico y talleres 1 a 4). */
-function buildActivities(seed: StudentSeed): StudentActivityProgress[] {
+function buildActivities(
+  seed: StudentSeed,
+  letterAlias: string,
+  store: Record<string, ReflectionReview>,
+): StudentActivityProgress[] {
   const theory: StudentActivityProgress = {
     activityId: THEORY_ACTIVITY_ID,
     title: 'Marco teórico',
@@ -119,28 +128,47 @@ function buildActivities(seed: StudentSeed): StudentActivityProgress[] {
     deadline: null,
   };
 
-  const workshops = seed.workshops.map(([grade, attemptsUsed], index): StudentActivityProgress => ({
-    activityId: `workshop-${index + 1}`,
-    title: `Taller ${index + 1}`,
-    status: getPerformanceStatus(grade),
-    grade,
-    attemptsUsed,
-    maxAttempts: DEFAULT_WORKSHOP_CONFIG.maxAttemptsPerWorkshop,
-    deadline: dateFromToday(WORKSHOP_DEADLINE_OFFSETS[index]),
-  }));
+  const workshops = seed.workshops.map(([seedGrade, attemptsUsed], index): StudentActivityProgress => {
+    const workshopNumber = index + 1;
+    const matchingSample = sampleReflections.find(
+      (r) => r.studentAlias === letterAlias && r.workshopNumber === workshopNumber,
+    );
+
+    let finalGrade = seedGrade;
+    if (matchingSample) {
+      const activeReview = store[matchingSample.id] ?? matchingSample.review;
+      if (activeReview.status === 'validated' && activeReview.assignedGrade !== null) {
+        finalGrade = activeReview.assignedGrade;
+      }
+    }
+
+    return {
+      activityId: `workshop-${workshopNumber}`,
+      title: `Taller ${workshopNumber}`,
+      status: getPerformanceStatus(finalGrade),
+      grade: finalGrade,
+      attemptsUsed,
+      maxAttempts: DEFAULT_WORKSHOP_CONFIG.maxAttemptsPerWorkshop,
+      deadline: dateFromToday(WORKSHOP_DEADLINE_OFFSETS[index]),
+    };
+  });
 
   return [theory, ...workshops];
 }
 
 /** Convierte los datos de partida en la lista de estudiantes. */
 function buildStudents(): StudentProgress[] {
+  const store = readUserStorage<Record<string, ReflectionReview>>(REVIEW_STORAGE_KEY) ?? {};
+
   return STUDENT_SEEDS.map((seed, index) => {
     const number = String(index + 1).padStart(2, '0');
+    const letterAlias = `Estudiante ${String.fromCharCode(65 + index)}`;
+
     return {
       id: `student-${number}`,
       alias: `Estudiante ${number}`,
       email: `estudiante${number}@ucen.cl`,
-      activities: buildActivities(seed),
+      activities: buildActivities(seed, letterAlias, store),
     };
   });
 }

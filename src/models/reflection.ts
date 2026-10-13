@@ -59,6 +59,14 @@ export interface ReflectionReview {
   hints: AIFeedbackHint[];
   /** Comentario general vigente, con los cambios del docente si los hubo. */
   generalComment: string;
+  /**
+   * Nota real asignada por el docente guía (escala chilena de 1.0 a 7.0).
+   * La IA solo sugiere una nota diagnóstica; la nota real es potestad humana
+   * y exclusiva del docente. null si aún no ha sido calificada.
+   */
+  assignedGrade: number | null;
+  /** Observaciones pedagógicas o justificación del docente sobre la nota real. */
+  gradeNotes?: string;
   /** Marca temporal ISO 8601 de la última acción docente (null si ninguna). */
   reviewedAt: string | null;
 }
@@ -137,13 +145,22 @@ export interface SaveReviewEditPayload {
   hints: AIFeedbackHint[];
   /** Comentario general con los cambios del docente. */
   generalComment: string;
+  /** Nota real asignada por el docente (o null si aún está en borrador sin calificar). */
+  assignedGrade: number | null;
+  /** Observaciones o justificación del docente sobre la nota. */
+  gradeNotes?: string;
 }
 
 /**
  * Payload para validar la retroalimentación vigente de una reflexión.
  * Usado por `reflectionService.validate()`.
+ * Requiere que el docente haya establecido la nota real del estudiante.
  */
 export interface ValidateReviewPayload {
   /** ID de la reflexión validada. */
   reflectionId: string;
+  /** Nota real y definitiva asignada por el docente (de 1.0 a 7.0). */
+  assignedGrade: number;
+  /** Observaciones o justificación del docente sobre la nota real. */
+  gradeNotes?: string;
 }
