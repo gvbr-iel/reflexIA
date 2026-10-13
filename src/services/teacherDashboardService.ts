@@ -26,7 +26,7 @@
 import { collection, getDocs } from 'firebase/firestore';
 
 import { DEFAULT_QUIZ_CONFIG } from '../models/theoryQuiz';
-import { EVALUATIONS_COLLECTION } from '../models/studentEvaluation';
+import type { WorkshopEvaluation } from '../models/studentEvaluation';
 import { PROGRESS_COLLECTION } from '../models/studentProgress';
 import { THEORY_ACTIVITY_ID } from '../models/workPacing';
 import {
@@ -40,6 +40,7 @@ import type { WhitelistEntry } from '../models/whitelist';
 import { getPerformanceStatus } from '../utils/performanceStatus';
 import { criticalIncidentService } from './criticalIncidentService';
 import { firestoreDb } from './firebase';
+import { studentEvaluationService, type WorkshopEvaluations } from './studentEvaluationService';
 import { studentProfileService } from './studentProfileService';
 import { whitelistService } from './whitelistService';
 
@@ -67,21 +68,15 @@ async function readCollection(name: string): Promise<Map<string, RawDocument>> {
 // ─────────────────────────────────────────────
 // Interpretación de los documentos
 // ─────────────────────────────────────────────
-// Los documentos de `evaluations` se pueden cargar a mano, así que pueden
-// venir incompletos. Estas funciones toman solo lo que está bien escrito e
-// ignoran el resto, en vez de romper todo el panel. Los nombres de `profiles`
-// los lee `studentProfileService`, con el mismo criterio.
+// Estas funciones leen el documento `progress` tomando solo lo que está bien
+// escrito e ignorando el resto, en vez de romper todo el panel. Los nombres
+// (`profiles`) y las notas (`evaluations`) los leen sus propios servicios,
+// con el mismo criterio.
 
 /** Avance del marco teórico que publicó el estudiante. */
 interface TheoryProgress {
   isApproved: boolean;
   attemptsUsed: number;
-}
-
-/** Nota y resultado de un taller que puso el profesor. */
-interface WorkshopEvaluationData {
-  grade: number | null;
-  outcome: 'approved' | 'failed' | null;
 }
 
 /** Devuelve el valor si es un número, y si no, el valor de respaldo. */
@@ -109,25 +104,6 @@ function readWorkshopAttempts(progress: RawDocument | undefined, workshopId: str
   return isRecord(workshop) ? readNumber(workshop.attemptsUsed, 0) : 0;
 }
 
-/** Nota y resultado de un taller, según el documento `evaluations` (null si no hay). */
-function readWorkshopEvaluation(
-  evaluation: RawDocument | undefined,
-  workshopId: string,
-): WorkshopEvaluationData | null {
-  const workshops = evaluation?.workshops;
-  if (!isRecord(workshops)) return null;
-
-  const workshop = workshops[workshopId];
-  if (!isRecord(workshop)) return null;
-
-  const grade =
-    typeof workshop.grade === 'number' && Number.isFinite(workshop.grade) ? workshop.grade : null;
-  const outcome =
-    workshop.outcome === 'approved' || workshop.outcome === 'failed' ? workshop.outcome : null;
-
-  return { grade, outcome };
-}
-
 // ─────────────────────────────────────────────
 // Construcción de los datos
 // ─────────────────────────────────────────────
@@ -139,7 +115,7 @@ function readWorkshopEvaluation(
  * aprobado es aprobado (o sobresaliente si la nota llega a 5.0). Si solo hay
  * nota, se usa la tabla de notas. Sin evaluación, el taller no se entregó.
  */
-function getWorkshopStatus(evaluation: WorkshopEvaluationData | null): PerformanceStatus {
+function getWorkshopStatus(evaluation: WorkshopEvaluation | undefined): PerformanceStatus {
   if (!evaluation) return 'not-submitted';
   if (evaluation.outcome === 'failed') return 'failed';
   if (evaluation.outcome === 'approved') {
@@ -169,7 +145,7 @@ interface WorkshopLimits {
 function buildActivities(
   workshops: WorkshopLimits[],
   progress: RawDocument | undefined,
-  evaluation: RawDocument | undefined,
+  evaluations: WorkshopEvaluations | undefined,
 ): StudentActivityProgress[] {
   const theory = readTheoryProgress(progress);
 
@@ -185,7 +161,7 @@ function buildActivities(
   };
 
   const workshopActivities = workshops.map((workshop): StudentActivityProgress => {
-    const workshopEvaluation = readWorkshopEvaluation(evaluation, workshop.id);
+    const workshopEvaluation = evaluations?.get(workshop.id);
     return {
       activityId: workshop.id,
       title: workshop.title,
@@ -211,7 +187,7 @@ function buildStudents(
   workshops: WorkshopLimits[],
   progressByEmail: Map<string, RawDocument>,
   nameByEmail: Map<string, string>,
-  evaluationByEmail: Map<string, RawDocument>,
+  evaluationsByEmail: Map<string, WorkshopEvaluations>,
 ): StudentProgress[] {
   return entries
     .map((entry): StudentProgress => ({
@@ -221,7 +197,7 @@ function buildStudents(
       activities: buildActivities(
         workshops,
         progressByEmail.get(entry.email),
-        evaluationByEmail.get(entry.email),
+        evaluationsByEmail.get(entry.email),
       ),
     }))
     .sort((a, b) => sortKey(a).localeCompare(sortKey(b), 'es'));
@@ -242,12 +218,12 @@ export const teacherDashboardService = {
    * `/docente/plazos` (queda pendiente junto con HU-06).
    */
   async fetchDashboard(): Promise<TeacherDashboardData> {
-    const [students, progressByEmail, nameByEmail, evaluationByEmail, workshopDefaults] =
+    const [students, progressByEmail, nameByEmail, evaluationsByEmail, workshopDefaults] =
       await Promise.all([
         whitelistService.fetchActiveStudents(),
         readCollection(PROGRESS_COLLECTION),
         studentProfileService.fetchNames(),
-        readCollection(EVALUATIONS_COLLECTION),
+        studentEvaluationService.fetchAll(),
         criticalIncidentService.fetchWorkshopPacingDefaults(),
       ]);
 
@@ -262,7 +238,7 @@ export const teacherDashboardService = {
         workshops,
         progressByEmail,
         nameByEmail,
-        evaluationByEmail,
+        evaluationsByEmail,
       ),
       generatedAt: new Date().toISOString(),
     };
