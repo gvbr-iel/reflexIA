@@ -220,14 +220,15 @@ views/<feature>/<Feature>View.tsx → arma la pantalla dentro del layout de su r
 - **¿Qué hace `lazy` y `Suspense` en `App.tsx`?** Cada pantalla se descarga solo cuando se visita (carga inicial más liviana). `Suspense` muestra "Cargando…" mientras tanto.
 - **¿Cómo protegen las rutas?** Con `RequireStudent` y `allowedRoles`. Además, Firestore tiene reglas de seguridad: la protección real no depende solo del frontend.
 - **¿Por qué `localStorage` por usuario?** Porque aún no hay backend para talleres y cuestionario. Se agrega el UID a la clave para que dos usuarios del mismo navegador no vean datos del otro.
-- **¿Qué es real y qué es simulado?** Real: login (Firebase Auth), whitelist (Firestore) y detección de datos sensibles (OpenRouter). Simulado en el frontend: cuestionario y talleres (`localStorage`), El Impulso (`impulseGenerator`), reflexiones, panel docente y biblioteca (datos de ejemplo). Los servicios mantienen su firma para reemplazarlos por una API sin cambiar los hooks.
+- **¿Qué es real y qué es simulado?** Real: login (Firebase Auth), whitelist y seguimiento docente (Firestore; las notas se cargan a mano) y detección de datos sensibles (OpenRouter). Simulado en el frontend: cuestionario y talleres (`localStorage`), El Impulso (`impulseGenerator`), reflexiones y biblioteca (datos de ejemplo). Los servicios mantienen su firma para reemplazarlos por una API sin cambiar los hooks.
 - **¿Cómo cumplen la privacidad?** Sin RUT, solo correos `@ucen.cl` autorizados, detección de nombres antes de procesar y alias en vez de nombres reales.
 - **¿Por qué no usan rojo en botones o errores?** Por pedido de la cliente: el rojo se reserva para el desempeño reprobado.
 
 ### 4.9 Limitaciones conocidas (mejor decirlas antes de que pregunten)
 
 - La configuración de plazos e intentos (HU-06) se guarda, pero todavía no la leen los talleres ni el cuestionario.
-- El panel docente y las reflexiones usan datos de ejemplo: el profesor aún no puede leer el avance real, que vive en el `localStorage` de cada estudiante.
+- Las reflexiones usan datos de ejemplo: el almacenamiento local por cuenta impide leer los relatos de otro estudiante.
+- El panel docente lee datos reales de Firestore, pero las notas y los nombres se cargan a mano y los plazos son los fijos de los talleres, no los de `/docente/plazos`. El "aprobado" lo calcula el navegador del estudiante, así que no es a prueba de manipulación sin un backend.
 - El Impulso se genera con reglas en el frontend (no con un modelo de IA).
 - Los límites de nota (aprobado de 4.0 a 5.0 y sobresaliente de 5.0 a 7.0) se solapan en el 5.0; se tomó 5.0 como sobresaliente, y falta confirmarlo con la cliente.
 

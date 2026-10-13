@@ -46,6 +46,7 @@ Este documento resume dónde se implementan los hooks principales del proyecto y
 |---|---|---|
 | `useAuth` | [src/hooks/useAuth.ts](../../src/hooks/useAuth.ts) | Autenticación global, sesión, rol y cierre de sesión. |
 | `useWorkshops` | [src/hooks/useWorkshops.ts](../../src/hooks/useWorkshops.ts) | Listado y acceso a talleres del estudiante. |
+| `useProgressSync` | [src/hooks/useProgressSync.ts](../../src/hooks/useProgressSync.ts) | Publica en Firestore el avance del estudiante al abrir su sesión (lo usa `StudentLayout`). |
 | `useTheoryGate` | [src/views/critical-incidents/hooks/useTheoryGate.ts](../../src/views/critical-incidents/hooks/useTheoryGate.ts) | Valida si el estudiante aprobó el marco teórico antes de entrar a incidentes críticos. |
 | `useIncidentWizard` | [src/views/critical-incidents/hooks/useIncidentWizard.ts](../../src/views/critical-incidents/hooks/useIncidentWizard.ts) | Flujo paso a paso del asistente de incidentes. |
 | `useImpulse` | [src/views/critical-incidents/hooks/useImpulse.ts](../../src/views/critical-incidents/hooks/useImpulse.ts) | Solicitud de impulso del docente/IA dentro del taller. |
