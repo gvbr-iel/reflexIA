@@ -82,6 +82,12 @@ export interface Reflection {
   id: string;
   /** Alias anónimo del estudiante (e.g. "Estudiante A"). */
   studentAlias: string;
+  /**
+   * Correo institucional del estudiante, en minúsculas. Es el dato que une la
+   * reflexión con su nota en Firestore (`evaluations/{correo}`) y con su
+   * nombre (`profiles/{correo}`).
+   */
+  studentEmail: string;
   /** ID del taller al que pertenece (e.g. "workshop-1"). */
   workshopId: string;
   /** Número ordinal del taller (1–4). */
