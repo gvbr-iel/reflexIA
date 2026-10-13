@@ -26,6 +26,7 @@ import {
   query,
   runTransaction,
   setDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore'
 
@@ -189,6 +190,24 @@ export const whitelistService = {
     )
     const snapshot = await getDocs(entriesQuery)
     return snapshot.docs.map((item) => parseEntry(item.id, item.data()))
+  },
+
+  /**
+   * Lista los estudiantes con acceso activo. La usa el panel docente.
+   *
+   * La consulta filtra por `role == 'student'` porque las reglas de Firestore
+   * solo dejan al profesor guía listar estudiantes; sin ese filtro la
+   * consulta sería rechazada. Los revocados se descartan aquí.
+   */
+  async fetchActiveStudents(): Promise<WhitelistEntry[]> {
+    const studentsQuery = query(
+      collection(getDatabase(), COLLECTION_NAME),
+      where('role', '==', 'student'),
+    )
+    const snapshot = await getDocs(studentsQuery)
+    return snapshot.docs
+      .map((item) => parseEntry(item.id, item.data()))
+      .filter((entry) => entry.status === 'active')
   },
 
   /**

@@ -10,9 +10,10 @@
  * ("theory-quiz" y "workshop-1" a "workshop-4"), así el panel y la
  * configuración de plazos hablan de las mismas actividades.
  *
- * Privacidad (AI_GUIDELINES §8): no hay nombres reales ni RUT. Cada
- * estudiante se identifica solo con un alias ("Estudiante 01") y su
- * correo institucional.
+ * Privacidad (AI_GUIDELINES §8): no hay RUT. Cada estudiante se identifica
+ * con su nombre y su correo institucional. La regla de anonimización aplica
+ * a las personas que aparecen en los relatos de los talleres, no a los
+ * estudiantes en práctica que usan ReflexIA.
  */
 
 // ─────────────────────────────────────────────
@@ -67,10 +68,10 @@ export interface StudentActivityProgress {
 
 /** Fila del seguimiento: un estudiante con su avance en las 5 actividades. */
 export interface StudentProgress {
-  /** Identificador interno del estudiante. */
+  /** Identificador del estudiante: su correo institucional. */
   id: string;
-  /** Nombre ficticio para mostrar (e.g. "Estudiante 01"). Nunca un nombre real. */
-  alias: string;
+  /** Nombre del estudiante (null si aún no tiene un perfil cargado). */
+  name: string | null;
   /** Correo institucional (@ucen.cl). */
   email: string;
   /** Las 5 actividades en orden: marco teórico y talleres 1 a 4. */

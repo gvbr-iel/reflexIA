@@ -56,7 +56,7 @@ src/
     ├── work-pacing/         # HU-06: Panel docente de plazos e intentos
     ├── student-dashboard/   # Dashboard "Mi progreso" del estudiante
     ├── reflections/         # HU-02: Revisión docente de la retroalimentación de la IA
-    ├── teacher-dashboard/   # Panel del profesor guía: seguimiento de estudiantes (datos de ejemplo)
+    ├── teacher-dashboard/   # Panel del profesor guía: seguimiento de estudiantes (datos de Firestore)
     ├── innovations/         # HU-07: Biblioteca de innovaciones pedagógicas
     ├── repository/          # Repositorio de talleres prácticos
     └── landingpage/         # Página pública de bienvenida
@@ -72,7 +72,7 @@ src/
 | `/iniciar-sesion` | — | LoginView | ✅ Listo | Formulario de acceso institucional con correo `@ucen.cl` y contraseña |
 | `/admin` → `/admin/whitelist` | AdminLayout | WhiteListView | ✅ Listo | Gestión de la Whitelist en Cloud Firestore |
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | ✅ Listo | Revisión, edición y validación de la retroalimentación de la IA |
-| `/docente` | TeacherLayout | TeacherDashboardView | ✅ Listo (datos de ejemplo) | Seguimiento semanal de estudiantes: resumen, filtros por situación y avance en marco teórico y talleres |
+| `/docente` | TeacherLayout | TeacherDashboardView | ✅ Listo (datos de Firestore; notas cargadas a mano) | Seguimiento semanal de estudiantes: resumen, filtros por situación y avance en marco teórico y talleres. Ver [`PANEL_DOCENTE_GUIA.md`](./docs/historias-usuario/PANEL_DOCENTE_GUIA.md) |
 | `/docente/plazos` | TeacherLayout | DeadlinesView | ✅ Listo | Regulación del ritmo de trabajo: plazos e intentos |
 | `/docente/innovaciones` | TeacherLayout | InnovationsView | ✅ Listo | Biblioteca de consulta compartida con estudiantes |
 | `/estudiante` | StudentLayout | StudentDashboardView | ✅ Listo | Dashboard "Mi progreso reflexivo" |
@@ -157,6 +157,16 @@ subas a Git) y repite allí estos pasos.
    documentos de esa colección. Desde **Autorizar correo** puedes añadir otros
    usuarios; crea primero cada cuenta en Firebase Authentication y luego
    autoriza su correo con el rol correspondiente en la vista.
+
+### Datos del panel docente
+
+El panel `/docente` lee las colecciones `progress`, `profiles` y `evaluations`
+de Cloud Firestore, además de la `whitelist`. `progress` la crea la app sola
+cuando un estudiante usa la plataforma; `profiles` (nombre) y `evaluations`
+(notas) se cargan a mano. Para que el panel funcione hay que publicar las
+reglas actuales de [`firestore.rules`](./firestore.rules) y que la cuenta
+docente figure en la whitelist con rol `teacher` y estado `active`. Los campos
+exactos están en [`docs/configuracion/panel-docente-datos.md`](./docs/configuracion/panel-docente-datos.md).
 
 La guía [whitelist.md](./docs/configuracion/whitelist.md) detalla los registros de referencia para
 estudiante, profesor guía y administrador, y

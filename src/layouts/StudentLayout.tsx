@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { theoryQuizService } from '../services/theoryQuizService'
 import { useAuth } from '../hooks/useAuth'
+import { useProgressSync } from '../hooks/useProgressSync'
 
 /* ------------------------------------------------
    StudentLayout — marco visual del Estudiante
@@ -56,6 +57,9 @@ export default function StudentLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
+
+  // Sube el avance que el estudiante ya tenía guardado, para el panel docente.
+  useProgressSync()
 
   // Consulta si el marco teórico está aprobado. Depende de la ruta para volver
   // a consultar al navegar (por ejemplo, al volver del cuestionario recién aprobado).

@@ -223,6 +223,7 @@ participan en el enrutamiento y composición, pero son componentes, no hooks.
 | Hook | Archivo | Qué resuelve y por qué importa |
 |---|---|---|
 | `useAuth` | [`src/hooks/useAuth.ts`](../../src/hooks/useAuth.ts) | Acceso tipado a usuario, rol, estado, inicio/cierre de sesión y reintento de autorización. Lanza un error claro si se invoca fuera de `AuthProvider`, evitando consumir un contexto inexistente. |
+| `useProgressSync` | [`src/hooks/useProgressSync.ts`](../../src/hooks/useProgressSync.ts) | Al abrir la sesión del estudiante, sube a Firestore el resumen de su avance (`studentProgressService.sync()`) para que el panel docente lo vea. Cubre el avance que ya tenía guardado en su navegador. |
 | `useWorkshops` | [`src/hooks/useWorkshops.ts`](../../src/hooks/useWorkshops.ts) | Fuente compartida del estado de los cuatro talleres. Proporciona carga inicial, reintento y actualización silenciosa para mantener sincronizadas la lista y la vista de trabajo. |
 
 ### 8.2 Administración de whitelist

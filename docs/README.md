@@ -5,9 +5,9 @@ mantenimiento:
 
 | Carpeta | Contenido |
 |---|---|
-| [`historias-usuario/`](./historias-usuario/) | Guías de implementación HU-01 a HU-08. |
+| [`historias-usuario/`](./historias-usuario/) | Guías de implementación HU-01 a HU-08 y del panel docente. |
 | [`tecnica/`](./tecnica/) | Inventario técnico de componentes y hooks. |
-| [`configuracion/`](./configuracion/) | Referencias para configurar usuarios de demostración en la whitelist. |
+| [`configuracion/`](./configuracion/) | Referencias para configurar usuarios de demostración en la whitelist y cargar los datos del panel docente. |
 | [`presentacion/`](./presentacion/) | Guía de preparación y presentación del proyecto. |
 | [`historial/`](./historial/) | Registro de cambios históricos de funcionalidades. |
 

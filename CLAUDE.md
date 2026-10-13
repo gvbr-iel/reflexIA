@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-ReflexIA es una aplicación web (React 18 + TypeScript + Vite + Tailwind v3) de práctica profesional pedagógica. Utiliza Firebase Authentication y Cloud Firestore para el inicio de sesión y la whitelist de usuarios institucional; los talleres de incidentes críticos y cuestionarios diagnósticos emplean persistencia en `localStorage` particionada de forma segura por UID mediante `utils/userStorage.ts`.
+ReflexIA es una aplicación web (React 18 + TypeScript + Vite + Tailwind v3) de práctica profesional pedagógica. Utiliza Firebase Authentication y Cloud Firestore para el inicio de sesión, la whitelist de usuarios institucional y el seguimiento docente; los talleres de incidentes críticos y cuestionarios diagnósticos emplean persistencia en `localStorage` particionada de forma segura por UID mediante `utils/userStorage.ts`.
 
 Contexto, requisitos (RF/RNF) y reglas del equipo, que debes respetar en todo cambio:
 
@@ -28,7 +28,7 @@ npm run build          # Compilación completa (tsc && vite build)
 - `/admin` → `/admin/whitelist`: Gestión de la whitelist (`WhiteListView`).
 - `/docente/reflexiones`: Revisión, edición y validación de la retroalimentación de la IA (`ReflectionsView`, HU-02).
 - `/docente/innovaciones`: Biblioteca de innovaciones, compartida con estudiantes (`InnovationsView`, HU-07).
-- `/docente`: Panel de seguimiento de estudiantes (`TeacherDashboardView`), con datos de ejemplo del mock `services/teacherDashboardService.ts`.
+- `/docente`: Panel de seguimiento de estudiantes (`TeacherDashboardView`), con datos reales de Firestore leídos por `services/teacherDashboardService.ts`.
 - `/docente/plazos`: Regulación de plazos e intentos (`DeadlinesView`, HU-06).
 - `/estudiante`: Dashboard de progreso (`StudentDashboardView`).
 - `/estudiante/marco-teorico`: Evaluación diagnóstica (`TheoryQuizView`, HU-04).
@@ -46,6 +46,8 @@ npm run build          # Compilación completa (tsc && vite build)
 **Dependencia HU-03 (incidentes) → HU-04 (marco teórico).** Los talleres solo se desbloquean si el estudiante aprobó el marco teórico. Se consulta en un único punto: `views/critical-incidents/hooks/useTheoryGate.ts`, invocando a `theoryQuizService.getApprovalStatus()`.
 
 **Invariante de HU-03.** Guardar un borrador **nunca** descuenta intentos de revisión: `criticalIncidentService.saveDraft` solo escribe la clave de borradores. Lo que sí descuenta 1 intento es pedir un impulso a la IA (`criticalIncidentService.requestImpulse`, HU-02).
+
+**Panel docente (datos reales).** Cada estudiante publica un resumen de su avance (solo números y estados, nunca el texto de los relatos) en `progress/{correo}` mediante `services/studentProgressService.ts`, que los servicios de talleres y marco teórico llaman con `sync()` cuando algo cambia. Las colecciones `profiles` (nombre) y `evaluations` (notas y resultados, que solo escriben los docentes) se cargan a mano. Los borradores, relatos y la aprobación siguen en `localStorage`. Las reglas están en `firestore.rules`; los campos a cargar, en [`docs/configuracion/panel-docente-datos.md`](./docs/configuracion/panel-docente-datos.md).
 
 **HU-02 (retroalimentación con IA).** Los impulsos los genera `utils/impulseGenerator.ts`, una simulación local sin red que **nunca redacta ni corrige** el texto del alumno. El panel docente trabaja con reflexiones de ejemplo (`views/reflections/data/reflections.ts`) porque el almacenamiento local por UID impide leer los envíos de otra cuenta; solo la revisión del docente se guarda de verdad. La propuesta original de la IA (`aiFeedback`) nunca se modifica: sirve para auditar. Detalle en [`HU02_GUIA.md`](./docs/historias-usuario/HU02_GUIA.md).
 
@@ -65,6 +67,6 @@ npm run build          # Compilación completa (tsc && vite build)
 - **HU-05 (Datos sensibles):** Detección en frontend vía OpenRouter con rotación automática de modelos gratuitos.
 - **HU-06 (Plazos e intentos):** Panel docente en `/docente/plazos` con límites de intentos y fechas de entrega.
 - **HU-07 (Biblioteca de innovaciones):** Catálogo categorizado con búsqueda, filtros y detalle, para estudiantes y profesores.
-- **Panel docente (`/docente`):** Seguimiento semanal con 4 tarjetas de resumen, filtros por situación (todos, vencidos, en curso, completados) y tabla de avance por estudiante (tarjetas en móvil). Usa un mock local con 8 estudiantes ficticios (`teacherDashboardService`); aún no lee los avances reales, que viven en el `localStorage` de cada estudiante.
+- **Panel docente (`/docente`):** Seguimiento semanal con 4 tarjetas de resumen, filtros por situación (todos, vencidos, en curso, completados) y tabla de avance por estudiante (tarjetas en móvil). Lee datos reales de Firestore (`teacherDashboardService`): estudiantes de la whitelist cruzados por correo con `progress`, `profiles` y `evaluations`. Pendientes: los plazos e intentos máximos siguen siendo los fijos de los talleres (no lee `/docente/plazos`), y las notas y resultados se cargan a mano hasta que la pantalla de reflexiones los guarde. Detalle en [`PANEL_DOCENTE_GUIA.md`](./docs/historias-usuario/PANEL_DOCENTE_GUIA.md).
 - **HU-08 (Autenticación multi-rol):** Login unificado en `/iniciar-sesion` con Firebase Authentication, verificación en Firestore y redirección por perfil.
 - **Pendientes:** todas las HU tienen su primera versión en frontend. Falta el backend (IA real, base de datos compartida entre cuentas) y los ajustes que lista cada guía `HU0X_GUIA.md`.

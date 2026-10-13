@@ -6,195 +6,270 @@
  * Responsabilidad:
  * - Entregar el avance de los estudiantes en el marco teórico y los talleres.
  *
- * Estado actual: **mock local con datos ficticios**.
- * Los avances de los estudiantes viven en el localStorage de cada uno, así
- * que el profesor todavía no puede leerlos. Cuando exista el backend, se
- * reemplaza el cuerpo de `fetchDashboard` por una llamada Axios/Fetch sin
- * cambiar la firma pública.
+ * Los datos salen de Cloud Firestore y se cruzan por el correo del estudiante:
+ * - `whitelist`: quiénes son los estudiantes con acceso activo.
+ * - `progress`: su avance (marco teórico, intentos, borradores). Lo publica
+ *   cada estudiante desde la app (ver `studentProgressService`).
+ * - `profiles`: su nombre. Por ahora se carga a mano.
+ * - `evaluations`: la nota y el resultado de cada taller. Por ahora se carga
+ *   a mano, hasta que la pantalla de reflexiones los guarde.
+ *
+ * Un estudiante sin `progress`, `profiles` o `evaluations` igual aparece:
+ * con sus actividades como "no entregado" y, sin perfil, sin nombre.
  *
  * Regla R4 (AI_GUIDELINES §9): las vistas y componentes NO llaman
  * a la API directamente; lo hacen a través de este servicio (vía hook).
  *
- * Privacidad (AI_GUIDELINES §8): los estudiantes son ficticios, con alias
- * y sin nombres reales ni RUT.
+ * Los permisos los aplican las reglas de seguridad de Firestore.
  */
 
-import { DEFAULT_WORKSHOP_CONFIG } from '../models/criticalIncident';
-import { THEORY_ACTIVITY_ID } from '../models/workPacing';
+import { collection, getDocs } from 'firebase/firestore';
+
 import { DEFAULT_QUIZ_CONFIG } from '../models/theoryQuiz';
-import type {
-  PerformanceStatus,
-  StudentActivityProgress,
-  StudentProgress,
-  TeacherDashboardData,
+import { EVALUATIONS_COLLECTION } from '../models/studentEvaluation';
+import { PROFILES_COLLECTION } from '../models/studentProfile';
+import { PROGRESS_COLLECTION } from '../models/studentProgress';
+import { THEORY_ACTIVITY_ID } from '../models/workPacing';
+import {
+  GRADE_THRESHOLDS,
+  type PerformanceStatus,
+  type StudentActivityProgress,
+  type StudentProgress,
+  type TeacherDashboardData,
 } from '../models/teacherDashboard';
+import type { WhitelistEntry } from '../models/whitelist';
 import { getPerformanceStatus } from '../utils/performanceStatus';
-import { readUserStorage } from '../utils/userStorage';
-import type { ReflectionReview } from '../models/reflection';
-import { sampleReflections } from '../views/reflections/data/reflections';
+import { criticalIncidentService } from './criticalIncidentService';
+import { firestoreDb } from './firebase';
+import { whitelistService } from './whitelistService';
 
-const REVIEW_STORAGE_KEY = 'reflexia_reflection_reviews';
+// ─────────────────────────────────────────────
+// Lectura de Firestore
+// ─────────────────────────────────────────────
 
-/** Latencia simulada para que se vean los estados de carga. */
-const MOCK_LATENCY_MS = 600;
+/** Contenido de un documento de Firestore, todavía sin revisar su forma. */
+type RawDocument = Record<string, unknown>;
 
-/** Espera `ms` milisegundos; simula el tiempo de respuesta de un servidor. */
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/** Indica si un valor es un objeto (y no null ni un arreglo). */
+function isRecord(value: unknown): value is RawDocument {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Lee toda una colección y la devuelve como un Map (id del documento → datos). */
+async function readCollection(name: string): Promise<Map<string, RawDocument>> {
+  if (!firestoreDb) {
+    throw new Error('Firebase no está configurado. Revisa las variables VITE_FIREBASE_*.');
+  }
+  const snapshot = await getDocs(collection(firestoreDb, name));
+  return new Map(snapshot.docs.map((item) => [item.id, item.data()]));
 }
 
 // ─────────────────────────────────────────────
-// Datos ficticios
+// Interpretación de los documentos
 // ─────────────────────────────────────────────
+// Los documentos de `profiles` y `evaluations` se cargan a mano, así que
+// pueden venir incompletos. Estas funciones toman solo lo que está bien
+// escrito y ignoran el resto, en vez de romper todo el panel.
 
-/**
- * Plazos de los talleres 1 a 4, en días desde hoy (negativo = ya pasó).
- * Son relativos a hoy para que la demo siempre muestre plazos vencidos,
- * próximos y lejanos, sin importar la fecha en que se abra.
- */
-const WORKSHOP_DEADLINE_OFFSETS = [-10, -3, 4, 11];
-
-/** Resultado del marco teórico de un estudiante ficticio. */
-type TheoryOutcome = 'approved' | 'failed' | 'pending';
-
-/** Resultado de un taller: nota (null si no entregó) e intentos usados. */
-type WorkshopOutcome = [grade: number | null, attemptsUsed: number];
-
-/** Datos de partida de un estudiante ficticio. */
-interface StudentSeed {
-  theory: TheoryOutcome;
-  /** Intentos usados en el marco teórico. */
-  theoryAttempts: number;
-  /** Los 4 talleres, en orden. */
-  workshops: [WorkshopOutcome, WorkshopOutcome, WorkshopOutcome, WorkshopOutcome];
+/** Avance del marco teórico que publicó el estudiante. */
+interface TheoryProgress {
+  isApproved: boolean;
+  attemptsUsed: number;
 }
 
-const NONE: WorkshopOutcome = [null, 0];
+/** Nota y resultado de un taller que puso el profesor. */
+interface WorkshopEvaluationData {
+  grade: number | null;
+  outcome: 'approved' | 'failed' | null;
+}
 
-/** 8 estudiantes con distintas situaciones: completo, al día, atrasado, reprobado. */
-const STUDENT_SEEDS: StudentSeed[] = [
-  // 01: al día, entregó los talleres que ya vencieron y el 3 está en curso.
-  { theory: 'approved', theoryAttempts: 1, workshops: [[6.2, 1], [5.5, 2], [4.5, 1], NONE] },
-  // 02: terminó todo con buenas notas.
-  { theory: 'approved', theoryAttempts: 1, workshops: [[6.5, 1], [6.0, 1], [5.8, 2], [6.8, 1]] },
-  // 03: reprobó el taller 1 y no entregó el 2 (plazo vencido).
-  { theory: 'approved', theoryAttempts: 2, workshops: [[3.5, 3], NONE, NONE, NONE] },
-  // 04: no aprobó el marco teórico y no avanzó (plazos vencidos).
-  { theory: 'failed', theoryAttempts: 3, workshops: [NONE, NONE, NONE, NONE] },
-  // 05: entregó el taller 1 con lo justo y no entregó el 2 (plazo vencido).
-  { theory: 'approved', theoryAttempts: 1, workshops: [[4.2, 2], NONE, NONE, NONE] },
-  // 06: terminó todo, con notas aprobadas.
-  { theory: 'approved', theoryAttempts: 2, workshops: [[5.0, 2], [4.0, 3], [4.4, 2], [5.1, 1]] },
-  // 07: aprobó el marco teórico, pero no entregó ningún taller (plazos vencidos).
-  { theory: 'approved', theoryAttempts: 1, workshops: [NONE, NONE, NONE, NONE] },
-  // 08: al día, con el taller 3 aún por entregar.
-  { theory: 'approved', theoryAttempts: 1, workshops: [[6.1, 1], [5.9, 1], NONE, NONE] },
-];
+/** Devuelve el valor si es un número, y si no, el valor de respaldo. */
+function readNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+/** Marco teórico del documento `progress` (sin avance si no existe). */
+function readTheoryProgress(progress: RawDocument | undefined): TheoryProgress {
+  const theory = progress?.theory;
+  if (!isRecord(theory)) return { isApproved: false, attemptsUsed: 0 };
+
+  return {
+    isApproved: theory.isApproved === true,
+    attemptsUsed: readNumber(theory.attemptsUsed, 0),
+  };
+}
+
+/** Intentos de revisión usados en un taller, según el documento `progress`. */
+function readWorkshopAttempts(progress: RawDocument | undefined, workshopId: string): number {
+  const workshops = progress?.workshops;
+  if (!isRecord(workshops)) return 0;
+
+  const workshop = workshops[workshopId];
+  return isRecord(workshop) ? readNumber(workshop.attemptsUsed, 0) : 0;
+}
+
+/** Nota y resultado de un taller, según el documento `evaluations` (null si no hay). */
+function readWorkshopEvaluation(
+  evaluation: RawDocument | undefined,
+  workshopId: string,
+): WorkshopEvaluationData | null {
+  const workshops = evaluation?.workshops;
+  if (!isRecord(workshops)) return null;
+
+  const workshop = workshops[workshopId];
+  if (!isRecord(workshop)) return null;
+
+  const grade =
+    typeof workshop.grade === 'number' && Number.isFinite(workshop.grade) ? workshop.grade : null;
+  const outcome =
+    workshop.outcome === 'approved' || workshop.outcome === 'failed' ? workshop.outcome : null;
+
+  return { grade, outcome };
+}
+
+/** Nombre del documento `profiles` (null si no existe o está vacío). */
+function readName(profile: RawDocument | undefined): string | null {
+  const name = profile?.name;
+  return typeof name === 'string' && name.trim() !== '' ? name.trim() : null;
+}
 
 // ─────────────────────────────────────────────
 // Construcción de los datos
 // ─────────────────────────────────────────────
 
-/** Fecha "YYYY-MM-DD" de hoy más (o menos) la cantidad de días indicada. */
-function dateFromToday(offsetDays: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
+/**
+ * Estado de desempeño de un taller.
+ *
+ * El resultado que marca el profesor manda: reprobado es reprobado y
+ * aprobado es aprobado (o sobresaliente si la nota llega a 5.0). Si solo hay
+ * nota, se usa la tabla de notas. Sin evaluación, el taller no se entregó.
+ */
+function getWorkshopStatus(evaluation: WorkshopEvaluationData | null): PerformanceStatus {
+  if (!evaluation) return 'not-submitted';
+  if (evaluation.outcome === 'failed') return 'failed';
+  if (evaluation.outcome === 'approved') {
+    const isExcellent = evaluation.grade !== null && evaluation.grade >= GRADE_THRESHOLDS.excellent;
+    return isExcellent ? 'excellent' : 'approved';
+  }
+  return getPerformanceStatus(evaluation.grade);
 }
 
-/** Estado del marco teórico, que no tiene nota: solo aprobado o no. */
-function getTheoryStatus(theory: TheoryOutcome): PerformanceStatus {
-  if (theory === 'approved') return 'approved';
-  if (theory === 'failed') return 'failed';
+/** Estado del marco teórico, que no tiene nota: solo aprobado, reprobado o sin entregar. */
+function getTheoryStatus(theory: TheoryProgress): PerformanceStatus {
+  if (theory.isApproved) return 'approved';
+  // Sin intentos disponibles y sin aprobar: reprobó el marco teórico.
+  if (theory.attemptsUsed >= DEFAULT_QUIZ_CONFIG.maxAttempts) return 'failed';
   return 'not-submitted';
+}
+
+/** Plazo e intentos máximos de un taller, tal como los ven hoy los estudiantes. */
+interface WorkshopLimits {
+  id: string;
+  title: string;
+  deadline: string | null;
+  maxAttempts: number;
 }
 
 /** Arma las 5 actividades de un estudiante (marco teórico y talleres 1 a 4). */
 function buildActivities(
-  seed: StudentSeed,
-  letterAlias: string,
-  store: Record<string, ReflectionReview>,
+  workshops: WorkshopLimits[],
+  progress: RawDocument | undefined,
+  evaluation: RawDocument | undefined,
 ): StudentActivityProgress[] {
-  const theory: StudentActivityProgress = {
+  const theory = readTheoryProgress(progress);
+
+  const theoryActivity: StudentActivityProgress = {
     activityId: THEORY_ACTIVITY_ID,
     title: 'Marco teórico',
-    status: getTheoryStatus(seed.theory),
+    status: getTheoryStatus(theory),
     grade: null,
-    attemptsUsed: seed.theoryAttempts,
+    attemptsUsed: theory.attemptsUsed,
     maxAttempts: DEFAULT_QUIZ_CONFIG.maxAttempts,
     // El marco teórico no tiene plazo por defecto.
     deadline: null,
   };
 
-  const workshops = seed.workshops.map(([seedGrade, attemptsUsed], index): StudentActivityProgress => {
-    const workshopNumber = index + 1;
-    const matchingSample = sampleReflections.find(
-      (r) => r.studentAlias === letterAlias && r.workshopNumber === workshopNumber,
-    );
-
-    let finalGrade = seedGrade;
-    if (matchingSample) {
-      const activeReview = store[matchingSample.id] ?? matchingSample.review;
-      if (activeReview.status === 'validated' && activeReview.assignedGrade !== null) {
-        finalGrade = activeReview.assignedGrade;
-      }
-    }
-
+  const workshopActivities = workshops.map((workshop): StudentActivityProgress => {
+    const workshopEvaluation = readWorkshopEvaluation(evaluation, workshop.id);
     return {
-      activityId: `workshop-${workshopNumber}`,
-      title: `Taller ${workshopNumber}`,
-      status: getPerformanceStatus(finalGrade),
-      grade: finalGrade,
-      attemptsUsed,
-      maxAttempts: DEFAULT_WORKSHOP_CONFIG.maxAttemptsPerWorkshop,
-      deadline: dateFromToday(WORKSHOP_DEADLINE_OFFSETS[index]),
+      activityId: workshop.id,
+      title: workshop.title,
+      status: getWorkshopStatus(workshopEvaluation),
+      grade: workshopEvaluation?.grade ?? null,
+      attemptsUsed: readWorkshopAttempts(progress, workshop.id),
+      maxAttempts: workshop.maxAttempts,
+      deadline: workshop.deadline,
     };
   });
 
-  return [theory, ...workshops];
+  return [theoryActivity, ...workshopActivities];
 }
 
-/** Convierte los datos de partida en la lista de estudiantes. */
-function buildStudents(): StudentProgress[] {
-  const store = readUserStorage<Record<string, ReflectionReview>>(REVIEW_STORAGE_KEY) ?? {};
+/** Nombre con el que se ordena la lista: el nombre, o el correo si no tiene. */
+function sortKey(student: StudentProgress): string {
+  return student.name ?? student.email;
+}
 
-  return STUDENT_SEEDS.map((seed, index) => {
-    const number = String(index + 1).padStart(2, '0');
-    const letterAlias = `Estudiante ${String.fromCharCode(65 + index)}`;
-
-    return {
-      id: `student-${number}`,
-      alias: `Estudiante ${number}`,
-      email: `estudiante${number}@ucen.cl`,
-      activities: buildActivities(seed, letterAlias, store),
-    };
-  });
+/** Une los datos de cada estudiante de la whitelist con su avance, nombre y notas. */
+function buildStudents(
+  entries: WhitelistEntry[],
+  workshops: WorkshopLimits[],
+  progressByEmail: Map<string, RawDocument>,
+  profileByEmail: Map<string, RawDocument>,
+  evaluationByEmail: Map<string, RawDocument>,
+): StudentProgress[] {
+  return entries
+    .map((entry): StudentProgress => ({
+      id: entry.email,
+      name: readName(profileByEmail.get(entry.email)),
+      email: entry.email,
+      activities: buildActivities(
+        workshops,
+        progressByEmail.get(entry.email),
+        evaluationByEmail.get(entry.email),
+      ),
+    }))
+    .sort((a, b) => sortKey(a).localeCompare(sortKey(b), 'es'));
 }
 
 // ─────────────────────────────────────────────
 // Servicio público
 // ─────────────────────────────────────────────
 
-/**
- * Servicio del panel docente.
- *
- * Firma estable: cuando el backend esté listo, se reemplaza el cuerpo
- * de cada método sin cambiar la interfaz pública.
- */
+/** Servicio del panel docente. Los hooks llaman a este objeto; las vistas no (regla R4). */
 export const teacherDashboardService = {
 
   /**
-   * Devuelve el avance de todos los estudiantes del profesor guía.
+   * Devuelve el avance de todos los estudiantes con acceso activo.
    *
-   * Producción: GET /api/teacher/dashboard
+   * Los plazos y los intentos máximos de los talleres son los que hoy ven los
+   * estudiantes. Todavía no se lee la configuración que guarda el profesor en
+   * `/docente/plazos` (queda pendiente junto con HU-06).
    */
   async fetchDashboard(): Promise<TeacherDashboardData> {
-    // TODO: Reemplazar por llamada Axios al backend
-    // return axios.get<TeacherDashboardData>('/api/teacher/dashboard');
-    await wait(MOCK_LATENCY_MS);
+    const [students, progressByEmail, profileByEmail, evaluationByEmail, workshopDefaults] =
+      await Promise.all([
+        whitelistService.fetchActiveStudents(),
+        readCollection(PROGRESS_COLLECTION),
+        readCollection(PROFILES_COLLECTION),
+        readCollection(EVALUATIONS_COLLECTION),
+        criticalIncidentService.fetchWorkshopPacingDefaults(),
+      ]);
 
-    return { students: buildStudents(), generatedAt: new Date().toISOString() };
+    const workshops: WorkshopLimits[] = workshopDefaults
+      .slice()
+      .sort((a, b) => a.number - b.number)
+      .map(({ id, title, deadline, maxAttempts }) => ({ id, title, deadline, maxAttempts }));
+
+    return {
+      students: buildStudents(
+        students,
+        workshops,
+        progressByEmail,
+        profileByEmail,
+        evaluationByEmail,
+      ),
+      generatedAt: new Date().toISOString(),
+    };
   },
 };

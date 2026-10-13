@@ -40,6 +40,11 @@ type Row = {
   workshop4: StudentActivityProgress
 }
 
+/** Nombre para mostrar; si el estudiante aún no tiene perfil, lo dice con claridad. */
+function studentName(student: StudentProgress): string {
+  return student.name ?? 'Sin nombre registrado'
+}
+
 /** Etiqueta e ícono de cada situación. */
 const SITUATION_INFO: Record<StudentSituation, { label: string; icon: ReactNode; className: string }> = {
   overdue: {
@@ -110,10 +115,10 @@ function MobileActivityRow({ activity }: { activity: StudentActivityProgress }) 
 function MobileStudentCard({ row }: { row: Row }) {
   return (
     <article className="rounded-xl border border-border bg-surface p-4">
-      {/* Arriba: alias y correo; la situación va debajo para que no se apriete. */}
+      {/* Arriba: nombre y correo; la situación va debajo para que no se apriete. */}
       <header className="space-y-2">
         <div>
-          <h3 className="font-heading text-base font-semibold text-texto">{row.student.alias}</h3>
+          <h3 className="font-heading text-base font-semibold text-texto">{studentName(row.student)}</h3>
           <p className="break-all text-xs text-texto/60">{row.student.email}</p>
         </div>
         <SituationBadge situation={row.situation} />
@@ -147,7 +152,7 @@ const columns: Column<Row>[] = [
     label: 'Estudiante',
     render: (_, row) => (
       <span className="flex flex-col items-end md:items-start">
-        <span className="font-medium text-texto">{row.student.alias}</span>
+        <span className="font-medium text-texto">{studentName(row.student)}</span>
         <span className="break-all text-xs text-texto/60">{row.student.email}</span>
       </span>
     ),
