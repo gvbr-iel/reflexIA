@@ -66,12 +66,11 @@ export default function ReflectionsView() {
       <header className="space-y-2">
         <h1 className="font-heading text-2xl font-bold text-texto">Reflexiones</h1>
         <p className="max-w-3xl text-base leading-relaxed text-texto/70">
-          Revisa las orientaciones que la IA propone a cada estudiante. Puedes editarlas y
-          validarlas antes de entregarlas.
+          Revisa las orientaciones y la nota sugerida por la IA. Como docente guía, evalúa el trabajo y asigna la nota real definitiva antes de validar la entrega oficial.
         </p>
         <p className="inline-flex max-w-3xl items-start gap-2 rounded-lg bg-primary/5 px-3 py-2 text-sm leading-relaxed text-primary">
           <BookOpen size={17} className="mt-0.5 shrink-0" aria-hidden="true" />
-          Las reflexiones de esta pantalla son ejemplos de referencia. Tus ediciones y
+          Las reflexiones de esta pantalla son ejemplos de referencia. Tus calificaciones y
           validaciones se guardan solo en este navegador.
         </p>
       </header>
@@ -132,6 +131,7 @@ export default function ReflectionsView() {
               <FeedbackEditor
                 review={review}
                 status={selected.review.status}
+                suggestedGrade={selected.aiFeedback.suggestedGrade}
                 onRequestValidate={() => setIsValidateOpen(true)}
               />
               {/* El aviso va junto a los botones para que se vea al guardar o validar. */}

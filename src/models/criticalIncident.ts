@@ -218,11 +218,26 @@ export interface AIFeedbackHint {
   message: string;
 }
 
+/** Resultado de un criterio pedagógico evaluado en la rúbrica orientativa de la IA. */
+export interface RubricCriterionResult {
+  step: IncidentStep;
+  key: string;
+  label: string;
+  isMet: boolean;
+  points: number;
+  maxPoints: number;
+}
+
 /**
  * Respuesta completa de retroalimentación de la IA ("El Impulso").
  *
  * Se muestra en un panel con borde izquierdo en `--color-accent-ia`,
  * ícono y etiqueta "El Impulso" (AI_GUIDELINES §7).
+ *
+ * Incluye orientaciones pedagógicas ("impulsos") y, para el panel docente,
+ * una nota sugerida con su justificación pedagógica completa.
+ * La nota de la IA es estrictamente orientativa y diagnóstica: la nota
+ * oficial es potestad exclusiva del docente guía.
  */
 export interface AIFeedback {
   /** Identificador único de la retroalimentación. */
@@ -235,6 +250,15 @@ export interface AIFeedback {
   hints: AIFeedbackHint[];
   /** Comentario general sobre el análisis del incidente. */
   generalComment: string;
+  /**
+   * Nota sugerida por la IA (escala chilena de 1.0 a 7.0).
+   * Solo diagnóstica/orientativa: nunca se aplica de forma automática al estudiante.
+   */
+  suggestedGrade: number;
+  /** Justificación pedagógica del puntaje sugerido por la IA. */
+  gradeJustification: string;
+  /** Desglose de cumplimiento de criterios por paso. */
+  rubricBreakdown?: RubricCriterionResult[];
   /** Marca temporal ISO 8601 de generación. */
   createdAt: string;
 }

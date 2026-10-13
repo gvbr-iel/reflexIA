@@ -44,6 +44,10 @@ interface TeacherReviewSeed {
   editHints?: (hints: AIFeedbackHint[]) => AIFeedbackHint[];
   /** Comentario general del docente; si se omite se conserva el de la IA. */
   generalComment?: string;
+  /** Nota real asignada por el docente guía (de 1.0 a 7.0). */
+  assignedGrade?: number | null;
+  /** Observaciones pedagógicas del docente respecto a la nota real. */
+  gradeNotes?: string;
 }
 
 /** Reemplaza el texto de la orientación con ese id (no hace nada si no existe). */
@@ -77,12 +81,18 @@ function createReflection(seed: ReflectionSeed, teacherReview?: TeacherReviewSee
           status: teacherReview.status,
           hints: teacherReview.editHints ? teacherReview.editHints(aiHints) : aiHints,
           generalComment: teacherReview.generalComment ?? aiFeedback.generalComment,
+          assignedGrade:
+            teacherReview.assignedGrade ??
+            (teacherReview.status === 'validated' ? aiFeedback.suggestedGrade : null),
+          gradeNotes: teacherReview.gradeNotes ?? '',
           reviewedAt: teacherReview.reviewedAt,
         }
       : {
           status: 'pending',
           hints: aiHints,
           generalComment: aiFeedback.generalComment,
+          assignedGrade: null,
+          gradeNotes: '',
           reviewedAt: null,
         },
   };
@@ -131,7 +141,12 @@ export const sampleReflections: Reflection[] = [
           'Es relevante porque aprendí a mediar sin imponer una solución; según Dewey, la reflexión surge ante una duda real.',
       },
     },
-    { status: 'validated', reviewedAt: '2026-10-01T10:30:00.000Z' },
+    {
+      status: 'validated',
+      reviewedAt: '2026-10-01T10:30:00.000Z',
+      assignedGrade: 6.0,
+      gradeNotes: 'Demuestra sólida capacidad reflexiva y oportuna mediación en el conflicto.',
+    },
   ),
 
   // Taller 2 · pendiente
@@ -175,6 +190,8 @@ export const sampleReflections: Reflection[] = [
     {
       status: 'edited',
       reviewedAt: '2026-10-03T09:15:00.000Z',
+      assignedGrade: 4.8,
+      gradeNotes: 'Borrador: Buen análisis de convivencia escolar; esperando confirmación del desenlace.',
       editHints: rewordHint(
         'description-outcome',
         'Cuenta qué pasó con el estudiante afectado después del comentario: ¿hubo alguna acción de apoyo o seguimiento?',
@@ -225,6 +242,8 @@ export const sampleReflections: Reflection[] = [
     {
       status: 'validated',
       reviewedAt: '2026-10-02T11:00:00.000Z',
+      assignedGrade: 5.5,
+      gradeNotes: 'Aprobado: Reconoce adecuadamente la necesidad de adaptar el ritmo pedagógico.',
       editHints: rewordHint(
         'relevance-theory',
         'Elige uno de los marcos de la barra lateral y explica con tus palabras cómo ayuda a entender lo que ocurrió con el ritmo de la clase.',
@@ -254,6 +273,8 @@ export const sampleReflections: Reflection[] = [
     {
       status: 'edited',
       reviewedAt: '2026-10-05T08:50:00.000Z',
+      assignedGrade: 5.0,
+      gradeNotes: 'Borrador: Buen rescate de la desmotivación; falta fundamentar con literatura.',
       editHints: rewordHint(
         'relevance-theory',
         'Tu propuesta de estaciones con juegos elegidos por los estudiantes es interesante: busca en la literatura del curso qué dice sobre la motivación para respaldarla.',

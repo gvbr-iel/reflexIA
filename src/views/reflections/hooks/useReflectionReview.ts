@@ -40,6 +40,14 @@ export interface UseReflectionReviewReturn {
   draftHints: AIFeedbackHint[];
   /** Comentario general que se está editando ahora. */
   draftComment: string;
+  /** Texto del campo de nota real que se está editando ahora. */
+  draftGrade: string;
+  /** Nota real convertida a número (null si el campo está vacío o inválido). */
+  parsedGrade: number | null;
+  /** Observaciones o justificación docente sobre la nota real. */
+  draftGradeNotes: string;
+  /** Error de validación de la nota real (null si es válida). */
+  gradeError: string | null;
 
   /** Cambia el texto de un impulso. */
   updateHintMessage: (hintId: string, message: string) => void;
@@ -47,6 +55,12 @@ export interface UseReflectionReviewReturn {
   removeHint: (hintId: string) => void;
   /** Cambia el comentario general. */
   updateComment: (comment: string) => void;
+  /** Cambia el valor del campo de la nota real. */
+  updateGrade: (val: string) => void;
+  /** Cambia las observaciones de la nota real. */
+  updateGradeNotes: (notes: string) => void;
+  /** Copia la nota sugerida por la IA al borrador de la nota real. */
+  applySuggestedGrade: () => void;
   /** Vuelve a lo último que se guardó. */
   discardChanges: () => void;
   /** Vuelve a la propuesta original de la IA (sin guardar). */
@@ -60,14 +74,16 @@ export interface UseReflectionReviewReturn {
   emptyHintIds: string[];
   /** true si el comentario general quedó vacío. */
   isCommentEmpty: boolean;
+  /** true si la nota ingresada es válida dentro de la escala 1.0 a 7.0. */
+  isGradeValid: boolean;
 
   /** true mientras se guardan los cambios. */
   isSaving: boolean;
   /** true mientras se valida la retroalimentación. */
   isValidating: boolean;
-  /** Se pueden guardar los cambios (hay cambios, sin campos vacíos). */
+  /** Se pueden guardar los cambios (hay cambios, sin campos vacíos y nota válida). */
   canSave: boolean;
-  /** Se puede validar (no está validada y no hay cambios sin guardar). */
+  /** Se puede validar (no está validada, no hay cambios sin guardar y tiene nota real asignada). */
   canValidate: boolean;
 
   /** Guarda los cambios; la reflexión queda "editada". */
@@ -114,6 +130,8 @@ export function useReflectionReview(
 
   const [draftHints, setDraftHints] = useState<AIFeedbackHint[]>([]);
   const [draftComment, setDraftComment] = useState('');
+  const [draftGrade, setDraftGrade] = useState('');
+  const [draftGradeNotes, setDraftGradeNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [notice, setNotice] = useState<ReviewNotice | null>(null);
@@ -132,6 +150,8 @@ export function useReflectionReview(
   useEffect(() => {
     setDraftHints(review ? cloneHints(review.hints) : []);
     setDraftComment(review ? review.generalComment : '');
+    setDraftGrade(review?.assignedGrade !== null && review?.assignedGrade !== undefined ? review.assignedGrade.toFixed(1) : '');
+    setDraftGradeNotes(review?.gradeNotes ?? '');
   }, [review]);
 
   // Al abrir otra reflexión se oculta el aviso de la anterior.
@@ -142,22 +162,49 @@ export function useReflectionReview(
   // true mientras se guarda o se valida (desactiva los botones).
   const isBusy = isSaving || isValidating;
 
+  // Conversión numérica y validación de la nota ingresada por el docente
+  const parsedGrade = useMemo(() => {
+    const trimmed = draftGrade.trim();
+    if (!trimmed) return null;
+    const num = Number(trimmed.replace(',', '.'));
+    return isNaN(num) ? null : Math.round(num * 10) / 10;
+  }, [draftGrade]);
+
+  const isGradeValid = useMemo(() => {
+    if (!draftGrade.trim()) return false;
+    return parsedGrade !== null && parsedGrade >= 1.0 && parsedGrade <= 7.0;
+  }, [draftGrade, parsedGrade]);
+
+  const gradeError = useMemo(() => {
+    if (!draftGrade.trim()) return null;
+    if (parsedGrade === null) return 'Ingresa una calificación numérica válida.';
+    if (parsedGrade < 1.0 || parsedGrade > 7.0) return 'La nota debe estar entre 1.0 y 7.0.';
+    return null;
+  }, [draftGrade, parsedGrade]);
+
   // ¿El borrador del profesor es distinto de lo guardado? (hay cambios sin guardar)
-  const isDirty = useMemo(
-    () =>
-      review !== null &&
-      (draftComment !== review.generalComment || !sameHints(draftHints, review.hints)),
-    [review, draftHints, draftComment],
-  );
+  const isDirty = useMemo(() => {
+    if (!review) return false;
+    const hintsChanged = !sameHints(draftHints, review.hints);
+    const commentChanged = draftComment !== review.generalComment;
+    const notesChanged = draftGradeNotes !== (review.gradeNotes ?? '');
+
+    const savedGradeStr = review.assignedGrade !== null ? review.assignedGrade.toFixed(1) : '';
+    const currentGradeStr = parsedGrade !== null ? parsedGrade.toFixed(1) : '';
+    const gradeChanged = (draftGrade.trim() === '' && review.assignedGrade !== null) ||
+      (draftGrade.trim() !== '' && currentGradeStr !== savedGradeStr);
+
+    return hintsChanged || commentChanged || notesChanged || gradeChanged;
+  }, [review, draftHints, draftComment, draftGradeNotes, draftGrade, parsedGrade]);
 
   // ¿El borrador es distinto de la propuesta original de la IA? (habilita "Restaurar propuesta")
-  const differsFromProposal = useMemo(
-    () =>
-      reflection !== null &&
-      (draftComment !== reflection.aiFeedback.generalComment ||
-        !sameHints(draftHints, reflection.aiFeedback.hints)),
-    [reflection, draftHints, draftComment],
-  );
+  const differsFromProposal = useMemo(() => {
+    if (!reflection) return false;
+    const hintsChanged = !sameHints(draftHints, reflection.aiFeedback.hints);
+    const commentChanged = draftComment !== reflection.aiFeedback.generalComment;
+    const gradeMatchesAi = parsedGrade !== null && parsedGrade === reflection.aiFeedback.suggestedGrade;
+    return hintsChanged || commentChanged || !gradeMatchesAi || draftGradeNotes.trim() !== '';
+  }, [reflection, draftHints, draftComment, parsedGrade, draftGradeNotes]);
 
   // Orientaciones que quedaron vacías: impiden guardar.
   const emptyHintIds = useMemo(
@@ -166,11 +213,24 @@ export function useReflectionReview(
   );
   const isCommentEmpty = draftComment.trim() === '';
 
-  // Reglas de los botones: guardar exige cambios completos; validar exige no tener cambios pendientes.
+  // Reglas de los botones:
+  // guardar exige cambios válidos (si se escribió nota, debe ser válida).
   const canSave =
-    reflection !== null && isDirty && emptyHintIds.length === 0 && !isCommentEmpty && !isBusy;
+    reflection !== null &&
+    isDirty &&
+    emptyHintIds.length === 0 &&
+    !isCommentEmpty &&
+    (draftGrade.trim() === '' || isGradeValid) &&
+    !isBusy;
+
+  // validar exige no tener cambios pendientes, y que el docente HAYA colocado una nota real válida.
   const canValidate =
-    reflection !== null && review?.status !== 'validated' && !isDirty && !isBusy;
+    reflection !== null &&
+    review?.status !== 'validated' &&
+    !isDirty &&
+    !isBusy &&
+    isGradeValid &&
+    parsedGrade !== null;
 
   /** Muestra un aviso solo si la reflexión sigue abierta (si el profesor cambió de reflexión, se descarta). */
   function showNotice(reflectionId: string, tone: ReviewNotice['tone'], message: string) {
@@ -194,11 +254,26 @@ export function useReflectionReview(
   /** Edita el comentario general del borrador. */
   const updateComment = useCallback((comment: string) => setDraftComment(comment), []);
 
+  /** Edita la nota real asignada por el docente. */
+  const updateGrade = useCallback((val: string) => setDraftGrade(val), []);
+
+  /** Edita las observaciones o justificación docente sobre la nota. */
+  const updateGradeNotes = useCallback((notes: string) => setDraftGradeNotes(notes), []);
+
+  /** Aplica la nota sugerida por la IA al borrador de la nota real. */
+  const applySuggestedGrade = useCallback(() => {
+    if (reflection) {
+      setDraftGrade(reflection.aiFeedback.suggestedGrade.toFixed(1));
+    }
+  }, [reflection]);
+
   /** Descarta los cambios: el borrador vuelve a lo último guardado. */
   const discardChanges = useCallback(() => {
     if (!review) return;
     setDraftHints(cloneHints(review.hints));
     setDraftComment(review.generalComment);
+    setDraftGrade(review.assignedGrade !== null ? review.assignedGrade.toFixed(1) : '');
+    setDraftGradeNotes(review.gradeNotes ?? '');
   }, [review]);
 
   /** Vuelve a la propuesta original de la IA. */
@@ -206,9 +281,11 @@ export function useReflectionReview(
     if (!reflection) return;
     setDraftHints(cloneHints(reflection.aiFeedback.hints));
     setDraftComment(reflection.aiFeedback.generalComment);
+    setDraftGrade(reflection.aiFeedback.suggestedGrade.toFixed(1));
+    setDraftGradeNotes('');
   }, [reflection]);
 
-  /** Guarda la edición del profesor (RF-02: puede editar la propuesta antes de validarla). */
+  /** Guarda la edición del profesor (RF-02: puede editar antes de validar). */
   async function saveEdit() {
     if (!reflection || !canSave) return;
 
@@ -218,12 +295,14 @@ export function useReflectionReview(
         reflectionId: reflection.id,
         hints: draftHints,
         generalComment: draftComment,
+        assignedGrade: parsedGrade,
+        gradeNotes: draftGradeNotes,
       });
       onUpdated(updated);
       showNotice(
         updated.id,
         'success',
-        'Cambios guardados. Valida la retroalimentación para dejarla lista para entregar.',
+        'Cambios guardados. Recuerda validar la retroalimentación para oficializar la nota real del estudiante.',
       );
     } catch (error) {
       showNotice(reflection.id, 'error', error instanceof Error ? error.message : GENERIC_ERROR);
@@ -232,15 +311,23 @@ export function useReflectionReview(
     }
   }
 
-  /** Valida la retroalimentación: queda lista para entregar al estudiante. */
+  /** Valida la retroalimentación: queda lista para entregar al estudiante con la nota real oficial. */
   async function validate() {
-    if (!reflection || !canValidate) return;
+    if (!reflection || !canValidate || parsedGrade === null) return;
 
     setIsValidating(true);
     try {
-      const updated = await reflectionService.validate({ reflectionId: reflection.id });
+      const updated = await reflectionService.validate({
+        reflectionId: reflection.id,
+        assignedGrade: parsedGrade,
+        gradeNotes: draftGradeNotes,
+      });
       onUpdated(updated);
-      showNotice(updated.id, 'success', 'Retroalimentación validada y lista para entregar.');
+      showNotice(
+        updated.id,
+        'success',
+        `Retroalimentación validada con éxito. Nota real asignada: ${parsedGrade.toFixed(1)}.`,
+      );
     } catch (error) {
       showNotice(reflection.id, 'error', error instanceof Error ? error.message : GENERIC_ERROR);
     } finally {
@@ -254,15 +341,23 @@ export function useReflectionReview(
   return {
     draftHints,
     draftComment,
+    draftGrade,
+    parsedGrade,
+    draftGradeNotes,
+    gradeError,
     updateHintMessage,
     removeHint,
     updateComment,
+    updateGrade,
+    updateGradeNotes,
+    applySuggestedGrade,
     discardChanges,
     restoreProposal,
     isDirty,
     differsFromProposal,
     emptyHintIds,
     isCommentEmpty,
+    isGradeValid,
     isSaving,
     isValidating,
     canSave,

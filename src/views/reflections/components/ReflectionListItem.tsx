@@ -1,4 +1,4 @@
-import { CalendarDays, Lightbulb } from 'lucide-react'
+import { Award, CalendarDays, Lightbulb, Sparkles } from 'lucide-react'
 
 import type { Reflection } from '../../../models/reflection'
 import { formatDateTime } from '../../../utils/formatDateTime'
@@ -9,7 +9,7 @@ import ReviewStatusBadge from './ReviewStatusBadge'
 
    Una reflexión en la lista del profesor: alias del
    estudiante, estado de la revisión, taller, intento,
-   fecha de envío y cantidad de impulsos.
+   fecha de envío, cantidad de impulsos y nota real/sugerida.
 
    Es un botón que abre el detalle. La reflexión abierta
    se marca con aria-current y con borde azul, no solo
@@ -29,6 +29,8 @@ export default function ReflectionListItem({
   onSelect,
 }: ReflectionListItemProps) {
   const hintCount = reflection.review.hints.length
+  const assignedGrade = reflection.review.assignedGrade
+  const suggestedGrade = reflection.aiFeedback.suggestedGrade
 
   return (
     <li>
@@ -62,6 +64,17 @@ export default function ReflectionListItem({
             <Lightbulb size={14} aria-hidden="true" />
             {hintCount} {hintCount === 1 ? 'impulso' : 'impulsos'}
           </span>
+          {assignedGrade !== null ? (
+            <span className="inline-flex items-center gap-1 font-medium text-primary">
+              <Award size={14} aria-hidden="true" />
+              Nota real: {assignedGrade.toFixed(1)}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs text-accent-ia/90">
+              <Sparkles size={13} aria-hidden="true" />
+              Sugerida: {suggestedGrade.toFixed(1)} (Pendiente)
+            </span>
+          )}
         </span>
       </button>
     </li>
