@@ -14,12 +14,13 @@ La HU tiene **dos caras**, que se conectan por el mismo tipo de dato (`AIFeedbac
 | **El Impulso** | Estudiante | `/estudiante/talleres/:workshopId` | Pide un impulso a la IA desde el asistente; cada solicitud descuenta 1 intento. |
 | **Revisión de reflexiones** | Profesor guía | `/docente/reflexiones` | Ve la propuesta de la IA **antes** de actuar; puede editarla, guardar y validarla. |
 
-> **Alcance — leer antes de probar.** El proyecto es **solo frontend**. No hay IA real ni base de datos compartida:
+> **Alcance — leer antes de probar.** No hay IA real, y los relatos que revisa el profesor son de ejemplo. Lo único que llega a la base de datos compartida es la nota oficial:
 >
 > - Los impulsos los genera `utils/impulseGenerator.ts`, una función local que revisa el texto con reglas por palabras clave y simula una espera de 2,5 s.
-> - El profesor trabaja con **8 reflexiones de ejemplo** (`views/reflections/data/reflections.ts`), porque los envíos reales de cada estudiante viven en el `localStorage` de su propia cuenta y otra cuenta no puede leerlos.
-> - Lo que sí se guarda de verdad es la **revisión del profesor** y los **intentos del estudiante**, en `localStorage` particionado por usuario.
-> - "Validar y entregar" es simulado: no llega a ninguna cuenta de estudiante. La pantalla lo avisa.
+> - El profesor trabaja con **8 reflexiones de ejemplo** (`views/reflections/data/reflections.ts`), porque los envíos reales de cada estudiante viven en el `localStorage` de su propia cuenta y otra cuenta no puede leerlos. Cada una está asignada al correo de una **cuenta de prueba**, y la pantalla muestra el nombre de ese estudiante (colección `profiles`).
+> - La **nota oficial** sí es real: al validar se guarda en Cloud Firestore (`evaluations/{correo}`) y aparece en el panel de seguimiento (`/docente`).
+> - Los impulsos editados, el comentario, la nota en borrador y los **intentos del estudiante** se guardan en `localStorage` particionado por usuario.
+> - La entrega de la retroalimentación al estudiante sigue simulada: los impulsos validados no llegan a su cuenta. La pantalla lo avisa.
 
 ---
 
@@ -44,9 +45,12 @@ La HU tiene **dos caras**, que se conectan por el mismo tipo de dato (`AIFeedbac
 ```text
 src/
 ├── models/
-│   └── reflection.ts                  # Tipos de la revisión docente (reutiliza AIFeedback de HU-03)
+│   ├── reflection.ts                  # Tipos de la revisión docente (reutiliza AIFeedback de HU-03)
+│   └── studentEvaluation.ts           # Nota y resultado de un taller en Firestore
 ├── services/
-│   ├── reflectionService.ts           # Mock del panel docente: listar, obtener, editar, validar
+│   ├── reflectionService.ts           # Listar, obtener, editar y validar (relatos de ejemplo, nota real)
+│   ├── studentEvaluationService.ts    # Lee y guarda las notas en Firestore (`evaluations`)
+│   ├── studentProfileService.ts       # Lee los nombres de los estudiantes (`profiles`)
 │   └── criticalIncidentService.ts     # Se agregaron requestImpulse y getAttempts (HU-03)
 ├── utils/
 │   ├── impulseGenerator.ts            # Generador SIMULADO de impulsos (pura, sin red)
@@ -55,7 +59,7 @@ src/
     ├── reflections/                   # Cara del PROFESOR
     │   ├── ReflectionsView.tsx        # Vista: junta los dos hooks y los componentes
     │   ├── data/
-    │   │   └── reflections.ts         # 8 reflexiones de ejemplo (Educación Física)
+    │   │   └── reflections.ts         # 8 reflexiones de ejemplo, asignadas a cuentas de prueba
     │   ├── hooks/
     │   │   ├── useReflections.ts      # Lista, filtros, resumen y reflexión elegida
     │   │   └── useReflectionReview.ts # Editar, guardar y validar UNA reflexión
@@ -71,6 +75,7 @@ src/
     │       ├── ValidateFeedbackModal.tsx    # Confirmación de validación
     │       ├── ReviewNotice.tsx             # Aviso de éxito o error
     │       ├── stepTitle.ts                 # Nombre de cada paso del asistente
+    │       ├── studentLabel.ts              # Nombre del estudiante, o su correo si no tiene perfil
     │       └── fieldStyles.ts               # Estilos de los campos
     └── critical-incidents/            # Cara del ESTUDIANTE
         ├── hooks/
@@ -152,14 +157,33 @@ Reglas del panel:
 
 ---
 
-## Persistencia (mock)
+## Persistencia
+
+**Cloud Firestore** (compartido entre cuentas):
+
+| Colección | Quién la escribe | Contenido |
+|---|---|---|
+| `evaluations/{correo}` | `studentEvaluationService`, al validar una reflexión | Nota oficial, resultado y fecha, por taller |
+| `profiles/{correo}` | Carga manual | Nombre del estudiante (solo lectura desde esta pantalla) |
+
+**`localStorage`** (solo en el navegador de cada cuenta):
 
 | Clave de `localStorage` | Quién la escribe | Contenido |
 |---|---|---|
 | `reflexia_reflection_reviews:<uid>` | `reflectionService` | Revisiones del profesor, por `reflectionId` |
 | `reflexia_incident_attempts:<uid>` | `criticalIncidentService` | Intentos del estudiante con su impulso, por taller |
 
-Todas se particionan por el UID de Firebase con `utils/userStorage.ts`. Sin sesión activa, las operaciones que guardan fallan con un mensaje claro en lugar de aparentar que funcionaron.
+Las claves de `localStorage` se particionan por el UID de Firebase con `utils/userStorage.ts`. Sin sesión activa, las operaciones que guardan fallan con un mensaje claro en lugar de aparentar que funcionaron.
+
+### Cómo se decide el estado de una reflexión
+
+`resolveReview` (en `reflectionService`) junta la revisión de ejemplo, lo que el docente guardó en su navegador y la nota oficial de Firestore. **Firestore manda sobre la nota:**
+
+- Con nota en `evaluations`, la reflexión figura como **Validada** con esa nota.
+- Sin nota en `evaluations`, nunca figura como validada. Si el ejemplo o el navegador la tenían así, queda **Editada**: conserva los cambios y la nota como borrador, y basta validarla para oficializarla.
+- Si el docente guardó cambios después de la última nota oficial, está corrigiendo: se muestra **Editada** con su borrador, y la nota oficial anterior sigue vigente hasta que valide de nuevo.
+
+Al validar, primero se escribe la nota en Firestore y solo después se marca la reflexión como validada. Si la escritura falla, la reflexión no queda validada.
 
 ---
 
@@ -167,7 +191,9 @@ Todas se particionan por el UID de Firebase con `utils/userStorage.ts`. Sin sesi
 
 - **Dos hooks en el panel docente**, porque una cosa es la lista y otra la revisión de un caso. La vista los conecta con `updateReflection`.
 - **Propuesta original separada de la versión editada**, para poder auditar (RF-02).
-- **Datos de ejemplo en vez de datos reales**, por el aislamiento del `localStorage` por cuenta. Los relatos son de clases de Educación Física, usan solo roles y ningún nombre, colegio ni curso exacto (AI_GUIDELINES §8). Las imágenes e íconos de la interfaz son neutros.
+- **El estudiante se identifica con nombre y correo, no con un alias.** La anonimización (AI_GUIDELINES §8) aplica a las personas que aparecen dentro del relato, no al estudiante en práctica que lo escribe.
+- **Solo la nota validada va a Firestore.** La nota en borrador es local: la calificación oficial es un acto explícito del docente.
+- **Relatos de ejemplo en vez de relatos reales**, por el aislamiento del `localStorage` por cuenta. Los relatos son de clases de Educación Física, usan solo roles y ningún nombre, colegio ni curso exacto (AI_GUIDELINES §8). Las imágenes e íconos de la interfaz son neutros.
 - **Sin rojo**: los errores y avisos usan ícono y texto, no color. El rojo queda reservado al desempeño (AI_GUIDELINES §4).
 - **El estado se indica con ícono y texto**, no solo con color (badges y panel de El Impulso).
 - **`requestImpulse` no guarda el borrador**: lo guarda antes el hook. Así cada pieza tiene una sola responsabilidad y se conserva el invariante de HU-03.
@@ -179,11 +205,13 @@ Todas se particionan por el UID de Firebase con `utils/userStorage.ts`. Sin sesi
 **Profesor** (cuenta con rol `teacher`):
 
 1. `npm run dev`, iniciar sesión y abrir **Reflexiones** en el menú lateral.
-2. Comprobar el resumen (Total 8, Pendientes 4, Editadas 2, Validadas 2) y que la lista parte con la reflexión más reciente.
+2. Comprobar el resumen (Total 8) y que la lista parte con la reflexión más reciente. Cuántas salen pendientes, editadas o validadas depende de las notas que haya en `evaluations`: sin ninguna nota en Firestore son 4 pendientes y 4 editadas.
 3. Probar los filtros (taller, estado, búsqueda) y "Limpiar filtros".
-4. Abrir **Estudiante A**: relato, propuesta de la IA (7 orientaciones) y editor.
+4. Abrir la reflexión del taller 1 de `estudiante3@ucen.cl` (se muestra su nombre si tiene perfil): relato, propuesta de la IA (7 orientaciones) y editor.
 5. Editar un impulso: aparece "Tienes cambios sin guardar" y "Validar" queda deshabilitado. Vaciar un impulso bloquea "Guardar cambios".
-6. Guardar (pasa a **Editada**), validar con la confirmación (pasa a **Validada**) y recargar: el estado se conserva.
+6. Guardar (pasa a **Editada**), validar con la confirmación (pasa a **Validada**) y recargar: el estado se conserva. En Firestore, `evaluations/{correo}` debe tener la nota de ese taller, y `/docente` debe mostrarla.
+   - Para cambiar una nota ya validada: modificarla, **Guardar cambios** y volver a **Validar**. Hasta validar, el panel muestra la nota anterior.
+   - Las tres cuentas de prueba deben existir en la whitelist con rol `student`. Si al validar aparece "No se pudo guardar la nota", revisar que las reglas estén publicadas y que el documento de `evaluations` no tenga campos mal escritos.
 7. Probar "Restaurar propuesta de la IA" y "Descartar cambios".
 8. Revisar a 360, 768 y 1280 px.
 
@@ -204,10 +232,12 @@ Verificación de tipos: `npx tsc --noEmit` (no hay tests).
 | Tema | Detalle |
 |---|---|
 | IA real | El generador es una simulación por palabras clave. Con backend, reemplazar `generateImpulse` por la llamada a la API manteniendo la firma y respetando el límite de 10 s (RNF-05). |
-| Datos compartidos entre cuentas | El profesor no ve los envíos reales de los estudiantes y la validación no llega al estudiante. Requiere base de datos compartida. |
+| Datos compartidos entre cuentas | La nota oficial ya se comparte por Firestore, pero el profesor no ve los envíos reales de los estudiantes y la retroalimentación validada no llega al estudiante. Requiere guardar los envíos en la base de datos. |
+| Reflexiones de ejemplo con cuentas de prueba | Las 8 reflexiones están repartidas de forma fija entre tres correos escritos en el código (`TEST_STUDENT_EMAILS`). Se elimina cuando cada envío real traiga el correo de quien lo hizo. |
+| Sin historial de notas | `evaluations` guarda solo la nota vigente; al validar de nuevo, la anterior se pierde. |
 | Detección de datos sensibles | El detector del asistente (HU-05) es manual y por paso. El bloqueo de "Pedir impulso" solo actúa si ya detectó algo en el paso actual. Una puerta completa (RF-05) necesita análisis automático de los 4 pasos o el backend. |
 | Intentos configurables | `requestImpulse` usa el máximo de HU-03 (3). Falta conectarlo a lo que el profesor configura en HU-06. |
-| Trazabilidad | No se registra quién auditó o validó cada impulso (backend). |
+| Trazabilidad | No se registra quién auditó o validó cada impulso ni quién puso cada nota (backend). |
 | Agregar impulsos | El profesor puede editar y quitar los impulsos de la IA, pero no agregar uno nuevo. |
 | Contenido de los relatos | Los relatos de ejemplo son ficticios. Si la profesora guía aclara que AI_GUIDELINES §8 ("sin estética deportiva") restringe también el contenido, es un cambio solo de texto. |
 | Componentes duplicados | `fieldStyles` y la tarjeta de resumen (`StatCard`) tienen copias en otras vistas; moverlos a `src/components/` (regla R2) requiere acuerdo del equipo. |

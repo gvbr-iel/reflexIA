@@ -1,8 +1,10 @@
 # Datos a mano del panel docente
 
-Mientras no exista la pantalla donde el profesor pone las notas, el nombre de
-cada estudiante y sus notas se cargan a mano en **Cloud Firestore**. Esta guía
-indica dónde y con qué campos.
+El nombre de cada estudiante se carga a mano en **Cloud Firestore**. Las notas
+las guarda la app cuando el profesor valida una reflexión en
+`/docente/reflexiones`, pero también se pueden cargar a mano (por ejemplo,
+para un taller que no tiene reflexión de ejemplo). Esta guía indica dónde y
+con qué campos.
 
 El avance (marco teórico, intentos y borradores) **no se carga a mano**: la app
 lo crea sola, en la colección `progress`, cuando el estudiante usa la
@@ -79,8 +81,13 @@ La situación (**Completado**, **En curso** o **Plazo vencido**) no se carga a
 mano: el panel la calcula con las notas, los resultados y los plazos de los
 talleres.
 
-## Provisional
+## Si cargas `evaluations` a mano
 
-Estas dos colecciones son un acuerdo temporal. Si la pantalla de reflexiones
-guarda las notas en otra colección o con otros campos, hay que actualizar el
-modelo, la lectura del panel docente y las reglas.
+La app escribe en el mismo documento cuando el profesor valida una reflexión,
+y las reglas revisan el documento completo. Si un documento cargado a mano
+tiene un campo de más o mal escrito, esa validación será rechazada con el
+aviso "No se pudo guardar la nota". Ante la duda, borra el documento y deja
+que la app lo cree.
+
+Validar una reflexión reemplaza la nota de ese taller, también si la habías
+cargado a mano.

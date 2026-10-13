@@ -14,12 +14,12 @@ que es también el id de cada documento.
 | `whitelist/{correo}` | Rol y estado de acceso | Admin | Admin; el docente solo lista `student` |
 | `progress/{correo}` | Marco teórico (aprobado, intentos, mejor porcentaje) e intentos y borrador de cada taller. Nunca el texto de los relatos | El propio estudiante, desde la app | El estudiante y los docentes |
 | `profiles/{correo}` | Nombre del estudiante | Admin (a mano, desde la consola) | El estudiante, docentes y admin |
-| `evaluations/{correo}` | Nota y resultado de cada taller | Docentes (por ahora a mano) | El estudiante y los docentes |
+| `evaluations/{correo}` | Nota y resultado de cada taller | Docentes, al validar una reflexión en `/docente/reflexiones` (o a mano) | El estudiante y los docentes |
 
 Los campos de cada colección están en [`src/models/studentProgress.ts`](../../src/models/studentProgress.ts),
 [`studentProfile.ts`](../../src/models/studentProfile.ts) y
 [`studentEvaluation.ts`](../../src/models/studentEvaluation.ts). Cómo cargar
-`profiles` y `evaluations` a mano: [`panel-docente-datos.md`](../configuracion/panel-docente-datos.md).
+`profiles` (y, si hace falta, `evaluations`) a mano: [`panel-docente-datos.md`](../configuracion/panel-docente-datos.md).
 
 El rol no viene en la sesión de Firebase: las reglas lo leen del documento del
 usuario en la `whitelist`, y exigen que esté `active`.
@@ -38,6 +38,23 @@ arma el resumen y lo sube a `progress`.
   genera una escritura por guardado.
 - Si falla (sin red, sin sesión), no interrumpe al estudiante: avisa en la
   consola y reintenta en el siguiente cambio.
+
+## Cómo llegan las notas a Firestore
+
+El profesor asigna la nota en `/docente/reflexiones`. Al validar,
+`reflectionService.validate` llama a `studentEvaluationService.saveWorkshopGrade`,
+que escribe en `evaluations/{correo}` solo el taller de esa reflexión.
+
+- El resultado sale de la nota: 4.0 o más es aprobado; menos, reprobado.
+- Primero se guarda en Firestore y después se marca la reflexión como
+  validada. Si la escritura falla, la reflexión no queda validada.
+- La nota en borrador ("Guardar cambios") no se guarda en Firestore.
+- Firestore manda sobre la nota: una reflexión solo figura como validada si
+  su nota está en `evaluations`. Para corregir una nota validada, el profesor
+  la cambia, guarda y vuelve a validar; mientras tanto sigue vigente la anterior.
+- Los relatos siguen siendo de ejemplo: cada reflexión está asignada al correo
+  de una cuenta de prueba (`TEST_STUDENT_EMAILS` en
+  `views/reflections/data/reflections.ts`). Detalle en [`HU02_GUIA.md`](./HU02_GUIA.md).
 
 ## Cómo se calcula lo que se muestra
 
@@ -67,7 +84,9 @@ calcula la situación.
 | Tema | Detalle |
 |---|---|
 | Plazos e intentos máximos | El panel usa los valores fijos de los talleres, no la configuración de `/docente/plazos`. Depende de conectar HU-06 (ver [`HU06_GUIA.md`](./HU06_GUIA.md), "Modificaciones futuras"). Los plazos actuales (15, 22 y 29 de octubre, 5 de noviembre) hacen que nadie figure vencido antes del 16 de octubre |
-| Notas y resultados | Se cargan a mano en `evaluations`. La pantalla de reflexiones ya permite al docente asignar la nota real (`assignedGrade`, ver [`gobernanza_pedagogica_evaluacion.md`](../tecnica/gobernanza_pedagogica_evaluacion.md)), pero la guarda en `localStorage` y sobre reflexiones de ejemplo identificadas con un alias, no con el correo del estudiante. Falta que esa pantalla escriba en Firestore; cuando lo haga, hay que alinear la colección, el modelo, la lectura del panel y las reglas con `evaluations` o reemplazarla. Al integrar la rama con `main` se descartó el vínculo del panel simulado con esas notas, porque no se puede asociar a estudiantes reales |
+| Notas sobre relatos de ejemplo | La nota que el docente valida en reflexiones ya se guarda en `evaluations` (ver [`gobernanza_pedagogica_evaluacion.md`](../tecnica/gobernanza_pedagogica_evaluacion.md)). Pero los relatos siguen siendo ficticios y están repartidos de forma fija entre tres cuentas de prueba, con sus correos escritos en el código. Un estudiante nuevo en la whitelist no tiene reflexiones, y no hay relato de ejemplo para todos los talleres de cada cuenta. Se resuelve cuando los envíos reales se guarden en Firestore |
+| Sin historial de notas | `evaluations` guarda solo la nota vigente de cada taller. Al validar de nuevo, la anterior se pierde y no queda registro de quién la cambió |
+| Revisión local | Los impulsos editados, el comentario y las observaciones de la nota siguen en el `localStorage` del docente: otro docente, u otro navegador, ve la nota oficial pero no esos textos |
 | Límite aprobado / sobresaliente | `AI_GUIDELINES` §4 pone el 5.0 en ambos rangos. Se decidió provisoriamente que 5.0 es sobresaliente (`GRADE_THRESHOLDS.excellent`). Confirmar con la cliente. Tampoco hay estado definido para notas entre 3.9 y 4.0 |
 | Nombre del estudiante | Vive en `profiles`, cargado a mano. Su lugar definitivo sería la gestión de la whitelist (HU-01) |
 | Seguridad del "aprobado" | El cuestionario se corrige en el navegador, así que un estudiante con conocimientos técnicos podría falsear su aprobación. Resolverlo requiere corregir en un servidor (por ejemplo, Cloud Functions) |
