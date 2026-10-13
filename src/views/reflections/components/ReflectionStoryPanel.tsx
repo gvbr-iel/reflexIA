@@ -4,6 +4,7 @@ import { INCIDENT_STEPS } from '../../../models/criticalIncident'
 import type { Reflection } from '../../../models/reflection'
 import { formatDateTime } from '../../../utils/formatDateTime'
 import ReviewStatusBadge from './ReviewStatusBadge'
+import { getStudentLabel } from './studentLabel'
 
 /* ------------------------------------------------
    ReflectionStoryPanel — HU-02 / RF-02
@@ -11,7 +12,8 @@ import ReviewStatusBadge from './ReviewStatusBadge'
    Relato que envió el estudiante, de solo lectura: un
    bloque por cada paso del asistente (Contexto,
    Descripción del hecho, Actores e influencia y
-   Relevancia pedagógica), con el alias, el taller, el
+   Relevancia pedagógica), con el nombre y el correo del
+   estudiante, el taller, el
    intento y el estado de la revisión arriba.
 
    El texto se muestra con saltos de línea respetados y
@@ -32,10 +34,14 @@ export default function ReflectionStoryPanel({ reflection }: ReflectionStoryPane
       <header className="space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="story-title" className="font-heading text-xl font-semibold text-texto">
-            {reflection.studentAlias}
+            {getStudentLabel(reflection)}
           </h2>
           <ReviewStatusBadge status={reflection.review.status} />
         </div>
+        {/* El correo solo se repite si arriba ya se mostró el nombre. */}
+        {reflection.studentName !== null && (
+          <p className="break-all text-sm text-texto/60">{reflection.studentEmail}</p>
+        )}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-texto/70">
           <span>
             Taller {reflection.workshopNumber} · Intento {reflection.attemptNumber}

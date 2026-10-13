@@ -3,12 +3,13 @@ import { Award, CalendarDays, Lightbulb, Sparkles } from 'lucide-react'
 import type { Reflection } from '../../../models/reflection'
 import { formatDateTime } from '../../../utils/formatDateTime'
 import ReviewStatusBadge from './ReviewStatusBadge'
+import { getStudentLabel } from './studentLabel'
 
 /* ------------------------------------------------
    ReflectionListItem — HU-02 / RF-02
 
-   Una reflexión en la lista del profesor: alias del
-   estudiante, estado de la revisión, taller, intento,
+   Una reflexión en la lista del profesor: nombre y correo
+   del estudiante, estado de la revisión, taller, intento,
    fecha de envío, cantidad de impulsos y nota real/sugerida.
 
    Es un botón que abre el detalle. La reflexión abierta
@@ -46,10 +47,17 @@ export default function ReflectionListItem({
       >
         <span className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-heading text-base font-semibold text-texto">
-            {reflection.studentAlias}
+            {getStudentLabel(reflection)}
           </span>
           <ReviewStatusBadge status={reflection.review.status} />
         </span>
+
+        {/* El correo solo se repite si arriba ya se mostró el nombre. */}
+        {reflection.studentName !== null && (
+          <span className="mt-0.5 block break-all text-xs text-texto/60">
+            {reflection.studentEmail}
+          </span>
+        )}
 
         <span className="mt-1 block text-sm text-texto/70">
           Taller {reflection.workshopNumber} · Intento {reflection.attemptNumber}

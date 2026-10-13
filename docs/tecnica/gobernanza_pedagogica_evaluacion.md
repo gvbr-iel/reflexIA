@@ -163,11 +163,17 @@ Para que la nota sugerida no sea una "caja negra", se estructuró una **rúbrica
 
 #### A. Persistencia en [`reflectionService.ts`](file:///c:/Users/joaqu/Documents/Github/reflexIA/src/services/reflectionService.ts)
 - `saveEdit`: Permite guardar borradores de notas y observaciones docentes en `localStorage` particionado por usuario.
-- `validate`: Valida que exista una nota real en el rango [1.0, 7.0] y actualiza el estado a `'validated'`.
+- `validate`: Valida que exista una nota real en el rango [1.0, 7.0], la guarda en Cloud Firestore (`evaluations/{correo}`) mediante `studentEvaluationService.saveWorkshopGrade` y, solo si esa escritura sale bien, actualiza el estado a `'validated'`.
 
 #### B. Sincronización en [`teacherDashboardService.ts`](file:///c:/Users/joaqu/Documents/Github/reflexIA/src/services/teacherDashboardService.ts)
-- La función generadora de la tabla general del panel docente (`/docente`) consulta el almacén de revisiones del profesor (`reflexia_reflection_reviews`).
-- Cuando el profesor valida la reflexión de un estudiante con una nota real en `/docente/reflexiones`, esa nota **se propaga de inmediato a la matriz de avance general del estudiante** en el panel principal, actualizando su situación (`Aprobado`, `Sobresaliente` o `Reprobado`).
+> **Actualización (13 de octubre de 2026).** El panel docente dejó de usar estudiantes ficticios y ya no lee el almacén local de revisiones (`reflexia_reflection_reviews`). La sincronización ahora pasa por Cloud Firestore.
+
+- Cada reflexión de ejemplo está asignada al correo de una cuenta de prueba (`studentEmail`).
+- Cuando el profesor valida una reflexión con una nota real en `/docente/reflexiones`, esa nota se guarda en `evaluations/{correo}`, en el taller correspondiente, con el resultado calculado a partir de la nota (4.0 o más es aprobado).
+- El panel docente (`/docente`) lee `evaluations` al cargar, así que la nota **aparece en la matriz de avance del estudiante al recargar el panel**, actualizando su situación (`Aprobado`, `Sobresaliente` o `Reprobado`).
+- La nota en borrador (`saveEdit`) no se propaga: solo la validada es oficial.
+
+Detalle en [`PANEL_DOCENTE_GUIA.md`](../historias-usuario/PANEL_DOCENTE_GUIA.md) y [`HU02_GUIA.md`](../historias-usuario/HU02_GUIA.md).
 
 ---
 
