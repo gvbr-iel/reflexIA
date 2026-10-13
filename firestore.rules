@@ -2,14 +2,44 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /whitelist/{email} {
-      function isWhitelistAdmin() {
-        return request.auth != null && (
-          request.auth.token.admin == true
-          || request.auth.token.email == 'admin@ucen.cl'
-        );
-      }
 
+    // ─────────────────────────────────────────────
+    // Funciones compartidas por todas las colecciones
+    // ─────────────────────────────────────────────
+
+    // Administrador de la whitelist.
+    function isWhitelistAdmin() {
+      return request.auth != null && (
+        request.auth.token.admin == true
+        || request.auth.token.email == 'admin@ucen.cl'
+      );
+    }
+
+    // true si quien consulta tiene sesión y su correo es el indicado.
+    function isOwner(email) {
+      return request.auth != null && request.auth.token.email == email;
+    }
+
+    // Registro en la whitelist de quien consulta.
+    function requesterEntry() {
+      return get(/databases/$(database)/documents/whitelist/$(request.auth.token.email)).data;
+    }
+
+    // true si quien consulta está activo en la whitelist con el rol indicado.
+    // El rol no viene en la sesión: se lee de su documento en la whitelist.
+    function hasActiveRole(role) {
+      return request.auth != null
+        && request.auth.token.email != null
+        && exists(/databases/$(database)/documents/whitelist/$(request.auth.token.email))
+        && requesterEntry().role == role
+        && requesterEntry().status == 'active';
+    }
+
+    // ─────────────────────────────────────────────
+    // Whitelist de correos autorizados (HU-01)
+    // ─────────────────────────────────────────────
+
+    match /whitelist/{email} {
       function hasValidWhitelistData() {
         return request.resource.data.keys().hasAll([
             'email', 'role', 'status', 'addedAt', 'revokedAt'
@@ -28,11 +58,89 @@ service cloud.firestore {
           );
       }
 
-      allow get: if isWhitelistAdmin()
-        || (request.auth != null && request.auth.token.email == email);
-      allow list: if isWhitelistAdmin();
+      allow get: if isWhitelistAdmin() || isOwner(email);
+      // El profesor guía solo puede listar estudiantes (panel docente).
+      // Su consulta debe filtrar por role == 'student' o será rechazada.
+      allow list: if isWhitelistAdmin()
+        || (hasActiveRole('teacher') && resource.data.role == 'student');
       allow create, update: if isWhitelistAdmin() && hasValidWhitelistData();
       allow delete: if isWhitelistAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // Resumen de avance de cada estudiante (panel docente)
+    // ─────────────────────────────────────────────
+
+    match /progress/{email} {
+      // Avance en el marco teórico.
+      function isValidTheory(theory) {
+        return theory is map
+          && theory.keys().hasAll([
+            'isApproved', 'attemptsUsed', 'bestScorePercentage', 'approvedAt'
+          ])
+          && theory.keys().hasOnly([
+            'isApproved', 'attemptsUsed', 'bestScorePercentage', 'approvedAt'
+          ])
+          && theory.isApproved is bool
+          && theory.attemptsUsed is int
+          && theory.attemptsUsed >= 0
+          && (
+            theory.bestScorePercentage == null
+            || (
+              theory.bestScorePercentage is number
+              && theory.bestScorePercentage >= 0
+              && theory.bestScorePercentage <= 100
+            )
+          )
+          && (theory.approvedAt == null || theory.approvedAt is string);
+      }
+
+      // Avance en un taller.
+      function isValidWorkshop(workshop) {
+        return workshop is map
+          && workshop.keys().hasAll(['attemptsUsed', 'hasDraft'])
+          && workshop.keys().hasOnly(['attemptsUsed', 'hasDraft'])
+          && workshop.attemptsUsed is int
+          && workshop.attemptsUsed >= 0
+          && workshop.hasDraft is bool;
+      }
+
+      // Los 4 talleres, ni más ni menos.
+      function hasValidWorkshops(workshops) {
+        return workshops is map
+          && workshops.keys().hasAll([
+            'workshop-1', 'workshop-2', 'workshop-3', 'workshop-4'
+          ])
+          && workshops.keys().hasOnly([
+            'workshop-1', 'workshop-2', 'workshop-3', 'workshop-4'
+          ])
+          && isValidWorkshop(workshops['workshop-1'])
+          && isValidWorkshop(workshops['workshop-2'])
+          && isValidWorkshop(workshops['workshop-3'])
+          && isValidWorkshop(workshops['workshop-4']);
+      }
+
+      function hasValidProgressData() {
+        return request.resource.data.keys().hasAll([
+            'email', 'theory', 'workshops', 'updatedAt'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'email', 'theory', 'workshops', 'updatedAt'
+          ])
+          && request.resource.data.email == email
+          && isValidTheory(request.resource.data.theory)
+          && hasValidWorkshops(request.resource.data.workshops)
+          && request.resource.data.updatedAt is string;
+      }
+
+      // Cada estudiante lee su propio resumen; el profesor guía lee todos.
+      allow get: if isOwner(email) || hasActiveRole('teacher');
+      allow list: if hasActiveRole('teacher');
+      // Solo el propio estudiante escribe su resumen, y solo si sigue activo.
+      allow create, update: if isOwner(email)
+        && hasActiveRole('student')
+        && hasValidProgressData();
+      allow delete: if false;
     }
   }
 }
