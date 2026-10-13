@@ -30,6 +30,7 @@ import type {
 } from '../models/reflection';
 import { sampleReflections } from '../views/reflections/data/reflections';
 import { getUserStorageKey, readUserStorage, writeUserStorage } from '../utils/userStorage';
+import { studentProfileService } from './studentProfileService';
 
 // ─────────────────────────────────────────────
 // Clave de localStorage (mock temporal)
@@ -61,10 +62,41 @@ function findSample(reflectionId: string): Reflection {
   return reflection;
 }
 
-/** Devuelve la reflexión con la revisión indicada, copiando los impulsos. */
-function withReview(reflection: Reflection, review: ReflectionReview): Reflection {
+/** Nombres ya leídos de Firestore (correo → nombre); null si aún no se leen. */
+let cachedNames: Map<string, string> | null = null;
+
+/**
+ * Lee los nombres de los estudiantes desde `profiles`.
+ *
+ * Guarda el resultado para no volver a leer Firestore en cada acción; con
+ * `refresh` se fuerza una lectura nueva. Si la lectura falla (sin red o sin
+ * permiso) no interrumpe la revisión: se usan los nombres que ya hubiera y,
+ * a falta de nombre, la pantalla muestra el correo.
+ */
+async function loadNames(refresh = false): Promise<Map<string, string>> {
+  if (cachedNames && !refresh) return cachedNames;
+
+  try {
+    cachedNames = await studentProfileService.fetchNames();
+    return cachedNames;
+  } catch (error) {
+    console.warn('No se pudieron leer los nombres de los estudiantes:', error);
+    return cachedNames ?? new Map();
+  }
+}
+
+/**
+ * Devuelve la reflexión con la revisión indicada (copiando los impulsos) y
+ * con el nombre del estudiante, si tiene un perfil cargado.
+ */
+function withReview(
+  reflection: Reflection,
+  review: ReflectionReview,
+  names: Map<string, string>,
+): Reflection {
   return {
     ...reflection,
+    studentName: names.get(reflection.studentEmail) ?? null,
     review: { ...review, hints: review.hints.map((hint) => ({ ...hint })) },
   };
 }
@@ -107,11 +139,12 @@ export const reflectionService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.get<Reflection[]>('/api/reflections');
 
-    await simulateLatency();
+    // Al listar se vuelven a leer los nombres, por si cambió algún perfil.
+    const [names] = await Promise.all([loadNames(true), simulateLatency()]);
 
     const store = readUserStorage<ReviewStore>(STORAGE_KEY) ?? {};
     return sampleReflections
-      .map((reflection) => withReview(reflection, currentReview(reflection, store)))
+      .map((reflection) => withReview(reflection, currentReview(reflection, store), names))
       .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
   },
 
@@ -125,11 +158,11 @@ export const reflectionService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.get<Reflection>(`/api/reflections/${reflectionId}`);
 
-    await simulateLatency();
+    const [names] = await Promise.all([loadNames(), simulateLatency()]);
 
     const reflection = findSample(reflectionId);
     const store = readUserStorage<ReviewStore>(STORAGE_KEY) ?? {};
-    return withReview(reflection, currentReview(reflection, store));
+    return withReview(reflection, currentReview(reflection, store), names);
   },
 
   /**
@@ -145,7 +178,7 @@ export const reflectionService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.put<Reflection>(`/api/reflections/${payload.reflectionId}/review`, payload);
 
-    await simulateLatency();
+    const [names] = await Promise.all([loadNames(), simulateLatency()]);
 
     const reflection = findSample(payload.reflectionId);
 
@@ -179,7 +212,7 @@ export const reflectionService = {
       reviewedAt: new Date().toISOString(),
     };
     persistReview(reflection.id, review);
-    return withReview(reflection, review);
+    return withReview(reflection, review, names);
   },
 
   /**
@@ -193,7 +226,7 @@ export const reflectionService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.post<Reflection>(`/api/reflections/${payload.reflectionId}/validate`);
 
-    await simulateLatency();
+    const [names] = await Promise.all([loadNames(), simulateLatency()]);
 
     const reflection = findSample(payload.reflectionId);
     const store = readUserStorage<ReviewStore>(STORAGE_KEY) ?? {};
@@ -219,6 +252,6 @@ export const reflectionService = {
       reviewedAt: new Date().toISOString(),
     };
     persistReview(reflection.id, validated);
-    return withReview(reflection, validated);
+    return withReview(reflection, validated, names);
   },
 };

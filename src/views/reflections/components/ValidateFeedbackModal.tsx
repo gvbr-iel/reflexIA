@@ -5,6 +5,7 @@ import Modal from '../../../components/Modal'
 import type { Reflection } from '../../../models/reflection'
 import { getPerformanceStatus } from '../../../utils/performanceStatus'
 import PerformanceBadge from '../../teacher-dashboard/components/PerformanceBadge'
+import { getStudentLabel } from './studentLabel'
 
 /* ------------------------------------------------
    ValidateFeedbackModal — HU-02 / RF-02
@@ -63,7 +64,7 @@ export default function ValidateFeedbackModal({
       <div className="space-y-4 text-base leading-relaxed text-texto">
         <p>
           Vas a oficializar la evaluación y retroalimentación de{' '}
-          <strong>{reflection.studentAlias}</strong> (Taller {reflection.workshopNumber}, intento{' '}
+          <strong>{getStudentLabel(reflection)}</strong> (Taller {reflection.workshopNumber}, intento{' '}
           {reflection.attemptNumber}).
         </p>
 

@@ -82,11 +82,18 @@ function normalizeSearchText(value: string): string {
     .toLocaleLowerCase('es');
 }
 
-/** Texto en el que busca el filtro: el alias y los 4 campos del relato. */
+/** Texto en el que busca el filtro: el nombre, el correo y los 4 campos del relato. */
 function searchableText(reflection: Reflection): string {
   const { context, description, actors, relevance } = reflection.content;
   return normalizeSearchText(
-    [reflection.studentAlias, context, description, actors, relevance].join(' '),
+    [
+      reflection.studentName ?? '',
+      reflection.studentEmail,
+      context,
+      description,
+      actors,
+      relevance,
+    ].join(' '),
   );
 }
 

@@ -3,9 +3,10 @@
  *
  * Los envíos reales de los estudiantes viven en el almacenamiento local de
  * cada cuenta, por lo que el profesor no puede leerlos sin un backend. Este
- * archivo simula ese conjunto: 8 reflexiones anónimas ("Estudiante A…") de
- * estudiantes en práctica de Pedagogía en Educación Física, sobre incidentes
- * ocurridos en sus clases, en los 4 talleres y en los tres estados de revisión.
+ * archivo simula ese conjunto: 8 reflexiones de ejemplo, asignadas a cuentas
+ * de prueba (ver `TEST_STUDENT_EMAILS`), de estudiantes en práctica de
+ * Pedagogía en Educación Física, sobre incidentes ocurridos en sus clases, en
+ * los 4 talleres y en los tres estados de revisión.
  *
  * Todos los relatos usan solo roles ("el docente", "un estudiante"): ningún
  * nombre real de persona, colegio o curso exacto (AI_GUIDELINES §8).
@@ -52,7 +53,6 @@ const TEST_STUDENT_EMAILS = {
 /** Datos que se escriben a mano de cada reflexión. */
 interface ReflectionSeed {
   id: string;
-  studentAlias: string;
   /** Correo de la cuenta de prueba a la que se asigna la reflexión. */
   studentEmail: string;
   workshopNumber: number;
@@ -94,7 +94,8 @@ function createReflection(seed: ReflectionSeed, teacherReview?: TeacherReviewSee
 
   return {
     id: seed.id,
-    studentAlias: seed.studentAlias,
+    // El nombre lo agrega el servicio al leer `profiles` de Firestore.
+    studentName: null,
     studentEmail: seed.studentEmail,
     workshopId,
     workshopNumber: seed.workshopNumber,
@@ -132,7 +133,6 @@ export const sampleReflections: Reflection[] = [
   // Taller 1 · pendiente · relato con varias omisiones
   createReflection({
     id: 'reflection-001',
-    studentAlias: 'Estudiante A',
     studentEmail: TEST_STUDENT_EMAILS.third,
     workshopNumber: 1,
     attemptNumber: 1,
@@ -153,7 +153,6 @@ export const sampleReflections: Reflection[] = [
   createReflection(
     {
       id: 'reflection-002',
-      studentAlias: 'Estudiante B',
       studentEmail: TEST_STUDENT_EMAILS.first,
       workshopNumber: 1,
       attemptNumber: 2,
@@ -180,7 +179,6 @@ export const sampleReflections: Reflection[] = [
   // Taller 2 · pendiente
   createReflection({
     id: 'reflection-003',
-    studentAlias: 'Estudiante C',
     studentEmail: TEST_STUDENT_EMAILS.third,
     workshopNumber: 2,
     attemptNumber: 1,
@@ -201,7 +199,6 @@ export const sampleReflections: Reflection[] = [
   createReflection(
     {
       id: 'reflection-004',
-      studentAlias: 'Estudiante D',
       studentEmail: TEST_STUDENT_EMAILS.first,
       workshopNumber: 2,
       attemptNumber: 3,
@@ -234,7 +231,6 @@ export const sampleReflections: Reflection[] = [
   // Taller 3 · pendiente
   createReflection({
     id: 'reflection-005',
-    studentAlias: 'Estudiante E',
     studentEmail: TEST_STUDENT_EMAILS.third,
     workshopNumber: 3,
     attemptNumber: 1,
@@ -255,7 +251,6 @@ export const sampleReflections: Reflection[] = [
   createReflection(
     {
       id: 'reflection-006',
-      studentAlias: 'Estudiante F',
       studentEmail: TEST_STUDENT_EMAILS.first,
       workshopNumber: 3,
       attemptNumber: 2,
@@ -287,7 +282,6 @@ export const sampleReflections: Reflection[] = [
   createReflection(
     {
       id: 'reflection-007',
-      studentAlias: 'Estudiante G',
       studentEmail: TEST_STUDENT_EMAILS.third,
       workshopNumber: 4,
       attemptNumber: 1,
@@ -318,7 +312,6 @@ export const sampleReflections: Reflection[] = [
   // Taller 1 · pendiente · un paso demasiado breve
   createReflection({
     id: 'reflection-008',
-    studentAlias: 'Estudiante H',
     studentEmail: TEST_STUDENT_EMAILS.second,
     workshopNumber: 1,
     attemptNumber: 1,

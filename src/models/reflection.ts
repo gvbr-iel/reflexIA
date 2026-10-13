@@ -74,14 +74,18 @@ export interface ReflectionReview {
 /**
  * Reflexión de un estudiante lista para ser revisada por el profesor.
  *
- * El estudiante se identifica con un alias ("Estudiante A"): la plataforma
- * no registra nombres reales (AI_GUIDELINES §8).
+ * El estudiante se identifica con su nombre y su correo institucional. La
+ * regla de anonimización (AI_GUIDELINES §8) aplica a las personas que
+ * aparecen dentro del relato, no al estudiante en práctica que lo escribe.
  */
 export interface Reflection {
   /** Identificador único de la reflexión. */
   id: string;
-  /** Alias anónimo del estudiante (e.g. "Estudiante A"). */
-  studentAlias: string;
+  /**
+   * Nombre del estudiante, leído de `profiles/{correo}` en Firestore.
+   * Es null si aún no tiene un perfil cargado: en ese caso se muestra el correo.
+   */
+  studentName: string | null;
   /**
    * Correo institucional del estudiante, en minúsculas. Es el dato que une la
    * reflexión con su nota en Firestore (`evaluations/{correo}`) y con su
@@ -117,7 +121,7 @@ export interface ReflectionFilters {
   workshopId: string;
   /** Estado de revisión o `all`. */
   status: ReviewStatus | typeof ALL_FILTER;
-  /** Texto libre; se busca en el alias y en el contenido del relato. */
+  /** Texto libre; se busca en el nombre, el correo y el contenido del relato. */
   query: string;
 }
 

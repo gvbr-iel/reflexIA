@@ -8,7 +8,7 @@ import { fieldClassName, labelClassName } from './fieldStyles'
 /* ------------------------------------------------
    ReflectionFilterBar — HU-02 / RF-02
 
-   Búsqueda por alias o palabra del relato y filtros por
+   Búsqueda por nombre, correo o palabra del relato y filtros por
    taller y por estado de revisión. Está pensada para la
    columna de la lista (angosta desde `xl`): el buscador
    ocupa todo el ancho y los dos selectores van lado a lado.
@@ -70,7 +70,7 @@ export default function ReflectionFilterBar({
             type="search"
             value={filters.query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Ej: Estudiante A o una palabra del relato"
+            placeholder="Ej: un nombre, un correo o una palabra del relato"
             autoComplete="off"
             className={`${fieldClassName} h-11 pl-10`}
           />
