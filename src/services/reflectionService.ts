@@ -133,8 +133,9 @@ export const reflectionService = {
   },
 
   /**
-   * Guarda los cambios del profesor sobre los impulsos y el comentario
-   * general. La reflexión queda "editada" y debe validarse para entregarse.
+   * Guarda los cambios del profesor sobre los impulsos, el comentario
+   * general y la nota real borrador. La reflexión queda "editada" y debe
+   * validarse para entregarse al estudiante.
    * La propuesta original de la IA nunca se modifica.
    *
    * Mock: persiste en localStorage.
@@ -159,10 +160,22 @@ export const reflectionService = {
       throw new Error('El comentario general está vacío. Escribe una orientación general para continuar.');
     }
 
+    if (payload.assignedGrade !== null) {
+      if (
+        isNaN(payload.assignedGrade) ||
+        payload.assignedGrade < 1.0 ||
+        payload.assignedGrade > 7.0
+      ) {
+        throw new Error('La nota real debe estar dentro de la escala chilena (entre 1.0 y 7.0).');
+      }
+    }
+
     const review: ReflectionReview = {
       status: 'edited',
       hints,
       generalComment,
+      assignedGrade: payload.assignedGrade,
+      gradeNotes: payload.gradeNotes?.trim() ?? '',
       reviewedAt: new Date().toISOString(),
     };
     persistReview(reflection.id, review);
@@ -170,8 +183,8 @@ export const reflectionService = {
   },
 
   /**
-   * Valida la retroalimentación vigente (la de la IA o la editada por el
-   * docente). Queda lista para entregarse al estudiante.
+   * Valida la retroalimentación y la calificación definitiva asignada por el docente.
+   * La nota oficial es potestad exclusiva del docente: la IA nunca califica automáticamente.
    *
    * Mock: persiste en localStorage.
    * Producción: POST /api/reflections/:reflectionId/validate
@@ -186,14 +199,23 @@ export const reflectionService = {
     const store = readUserStorage<ReviewStore>(STORAGE_KEY) ?? {};
     const review = currentReview(reflection, store);
 
-    // Validar dos veces no cambia nada: se conserva la fecha original.
-    if (review.status === 'validated') {
-      return withReview(reflection, review);
+    const gradeToValidate = payload.assignedGrade ?? review.assignedGrade;
+    if (
+      gradeToValidate === null ||
+      isNaN(gradeToValidate) ||
+      gradeToValidate < 1.0 ||
+      gradeToValidate > 7.0
+    ) {
+      throw new Error(
+        'Debes ingresar la nota real del estudiante (entre 1.0 y 7.0) antes de validar. La calificación debe ser asignada por el docente.',
+      );
     }
 
     const validated: ReflectionReview = {
       ...review,
       status: 'validated',
+      assignedGrade: gradeToValidate,
+      gradeNotes: (payload.gradeNotes !== undefined ? payload.gradeNotes : review.gradeNotes)?.trim() ?? '',
       reviewedAt: new Date().toISOString(),
     };
     persistReview(reflection.id, validated);

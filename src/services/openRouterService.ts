@@ -248,9 +248,11 @@ async function callOpenRouter(
   text: string,
   model: OpenRouterModel,
   apiKey: string,
+  signal?: AbortSignal,
 ): Promise<string> {
   const response = await fetch(OPENROUTER_BASE_URL, {
     method: 'POST',
+    signal,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
@@ -311,10 +313,18 @@ export const openRouterService = {
    * Detecta datos sensibles en un texto.
    *
    * @param text Texto a analizar (campo del formulario de incidente).
+   * @param signal Señal de cancelación opcional (AbortSignal).
    * @returns Resultado de la detección con las palabras sensibles.
    * @throws Error si no hay API keys configuradas o si todos los intentos fallan.
    */
-  async detectSensitiveData(text: string): Promise<SensitiveDataDetection> {
+  async detectSensitiveData(
+    text: string,
+    signal?: AbortSignal,
+  ): Promise<SensitiveDataDetection> {
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
     // Validar longitud mínima
     if (text.trim().length < DEFAULT_SENSITIVE_DATA_CONFIG.minTextLength) {
       return {
@@ -338,8 +348,12 @@ export const openRouterService = {
 
     for (const apiKey of apiKeys) {
       for (const model of OPENROUTER_MODELS) {
+        if (signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+
         try {
-          const content = await callOpenRouter(text, model, apiKey);
+          const content = await callOpenRouter(text, model, apiKey, signal);
           const rawWords = parseModelResponse(content);
           const detectedWords = validateAndNormalize(rawWords, text);
 
@@ -349,6 +363,10 @@ export const openRouterService = {
             hasSensitiveData: detectedWords.length > 0,
           };
         } catch (err) {
+          if (signal?.aborted || (err as Error)?.name === 'AbortError') {
+            throw err;
+          }
+
           lastError = err instanceof Error ? err : new Error(String(err));
           const statusCode = (err as Error & { statusCode?: number }).statusCode;
 

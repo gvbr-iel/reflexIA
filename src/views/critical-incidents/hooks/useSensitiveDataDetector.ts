@@ -40,6 +40,8 @@ export interface UseSensitiveDataDetectorReturn {
   hasSensitiveData: boolean;
   /** Dispara el análisis asíncrono sobre el texto proporcionado. */
   analyze: (text: string) => Promise<void>;
+  /** Cancela la petición de análisis en curso para no consumir IA innecesariamente. */
+  cancelAnalysis: () => void;
   /** Reinicia el estado del detector a sus valores iniciales. */
   clearResults: () => void;
 }
@@ -55,10 +57,28 @@ export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
   // Evita carreras entre peticiones y reentrancia
   const latestRequestRef = useRef(0);
   const isAnalyzingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  /** Cancela la petición en curso y restablece el estado de carga. */
+  const cancelAnalysis = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    latestRequestRef.current += 1;
+    isAnalyzingRef.current = false;
+
+    setIsAnalyzing(false);
+    setAnalysisError(null);
+  }, []);
 
   /** Borra el resultado del análisis (por ejemplo, cuando el texto cambia). */
   const clearResults = useCallback(() => {
-    // Invalida cualquier petición que pudiera estar en vuelo
+    // Cancela e invalida cualquier petición que pudiera estar en vuelo
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
     latestRequestRef.current += 1;
     isAnalyzingRef.current = false;
 
@@ -90,11 +110,14 @@ export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
     setIsAnalyzing(true);
     setAnalysisError(null);
 
-    try {
-      const result = await openRouterService.detectSensitiveData(text);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-      // Si se inició otra petición o se llamó a clearResults mientras se resolvía la API, descartar
-      if (requestId !== latestRequestRef.current) {
+    try {
+      const result = await openRouterService.detectSensitiveData(text, controller.signal);
+
+      // Si se inició otra petición o se canceló mientras se resolvía la API, descartar
+      if (requestId !== latestRequestRef.current || controller.signal.aborted) {
         return;
       }
 
@@ -103,7 +126,11 @@ export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
       setAnalysisError(null);
       setHasAnalyzed(true);
     } catch (err: unknown) {
-      if (requestId !== latestRequestRef.current) {
+      if (requestId !== latestRequestRef.current || controller.signal.aborted) {
+        return;
+      }
+
+      if ((err as Error)?.name === 'AbortError') {
         return;
       }
 
@@ -120,6 +147,7 @@ export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
       if (requestId === latestRequestRef.current) {
         isAnalyzingRef.current = false;
         setIsAnalyzing(false);
+        abortControllerRef.current = null;
       }
     }
   }, []);
@@ -134,6 +162,7 @@ export function useSensitiveDataDetector(): UseSensitiveDataDetectorReturn {
     hasAnalyzed,
     hasSensitiveData,
     analyze,
+    cancelAnalysis,
     clearResults,
   };
 }
