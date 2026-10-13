@@ -49,11 +49,12 @@ export default function TeacherDashboardView() {
           Sigue el avance semanal de tus estudiantes en el marco teórico y los talleres de
           incidentes críticos.
         </p>
-        {/* Aclara que los datos son de ejemplo (prototipo). */}
-        <p className="mt-1 text-sm text-texto/60">
-          Datos de ejemplo
-          {dashboard.generatedAt && ` · Actualizado el ${updatedFormatter.format(new Date(dashboard.generatedAt))}`}
-        </p>
+        {/* Fecha y hora en que se cargaron los datos. */}
+        {dashboard.generatedAt && (
+          <p className="mt-1 text-sm text-texto/60">
+            Actualizado el {updatedFormatter.format(new Date(dashboard.generatedAt))}
+          </p>
+        )}
       </header>
 
       {dashboard.error ? (
