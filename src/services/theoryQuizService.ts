@@ -31,6 +31,7 @@ import type {
 
 import { DEFAULT_QUIZ_CONFIG } from '../models/theoryQuiz';
 import { readUserStorage, writeUserStorage } from '../utils/userStorage';
+import { studentProgressService } from './studentProgressService';
 
 // ─────────────────────────────────────────────
 // Claves de localStorage (mock temporal)
@@ -519,6 +520,9 @@ export const theoryQuizService = {
     };
 
     writeUserStorage(STORAGE_KEYS.APPROVAL, approval);
+
+    // Avisa al panel docente del nuevo avance (no espera ni interrumpe al estudiante).
+    void studentProgressService.sync();
 
     return { attempt, approval };
   },

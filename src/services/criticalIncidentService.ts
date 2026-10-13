@@ -39,6 +39,7 @@ import type {
 import { DEFAULT_WORKSHOP_CONFIG, INCIDENT_STEPS } from '../models/criticalIncident';
 import { generateImpulse } from '../utils/impulseGenerator';
 import { getUserStorageKey, readUserStorage, writeUserStorage } from '../utils/userStorage';
+import { studentProgressService } from './studentProgressService';
 
 // ─────────────────────────────────────────────
 // Claves de localStorage (mock temporal)
@@ -387,6 +388,9 @@ export const criticalIncidentService = {
     drafts[payload.workshopId] = draft;
     writeUserStorage(STORAGE_KEYS.DRAFTS, drafts);
 
+    // Avisa al panel docente del avance (no espera ni interrumpe al estudiante).
+    void studentProgressService.sync();
+
     return draft;
   },
 
@@ -406,6 +410,9 @@ export const criticalIncidentService = {
     const drafts = readUserStorage<DraftStore>(STORAGE_KEYS.DRAFTS) ?? {};
     delete drafts[workshopId];
     writeUserStorage(STORAGE_KEYS.DRAFTS, drafts);
+
+    // Avisa al panel docente de que el taller ya no tiene borrador.
+    void studentProgressService.sync();
   },
 
   /**
@@ -480,6 +487,9 @@ export const criticalIncidentService = {
 
     attempts[workshopId] = [...(attempts[workshopId] ?? []), attempt];
     writeUserStorage(STORAGE_KEYS.ATTEMPTS, attempts);
+
+    // Avisa al panel docente del intento de revisión usado.
+    void studentProgressService.sync();
 
     const updatedWorkshop =
       buildWorkshops(drafts, attempts, results).find((w) => w.id === workshopId) ?? workshop;

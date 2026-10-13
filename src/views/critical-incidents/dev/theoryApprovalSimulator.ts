@@ -13,6 +13,7 @@
  */
 
 import type { TheoryApprovalStatus } from '../../../models/theoryQuiz';
+import { studentProgressService } from '../../../services/studentProgressService';
 import { getUserStorageKey } from '../../../utils/userStorage';
 
 /** Misma clave que `theoryQuizService` (STORAGE_KEYS.APPROVAL). */
@@ -28,6 +29,7 @@ export function setSimulatedTheoryApproval(approved: boolean): void {
 
   if (!approved) {
     localStorage.removeItem(storageKey);
+    void studentProgressService.sync();
     return;
   }
 
@@ -46,4 +48,6 @@ export function setSimulatedTheoryApproval(approved: boolean): void {
   };
 
   localStorage.setItem(storageKey, JSON.stringify(status));
+  // Escribe directo en localStorage, así que avisa al panel docente a mano.
+  void studentProgressService.sync();
 }
