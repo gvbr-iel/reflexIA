@@ -142,5 +142,69 @@ service cloud.firestore {
         && hasValidProgressData();
       allow delete: if false;
     }
+
+    // ─────────────────────────────────────────────
+    // Nombre de cada estudiante (panel docente)
+    // ─────────────────────────────────────────────
+
+    match /profiles/{email} {
+      // El estudiante lee el suyo; el profesor guía y el admin leen todos.
+      allow get: if isOwner(email) || hasActiveRole('teacher') || isWhitelistAdmin();
+      allow list: if hasActiveRole('teacher') || isWhitelistAdmin();
+      // Por ahora lo carga el administrador (desde la consola, que no pasa
+      // por estas reglas). Se deja la escritura solo al admin por si más
+      // adelante se hace desde la app.
+      allow create, update: if isWhitelistAdmin()
+        && request.resource.data.keys().hasOnly(['email', 'name'])
+        && request.resource.data.keys().hasAll(['email', 'name'])
+        && request.resource.data.email == email
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120;
+      allow delete: if isWhitelistAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // Notas y resultados de los talleres (los pone el profesor)
+    // ─────────────────────────────────────────────
+
+    match /evaluations/{email} {
+      // Evaluación de un taller: nota de 1 a 7 y resultado, ambos opcionales.
+      function isValidEvaluation(evaluation) {
+        return evaluation is map
+          && evaluation.keys().hasAll(['grade', 'outcome', 'evaluatedAt'])
+          && evaluation.keys().hasOnly(['grade', 'outcome', 'evaluatedAt'])
+          && (
+            evaluation.grade == null
+            || (evaluation.grade is number && evaluation.grade >= 1 && evaluation.grade <= 7)
+          )
+          && (evaluation.outcome == null || evaluation.outcome in ['approved', 'failed'])
+          && (evaluation.evaluatedAt == null || evaluation.evaluatedAt is string);
+      }
+
+      // Cada taller es opcional, pero si viene debe ser válido.
+      function hasValidEvaluations(workshops) {
+        return workshops is map
+          && workshops.keys().hasOnly([
+            'workshop-1', 'workshop-2', 'workshop-3', 'workshop-4'
+          ])
+          && (!('workshop-1' in workshops) || isValidEvaluation(workshops['workshop-1']))
+          && (!('workshop-2' in workshops) || isValidEvaluation(workshops['workshop-2']))
+          && (!('workshop-3' in workshops) || isValidEvaluation(workshops['workshop-3']))
+          && (!('workshop-4' in workshops) || isValidEvaluation(workshops['workshop-4']));
+      }
+
+      // El estudiante lee la suya; el profesor guía lee todas.
+      allow get: if isOwner(email) || hasActiveRole('teacher');
+      allow list: if hasActiveRole('teacher');
+      // Solo el profesor guía escribe; el estudiante nunca puede ponerse nota.
+      allow create, update: if hasActiveRole('teacher')
+        && request.resource.data.keys().hasOnly(['email', 'workshops', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['email', 'workshops', 'updatedAt'])
+        && request.resource.data.email == email
+        && hasValidEvaluations(request.resource.data.workshops)
+        && request.resource.data.updatedAt is string;
+      allow delete: if false;
+    }
   }
 }
