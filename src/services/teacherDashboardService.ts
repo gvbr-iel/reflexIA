@@ -27,7 +27,6 @@ import { collection, getDocs } from 'firebase/firestore';
 
 import { DEFAULT_QUIZ_CONFIG } from '../models/theoryQuiz';
 import { EVALUATIONS_COLLECTION } from '../models/studentEvaluation';
-import { PROFILES_COLLECTION } from '../models/studentProfile';
 import { PROGRESS_COLLECTION } from '../models/studentProgress';
 import { THEORY_ACTIVITY_ID } from '../models/workPacing';
 import {
@@ -41,6 +40,7 @@ import type { WhitelistEntry } from '../models/whitelist';
 import { getPerformanceStatus } from '../utils/performanceStatus';
 import { criticalIncidentService } from './criticalIncidentService';
 import { firestoreDb } from './firebase';
+import { studentProfileService } from './studentProfileService';
 import { whitelistService } from './whitelistService';
 
 // ─────────────────────────────────────────────
@@ -67,9 +67,10 @@ async function readCollection(name: string): Promise<Map<string, RawDocument>> {
 // ─────────────────────────────────────────────
 // Interpretación de los documentos
 // ─────────────────────────────────────────────
-// Los documentos de `profiles` y `evaluations` se cargan a mano, así que
-// pueden venir incompletos. Estas funciones toman solo lo que está bien
-// escrito y ignoran el resto, en vez de romper todo el panel.
+// Los documentos de `evaluations` se pueden cargar a mano, así que pueden
+// venir incompletos. Estas funciones toman solo lo que está bien escrito e
+// ignoran el resto, en vez de romper todo el panel. Los nombres de `profiles`
+// los lee `studentProfileService`, con el mismo criterio.
 
 /** Avance del marco teórico que publicó el estudiante. */
 interface TheoryProgress {
@@ -125,12 +126,6 @@ function readWorkshopEvaluation(
     workshop.outcome === 'approved' || workshop.outcome === 'failed' ? workshop.outcome : null;
 
   return { grade, outcome };
-}
-
-/** Nombre del documento `profiles` (null si no existe o está vacío). */
-function readName(profile: RawDocument | undefined): string | null {
-  const name = profile?.name;
-  return typeof name === 'string' && name.trim() !== '' ? name.trim() : null;
 }
 
 // ─────────────────────────────────────────────
@@ -215,13 +210,13 @@ function buildStudents(
   entries: WhitelistEntry[],
   workshops: WorkshopLimits[],
   progressByEmail: Map<string, RawDocument>,
-  profileByEmail: Map<string, RawDocument>,
+  nameByEmail: Map<string, string>,
   evaluationByEmail: Map<string, RawDocument>,
 ): StudentProgress[] {
   return entries
     .map((entry): StudentProgress => ({
       id: entry.email,
-      name: readName(profileByEmail.get(entry.email)),
+      name: nameByEmail.get(entry.email) ?? null,
       email: entry.email,
       activities: buildActivities(
         workshops,
@@ -247,11 +242,11 @@ export const teacherDashboardService = {
    * `/docente/plazos` (queda pendiente junto con HU-06).
    */
   async fetchDashboard(): Promise<TeacherDashboardData> {
-    const [students, progressByEmail, profileByEmail, evaluationByEmail, workshopDefaults] =
+    const [students, progressByEmail, nameByEmail, evaluationByEmail, workshopDefaults] =
       await Promise.all([
         whitelistService.fetchActiveStudents(),
         readCollection(PROGRESS_COLLECTION),
-        readCollection(PROFILES_COLLECTION),
+        studentProfileService.fetchNames(),
         readCollection(EVALUATIONS_COLLECTION),
         criticalIncidentService.fetchWorkshopPacingDefaults(),
       ]);
@@ -266,7 +261,7 @@ export const teacherDashboardService = {
         students,
         workshops,
         progressByEmail,
-        profileByEmail,
+        nameByEmail,
         evaluationByEmail,
       ),
       generatedAt: new Date().toISOString(),
