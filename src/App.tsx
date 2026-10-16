@@ -32,6 +32,9 @@ const TeacherDashboardView = lazy(
 )
 const ReflectionsView = lazy(() => import('./views/reflections/ReflectionsView'))
 const DeadlinesView = lazy(() => import('./views/work-pacing/DeadlinesView'))
+const WorkshopStructureView = lazy(
+  () => import('./views/workshop-structure/WorkshopStructureView'),
+)
 const StudentDashboardView = lazy(
   () => import('./views/student-dashboard/StudentDashboardView'),
 )
@@ -90,6 +93,7 @@ export default function App() {
           <Route index element={<TeacherDashboardView />} />
           <Route path="reflexiones" element={<ReflectionsView />} />
           <Route path="plazos" element={<DeadlinesView />} />
+          <Route path="estructura-talleres" element={<WorkshopStructureView />} />
           <Route path="innovaciones" element={<InnovationsView />} />
         </Route>
 

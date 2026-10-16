@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { FileText, Clock, Lightbulb, LayoutDashboard, Menu, X, LogOut } from 'lucide-react'
+import { FileText, Clock, Lightbulb, LayoutDashboard, Menu, X, LogOut, SlidersHorizontal } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 /* ------------------------------------------------
@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { label: 'Panel docente', path: '/docente', icon: <LayoutDashboard size={20} /> },
   { label: 'Reflexiones', path: '/docente/reflexiones', icon: <FileText size={20} /> },
   { label: 'Plazos e intentos', path: '/docente/plazos', icon: <Clock size={20} /> },
+  { label: 'Estructura de talleres', path: '/docente/estructura-talleres', icon: <SlidersHorizontal size={20} /> },
   { label: 'Innovaciones', path: '/docente/innovaciones', icon: <Lightbulb size={20} /> },
 ]
 
