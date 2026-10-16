@@ -16,6 +16,7 @@ ReflexIA es una aplicación web orientada a la práctica profesional docente de 
 | **RF-06** | [HU-06](./docs/historias-usuario/HU06_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de control en `/docente/plazos` para definir fechas límite y límites de intentos de revisión por actividad (marco teórico y talleres 1 a 4). |
 | **RF-07** | [HU-07](./docs/historias-usuario/HU07_GUIA.md) | Estudiante y Docente | ✅ **Implementado** | Biblioteca ilustrativa categorizada, con búsqueda combinable y detalle de casos disponible para estudiantes y profesores. |
 | **RF-08** | [HU-08](./docs/historias-usuario/HU08_GUIA.md) | Todos los roles | ✅ **Implementado** | Inicio de sesión seguro con Firebase Authentication y autorización activa en Firestore, con redirección inteligente por rol a `/estudiante`, `/docente` o `/admin`. |
+| **HU-09** | [HU-09](./docs/historias-usuario/HU09_GUIA.md) | Profesor guía | 🟡 **Configuración docente** | Editor independiente para los talleres 1 a 4, con secciones reordenables, cuatro formatos, edición de preguntas y vista previa. Persiste en Firestore; la integración de la configuración al flujo activo del estudiante queda pendiente. |
 
 ---
 
@@ -54,6 +55,7 @@ src/
     ├── critical-incidents/  # HU-03: Asistente guiado de incidentes críticos
     ├── theory-verification/ # HU-04: Verificación diagnóstica del marco teórico
     ├── work-pacing/         # HU-06: Panel docente de plazos e intentos
+    ├── workshop-structure/  # HU-09: Configuración docente de la estructura de talleres
     ├── student-dashboard/   # Dashboard "Mi progreso" del estudiante
     ├── reflections/         # HU-02: Revisión docente de la retroalimentación de la IA
     ├── teacher-dashboard/   # Panel del profesor guía: seguimiento de estudiantes (datos de Firestore)
@@ -74,6 +76,7 @@ src/
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | ✅ Listo | Revisión, edición y validación de la retroalimentación de la IA |
 | `/docente` | TeacherLayout | TeacherDashboardView | ✅ Listo (datos de Firestore) | Seguimiento semanal de estudiantes: resumen, filtros por situación y avance en marco teórico y talleres. Ver [`PANEL_DOCENTE_GUIA.md`](./docs/historias-usuario/PANEL_DOCENTE_GUIA.md) |
 | `/docente/plazos` | TeacherLayout | DeadlinesView | ✅ Listo | Regulación del ritmo de trabajo: plazos e intentos |
+| `/docente/estructura-talleres` | TeacherLayout | WorkshopStructureView | 🟡 Configuración docente | Editor independiente, persistencia y vista previa de los talleres 1 a 4; la vista de estudiante aún usa el asistente HU-03 vigente |
 | `/docente/innovaciones` | TeacherLayout | InnovationsView | ✅ Listo | Biblioteca de consulta compartida con estudiantes |
 | `/estudiante` | StudentLayout | StudentDashboardView | ✅ Listo | Dashboard "Mi progreso reflexivo" |
 | `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | ✅ Listo | Evaluación diagnóstica obligatoria del marco teórico |
