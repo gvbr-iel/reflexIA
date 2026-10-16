@@ -37,6 +37,7 @@ Ejemplo del documento:
 ```json
 {
   "workshopId": "workshop-1",
+  "answerKeyPrivate": true,
   "sections": [
     { "id": "objectives-context", "enabled": true, "order": 0 },
     { "id": "incident-form", "enabled": true, "order": 1 },
@@ -49,18 +50,23 @@ Ejemplo del documento:
   "formSchema": {
     "guidingQuestions": [],
     "matrixRows": ["Situación observada", "Interpretación pedagógica"],
-    "questions": []
+    "questions": [
+      { "id": "q1", "prompt": "Pregunta", "options": ["A", "B"] }
+    ]
   },
   "updatedAt": "2026-10-16T18:00:00.000Z",
   "updatedBy": "docente@ucen.cl"
 }
 ```
 
-`evaluationType` admite `text`, `matrix`, `multiple-choice` y `file`. Cada
-elemento de `formSchema.questions` contiene `id`, `prompt`, `options` y
-`correctOptionIndex`. La aplicación valida las longitudes y cardinalidades
-antes de escribir; las reglas de Firestore limitan roles, IDs de taller, las
-secciones y el tamaño de las listas.
+`evaluationType` admite `text`, `matrix`, `multiple-choice` y `file`. Las
+preguntas y alternativas se guardan en el documento visible al estudiante; la
+respuesta correcta se mantiene aparte en
+`workshopConfigurations/{workshopId}/private/answerKey`, que solo pueden leer
+docentes activos. El estudiante recibe únicamente el enunciado y las opciones.
+La aplicación valida las longitudes y cardinalidades antes de escribir; las
+reglas de Firestore restringen los roles y los IDs de taller, además de impedir
+que una configuración sin la pauta privada se lea desde una cuenta de estudiante.
 
 Las reglas deben desplegarse en Firebase para habilitar la persistencia:
 
@@ -68,13 +74,26 @@ Las reglas deben desplegarse en Firebase para habilitar la persistencia:
 firebase deploy --only firestore:rules
 ```
 
+## Integración con el asistente del estudiante
+
+Al entrar a `/estudiante/talleres/:workshopId`, HU-03 carga la configuración del
+taller desde Firestore. La secuencia de secciones respeta el orden y los estados
+activados por el docente. El estudiante puede completar el relato, responder la
+matriz en una tabla o contestar las preguntas de alternativas; las respuestas
+dinámicas se guardan en el borrador local particionado por UID y se restauran
+al volver al taller. La clave correcta de alternativas no se envía al cliente.
+
+Los formatos de texto y matriz conservan el control de datos sensibles. El
+Impulso y el contador siguen ligados a la revisión del relato libre; una matriz
+o cuestionario no consume intentos de IA.
+
 ## Estado y límites actuales
 
-La configuración se guarda y la vista previa representa las secciones y el
-formato elegidos. El formulario de captura que ya usa el estudiante en
-`/estudiante/talleres/:workshopId` todavía corresponde al asistente HU-03 y no
-consume estas configuraciones. Su integración requiere adaptar el modelo de
-borradores y conservar la detección de datos sensibles, el guardado por UID y
-el contador de intentos. La carga real de archivos/diagramas también requiere
-definir almacenamiento y validaciones; el selector de archivo de la vista
-previa es solo ilustrativo.
+El formato de archivo/diagrama no acepta archivos aún. Requiere definir
+almacenamiento seguro y revisión de privacidad del contenido antes de habilitar
+la recepción de documentos escolares. La sección de retroalimentación de pares
+se muestra como no disponible hasta implementar el flujo compartido.
+
+Si había una configuración previa a la separación de la pauta, la pantalla
+docente la migra al abrirla; entretanto, las reglas no permiten que estudiantes
+lean un documento que todavía no declare `answerKeyPrivate: true`.
