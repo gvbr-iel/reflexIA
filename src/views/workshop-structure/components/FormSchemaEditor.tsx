@@ -162,6 +162,10 @@ export default function FormSchemaEditor({
           <p className="text-sm text-texto/70">
             Define las instrucciones que acompañarán la carga de archivo o diagrama.
           </p>
+          <p className="rounded-lg border border-border bg-bg p-3 text-sm text-texto/70">
+            La recepción de archivos en el asistente del estudiante está deshabilitada hasta contar
+            con almacenamiento seguro y revisión de privacidad.
+          </p>
           <EditableList
             label="Instrucción"
             items={formSchema.guidingQuestions}

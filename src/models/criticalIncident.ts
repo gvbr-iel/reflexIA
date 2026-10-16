@@ -98,6 +98,11 @@ export interface IncidentStepInfo {
   order: number;
 }
 
+/** Paso dinámico del formulario docente, que puede no ser un paso estándar. */
+export interface WorkshopFormStep extends Omit<IncidentStepInfo, 'id'> {
+  id: string;
+}
+
 /**
  * Definición de los 4 pasos del formulario de incidente crítico.
  *
@@ -177,8 +182,10 @@ export interface IncidentDraft {
   actors: string;
   /** Texto del campo Relevancia pedagógica. */
   relevance: string;
+  /** Respuestas de filas, preguntas u otros campos configurados por el docente. */
+  answers?: Record<string, string>;
   /** Paso en el que se encontraba el estudiante al guardar. */
-  currentStep: IncidentStep;
+  currentStep: string;
   /** Marca temporal ISO 8601 del último guardado. */
   savedAt: string;
   /** Si fue guardado automáticamente (true) o manualmente (false). */
@@ -376,8 +383,10 @@ export interface SaveDraftPayload {
   actors: string;
   /** Contenido del campo Relevancia pedagógica. */
   relevance: string;
+  /** Respuestas de filas, preguntas u otros campos configurados por el docente. */
+  answers?: Record<string, string>;
   /** Paso actual del estudiante al momento de guardar. */
-  currentStep: IncidentStep;
+  currentStep: string;
 }
 
 /**

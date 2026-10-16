@@ -1,6 +1,6 @@
 import { AlertCircle } from 'lucide-react'
 
-import type { IncidentStepInfo } from '../../../models/criticalIncident'
+import type { WorkshopFormStep } from '../../../models/criticalIncident'
 
 /* ------------------------------------------------
    IncidentStepForm — campo de texto de un paso (RF-03)
@@ -12,7 +12,7 @@ import type { IncidentStepInfo } from '../../../models/criticalIncident'
    ------------------------------------------------ */
 
 interface IncidentStepFormProps {
-  step: IncidentStepInfo
+  step: WorkshopFormStep
   /** Total de pasos, para mostrar "Paso X de N". */
   totalSteps: number
   value: string

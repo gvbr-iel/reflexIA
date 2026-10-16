@@ -4,7 +4,7 @@
  * Hook principal del asistente de incidentes críticos (HU-03 / RF-03).
  *
  * Encapsula toda la lógica y el estado del Step Wizard (R5):
- * - Los 4 campos independientes y la navegación entre pasos.
+ * - Los campos y la navegación definidos por la configuración docente del taller.
  * - Bloqueo de avance si el campo obligatorio del paso actual está vacío.
  * - Guardado manual y automático del borrador (cada `autoSaveIntervalMs`,
  *   al cambiar de paso y al salir de la vista).
@@ -17,24 +17,25 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 import type {
-  IncidentStep,
-  IncidentStepInfo,
   Workshop,
   WorkshopConfig,
+  WorkshopFormStep,
 } from '../../../models/criticalIncident';
 import {
   INCIDENT_STEPS,
   EMPTY_DRAFT_FIELDS,
   DEFAULT_WORKSHOP_CONFIG,
 } from '../../../models/criticalIncident';
+import type { WorkshopStudentConfiguration } from '../../../models/workshopStructure';
 import { criticalIncidentService } from '../../../services/criticalIncidentService';
+import { workshopStructureService } from '../../../services/workshopStructureService';
 
 // ─────────────────────────────────────────────
 // Tipos del hook
 // ─────────────────────────────────────────────
 
 /** Texto de cada uno de los 4 campos, indexado por paso. */
-export type StepValues = Record<IncidentStep, string>;
+export type StepValues = Record<string, string>;
 
 /** Estado del último intento de guardado del borrador. */
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -48,14 +49,16 @@ export interface UseIncidentWizardReturn {
   loadError: string | null;
   /** Taller en curso (null mientras carga o si falló). */
   workshop: Workshop | null;
+  /** Configuración docente activa y segura para estudiantes. */
+  configuration: WorkshopStudentConfiguration | null;
   /** Reintenta la carga inicial. */
   retryLoad: () => Promise<void>;
 
   // ── Pasos ──
-  /** Definición de los 4 pasos. */
-  steps: IncidentStepInfo[];
+  /** Pasos dinámicos derivados del formato y el esquema configurados. */
+  steps: WorkshopFormStep[];
   /** Paso actual. */
-  currentStep: IncidentStepInfo;
+  currentStep: WorkshopFormStep;
   /** Índice del paso actual (0-based). */
   currentIndex: number;
   isFirstStep: boolean;
@@ -64,18 +67,21 @@ export interface UseIncidentWizardReturn {
   // ── Contenido ──
   /** Texto escrito en cada paso. */
   values: StepValues;
-  /** Actualiza el texto de un paso. */
-  setFieldValue: (step: IncidentStep, text: string) => void;
+  answers: Record<string, string>;
+  /** Respuesta del paso actual. */
+  currentValue: string;
+  /** Actualiza la respuesta de un paso. */
+  setFieldValue: (step: string, text: string) => void;
 
   // ── Validación ──
   /** Si cada paso tiene su campo obligatorio completo. */
-  stepCompletion: Record<IncidentStep, boolean>;
-  /** Si los 4 pasos están completos. */
+  stepCompletion: Record<string, boolean>;
+  /** Si todos los pasos configurados están completos. */
   allStepsCompleted: boolean;
   /** Error del paso actual tras intentar avanzar (null si no hay). */
   stepError: string | null;
   /** Si se puede ir a un paso (todos los anteriores completos). */
-  canGoToStep: (step: IncidentStep) => boolean;
+  canGoToStep: (step: string) => boolean;
 
   // ── Navegación ──
   /** Avanza al siguiente paso; se bloquea si el campo está vacío. */
@@ -83,7 +89,7 @@ export interface UseIncidentWizardReturn {
   /** Retrocede al paso anterior. */
   goBack: () => void;
   /** Salta a un paso permitido. */
-  goToStep: (step: IncidentStep) => void;
+  goToStep: (step: string) => void;
 
   // ── Borrador ──
   saveStatus: SaveStatus;
@@ -112,6 +118,81 @@ const EMPTY_VALUES: StepValues = {
   relevance: '',
 };
 
+function buildConfiguredSteps(
+  configuration: WorkshopStudentConfiguration | null,
+): WorkshopFormStep[] {
+  if (!configuration) return INCIDENT_STEPS;
+
+  if (configuration.evaluationType === 'matrix') {
+    if (configuration.formSchema.matrixRows.length === 0) {
+      return [{
+        id: 'matrix-empty',
+        title: 'No hay filas de análisis',
+        instruction: 'El docente aún no ha agregado filas a esta matriz.',
+        placeholder: '',
+        order: 1,
+      }];
+    }
+    return configuration.formSchema.matrixRows.map((row, index) => ({
+      id: `matrix-${index}`,
+      title: row,
+      instruction: `Completa la fila «${row}» con tu análisis. No incluyas nombres reales.`,
+      placeholder: `Escribe aquí tu respuesta para: ${row}`,
+      order: index + 1,
+    }));
+  }
+
+  if (configuration.evaluationType === 'multiple-choice') {
+    const questions = configuration.formSchema.questions;
+    if (questions.length === 0) {
+      return [{
+        id: 'choice-empty',
+        title: 'No hay preguntas disponibles',
+        instruction: 'El docente aún no ha agregado preguntas a este formulario.',
+        placeholder: '',
+        order: 1,
+      }];
+    }
+    return questions.map((question, index) => ({
+      id: `choice-${question.id}`,
+      title: question.prompt,
+      instruction: 'Selecciona la alternativa que consideres correcta.',
+      placeholder: '',
+      order: index + 1,
+    }));
+  }
+
+  if (configuration.evaluationType === 'file') {
+    return [{
+      id: 'file-upload',
+      title: 'Archivo o diagrama',
+      instruction:
+        'La plataforma todavía no cuenta con almacenamiento seguro ni revisión de privacidad para archivos. ' +
+        'Solicita al docente cambiar el formato antes de continuar.',
+      placeholder: '',
+      order: 1,
+    }];
+  }
+
+  const steps: WorkshopFormStep[] = INCIDENT_STEPS.map((step, index) => {
+    const prompt = configuration.formSchema.guidingQuestions[index]?.trim();
+    return {
+      ...step,
+      instruction: prompt ? `${step.instruction} Orientación: ${prompt}` : step.instruction,
+    };
+  });
+  configuration.formSchema.guidingQuestions.slice(INCIDENT_STEPS.length).forEach((question, index) => {
+    steps.push({
+      id: `guiding-${index + INCIDENT_STEPS.length}`,
+      title: `Pregunta orientadora ${index + INCIDENT_STEPS.length + 1}`,
+      instruction: question,
+      placeholder: 'Desarrolla tu respuesta sin incluir nombres reales.',
+      order: steps.length + 1,
+    });
+  });
+  return steps;
+}
+
 /** Un campo obligatorio está completo si tiene texto además de espacios. */
 function isFilled(text: string): boolean {
   return text.trim().length > 0;
@@ -132,11 +213,13 @@ export function useIncidentWizard(
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [workshop, setWorkshop] = useState<Workshop | null>(null);
+  const [configuration, setConfiguration] = useState<WorkshopStudentConfiguration | null>(null);
   const [config, setConfig] = useState<WorkshopConfig>(DEFAULT_WORKSHOP_CONFIG);
 
   // ── Contenido y navegación ────────────────
   const [values, setValues] = useState<StepValues>(EMPTY_VALUES);
-  const [currentStepId, setCurrentStepId] = useState<IncidentStep>(
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [currentStepId, setCurrentStepId] = useState<string>(
     EMPTY_DRAFT_FIELDS.currentStep,
   );
   const [showValidation, setShowValidation] = useState(false);
@@ -150,10 +233,10 @@ export function useIncidentWizard(
 
   // Referencia al último estado, para el temporizador y la salida de la
   // vista sin recrear los efectos en cada tecla.
-  const latestRef = useRef({ values, currentStepId, isDirty });
+  const latestRef = useRef({ values, answers, currentStepId, isDirty });
   // Sin lista de dependencias: se actualiza después de cada render.
   useEffect(() => {
-    latestRef.current = { values, currentStepId, isDirty };
+    latestRef.current = { values, answers, currentStepId, isDirty };
   });
 
   // Se incrementa en cada edición: permite saber si el usuario siguió
@@ -171,18 +254,30 @@ export function useIncidentWizard(
   });
 
   // ── Derivados ─────────────────────────────
-  const currentIndex = INCIDENT_STEPS.findIndex((s) => s.id === currentStepId);
-  const currentStep = INCIDENT_STEPS[currentIndex];
+  const steps = buildConfiguredSteps(configuration);
+  const currentIndex = Math.max(0, steps.findIndex((s) => s.id === currentStepId));
+  const currentStep = steps[currentIndex] ?? steps[0];
   const isFirstStep = currentIndex === 0;
-  const isLastStep = currentIndex === INCIDENT_STEPS.length - 1;
+  const isLastStep = currentIndex === steps.length - 1;
 
-  const stepCompletion = {
-    context: isFilled(values.context),
-    description: isFilled(values.description),
-    actors: isFilled(values.actors),
-    relevance: isFilled(values.relevance),
-  };
-  const allStepsCompleted = INCIDENT_STEPS.every((s) => stepCompletion[s.id]);
+  const getAnswer = useCallback(
+    (stepId: string) =>
+      stepId in values ? values[stepId] : answers[stepId] ?? '',
+    [answers, values],
+  );
+  const currentValue = currentStep ? getAnswer(currentStep.id) : '';
+  const stepCompletion = Object.fromEntries(
+    steps.map((step) => [
+      step.id,
+      configuration?.evaluationType === 'file'
+        ? false
+        : isFilled(getAnswer(step.id)),
+    ]),
+  );
+  const allStepsCompleted =
+    configuration?.evaluationType !== 'file' &&
+    steps.length > 0 &&
+    steps.every((step) => stepCompletion[step.id]);
   const canAdvance = stepCompletion[currentStepId];
   const stepError = showValidation && !canAdvance ? STEP_ERROR_MESSAGE : null;
 
@@ -192,9 +287,10 @@ export function useIncidentWizard(
       setIsLoading(true);
       setLoadError(null);
 
-      const [{ workshops, config: workshopConfig }, draft] = await Promise.all([
+      const [{ workshops, config: workshopConfig }, draft, workshopConfiguration] = await Promise.all([
         criticalIncidentService.fetchWorkshops(),
         criticalIncidentService.getDraft(workshopId),
+        workshopStructureService.fetchStudentConfiguration(workshopId),
       ]);
 
       const found = workshops.find((w) => w.id === workshopId);
@@ -202,6 +298,7 @@ export function useIncidentWizard(
 
       setWorkshop(found);
       setConfig(workshopConfig);
+      setConfiguration(workshopConfiguration);
 
       if (draft) {
         setValues({
@@ -210,15 +307,26 @@ export function useIncidentWizard(
           actors: draft.actors,
           relevance: draft.relevance,
         });
-        setCurrentStepId(draft.currentStep);
+        setAnswers(draft.answers ?? {});
+        const configuredSteps = buildConfiguredSteps(workshopConfiguration);
+        setCurrentStepId(
+          configuredSteps.some((step) => step.id === draft.currentStep)
+            ? draft.currentStep
+            : configuredSteps[0]?.id ?? EMPTY_DRAFT_FIELDS.currentStep,
+        );
         setSavedAt(draft.savedAt);
         setLastSaveWasAuto(draft.isAutoSaved);
         setHasDraft(true);
+      } else {
+        setValues(EMPTY_VALUES);
+        setAnswers({});
+        setCurrentStepId(buildConfiguredSteps(workshopConfiguration)[0]?.id ?? 'context');
       }
-    } catch {
+    } catch (cause) {
+      console.error('No se pudo cargar la configuración del asistente:', cause);
       setLoadError(
-        'No se pudo cargar el taller. ' +
-        'Verifica tu conexión e intenta nuevamente.',
+        'No se pudo cargar el taller o su configuración docente. ' +
+        'Verifica tu conexión, los permisos de Firestore y vuelve a intentarlo.',
       );
     } finally {
       setIsLoading(false);
@@ -237,7 +345,7 @@ export function useIncidentWizard(
    * @param stepOverride - Paso a guardar como actual (al cambiar de paso).
    */
   const persist = useCallback(
-    async (isAuto: boolean, stepOverride?: IncidentStep) => {
+    async (isAuto: boolean, stepOverride?: string) => {
       if (isSavingRef.current) return;
 
       const snapshot = latestRef.current;
@@ -250,7 +358,11 @@ export function useIncidentWizard(
         const draft = await criticalIncidentService.saveDraft(
           {
             workshopId,
-            ...snapshot.values,
+            context: snapshot.values.context ?? '',
+            description: snapshot.values.description ?? '',
+            actors: snapshot.values.actors ?? '',
+            relevance: snapshot.values.relevance ?? '',
+            answers: snapshot.answers,
             currentStep: stepOverride ?? snapshot.currentStepId,
           },
           isAuto,
@@ -287,12 +399,19 @@ export function useIncidentWizard(
   useEffect(() => {
     /** Guarda lo pendiente sin esperar la respuesta (la pestaña puede estar cerrándose). */
     function flush() {
-      const { values: latest, currentStepId: step, isDirty: dirty } =
-        latestRef.current;
-      if (!dirty || isSavingRef.current) return;
+      const snapshot = latestRef.current;
+      if (!snapshot.isDirty || isSavingRef.current) return;
 
       criticalIncidentService
-        .saveDraft({ workshopId, ...latest, currentStep: step }, true)
+        .saveDraft({
+          workshopId,
+          context: snapshot.values.context ?? '',
+          description: snapshot.values.description ?? '',
+          actors: snapshot.values.actors ?? '',
+          relevance: snapshot.values.relevance ?? '',
+          answers: snapshot.answers,
+          currentStep: snapshot.currentStepId,
+        }, true)
         .catch(() => {});
     }
 
@@ -305,16 +424,20 @@ export function useIncidentWizard(
 
   // ── Acciones: contenido ───────────────────
   /** Actualiza el texto de un paso y marca que hay cambios sin guardar. */
-  const setFieldValue = useCallback((step: IncidentStep, text: string) => {
+  const setFieldValue = useCallback((step: string, text: string) => {
     editVersionRef.current += 1;
-    setValues((prev) => ({ ...prev, [step]: text }));
+    if (step in EMPTY_VALUES) {
+      setValues((prev) => ({ ...prev, [step]: text }));
+    } else {
+      setAnswers((prev) => ({ ...prev, [step]: text }));
+    }
     setIsDirty(true);
   }, []);
 
   // ── Acciones: navegación ──────────────────
   /** Cambia de paso (sin validar); lo usan goNext, goBack y goToStep. */
   const moveToStep = useCallback(
-    (target: IncidentStep) => {
+    (target: string) => {
       setShowValidation(false);
       setCurrentStepId(target);
       // Punto de control natural: guarda lo escrito al cambiar de paso.
@@ -329,30 +452,30 @@ export function useIncidentWizard(
       setShowValidation(true);
       return;
     }
-    const next = INCIDENT_STEPS[currentIndex + 1];
+    const next = steps[currentIndex + 1];
     if (next) moveToStep(next.id);
-  }, [canAdvance, currentIndex, moveToStep]);
+  }, [canAdvance, currentIndex, moveToStep, steps]);
 
   /** Vuelve al paso anterior (siempre se permite). */
   const goBack = useCallback(() => {
-    const previous = INCIDENT_STEPS[currentIndex - 1];
+    const previous = steps[currentIndex - 1];
     if (previous) moveToStep(previous.id);
-  }, [currentIndex, moveToStep]);
+  }, [currentIndex, moveToStep, steps]);
 
   /** Un paso es accesible si todos los anteriores están completos (orden lineal). */
   const canGoToStep = useCallback(
-    (step: IncidentStep) => {
-      const targetIndex = INCIDENT_STEPS.findIndex((s) => s.id === step);
-      return INCIDENT_STEPS.slice(0, targetIndex).every((s) =>
-        isFilled(values[s.id]),
+    (step: string) => {
+      const targetIndex = steps.findIndex((s) => s.id === step);
+      return targetIndex >= 0 && steps.slice(0, targetIndex).every((s) =>
+        isFilled(getAnswer(s.id)),
       );
     },
-    [values],
+    [getAnswer, steps],
   );
 
   /** Salta a un paso desde la barra de pasos, si está permitido. */
   const goToStep = useCallback(
-    (step: IncidentStep) => {
+    (step: string) => {
       if (step === currentStepId || !canGoToStep(step)) return;
       moveToStep(step);
     },
@@ -370,6 +493,7 @@ export function useIncidentWizard(
 
       editVersionRef.current += 1;
       setValues(EMPTY_VALUES);
+      setAnswers({});
       setCurrentStepId(EMPTY_DRAFT_FIELDS.currentStep);
       setShowValidation(false);
       setIsDirty(false);
@@ -389,10 +513,11 @@ export function useIncidentWizard(
     isLoading,
     loadError,
     workshop,
+    configuration,
     retryLoad: load,
 
     // Pasos
-    steps: INCIDENT_STEPS,
+    steps,
     currentStep,
     currentIndex,
     isFirstStep,
@@ -400,6 +525,8 @@ export function useIncidentWizard(
 
     // Contenido
     values,
+    answers,
+    currentValue,
     setFieldValue,
 
     // Validación

@@ -43,6 +43,12 @@ export interface UseImpulseParams {
   maxAttempts: number | null;
   /** true si el detector de datos sensibles encontró algo en el relato. */
   hasSensitiveData: boolean;
+  /** true solo si el relato actual ya pasó la revisión de privacidad. */
+  hasPassedSensitiveCheck?: boolean;
+  /** Solo el formato de relato libre genera impulsos pedagógicos actualmente. */
+  impulseAvailable?: boolean;
+  /** Impide solicitar el impulso mientras existan respuestas adicionales incompletas. */
+  hasCompleteNarrative?: boolean;
   /** Guarda el borrador; se llama justo antes de pedir el impulso. */
   saveDraft: () => Promise<void>;
   /** Se llama cuando se registra un intento, por ejemplo para refrescar el taller. */
@@ -113,6 +119,9 @@ export function useImpulse({
   values,
   maxAttempts: maxAttemptsParam,
   hasSensitiveData,
+  hasPassedSensitiveCheck = false,
+  impulseAvailable = true,
+  hasCompleteNarrative = true,
   saveDraft,
   onAttemptRegistered,
 }: UseImpulseParams): UseImpulseReturn {
@@ -188,6 +197,9 @@ export function useImpulse({
     loadError === null &&
     !isRequesting &&
     !isExhausted &&
+    impulseAvailable &&
+    hasCompleteNarrative &&
+    hasPassedSensitiveCheck &&
     !hasSensitiveData &&
     shortSteps.length === 0;
 
@@ -196,6 +208,13 @@ export function useImpulse({
   if (!isRequesting && !isLoadingAttempts && loadError === null) {
     if (isExhausted) {
       blockedReason = `Ya usaste los ${maxAttempts} intentos de revisión de este taller.`;
+    } else if (!impulseAvailable) {
+      blockedReason =
+        'El Impulso está disponible para el formato de relato libre; este formato se completa y guarda sin generar orientaciones automáticas.';
+    } else if (!hasCompleteNarrative) {
+      blockedReason = 'Completa todos los pasos configurados para poder pedir un impulso.';
+    } else if (!hasPassedSensitiveCheck) {
+      blockedReason = 'Detecta los datos sensibles del relato antes de pedir un impulso.';
     } else if (hasSensitiveData) {
       blockedReason =
         'Se detectaron datos sensibles en tu relato. Reemplázalos por etiquetas generales, como "Estudiante A", antes de pedir un impulso.';
@@ -227,7 +246,10 @@ export function useImpulse({
 
       const { attempt } = await criticalIncidentService.requestImpulse({
         workshopId,
-        ...values,
+        context: values.context ?? '',
+        description: values.description ?? '',
+        actors: values.actors ?? '',
+        relevance: values.relevance ?? '',
       });
       if (!isMountedRef.current) return;
 

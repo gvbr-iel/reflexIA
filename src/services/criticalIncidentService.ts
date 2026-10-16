@@ -379,6 +379,7 @@ export const criticalIncidentService = {
       description: payload.description,
       actors: payload.actors,
       relevance: payload.relevance,
+      answers: payload.answers,
       currentStep: payload.currentStep,
       savedAt: new Date().toISOString(),
       isAutoSaved,

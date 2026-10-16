@@ -1,9 +1,9 @@
 import { Check } from 'lucide-react'
 
-import type { IncidentStep, IncidentStepInfo } from '../../../models/criticalIncident'
+import type { WorkshopFormStep } from '../../../models/criticalIncident'
 
 /* ------------------------------------------------
-   StepWizard — indicador de los 4 pasos (RF-03)
+   StepWizard — indicador de los pasos configurados (RF-03)
    Sin estado propio (R5): recibe todo desde
    useIncidentWizard. En móvil (360 px) muestra solo
    los números. Desde `sm` agrega el título del paso
@@ -13,14 +13,14 @@ import type { IncidentStep, IncidentStepInfo } from '../../../models/criticalInc
    ------------------------------------------------ */
 
 interface StepWizardProps {
-  steps: IncidentStepInfo[]
+  steps: WorkshopFormStep[]
   /** Identificador del paso actual. */
-  currentStepId: IncidentStep
+  currentStepId: string
   /** Si cada paso tiene su campo obligatorio completo. */
-  completion: Record<IncidentStep, boolean>
+  completion: Record<string, boolean>
   /** Si se puede ir a un paso (todos los anteriores completos). */
-  canGoToStep: (step: IncidentStep) => boolean
-  onGoToStep: (step: IncidentStep) => void
+  canGoToStep: (step: string) => boolean
+  onGoToStep: (step: string) => void
 }
 
 export default function StepWizard({
