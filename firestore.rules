@@ -206,5 +206,72 @@ service cloud.firestore {
         && request.resource.data.updatedAt is string;
       allow delete: if false;
     }
+
+    // ─────────────────────────────────────────────
+    // Estructura configurable de talleres (HU-09)
+    // ─────────────────────────────────────────────
+
+    match /workshopConfigurations/{workshopId} {
+      function isValidSection(section) {
+        return section is map
+          && section.keys().hasOnly(['id', 'enabled', 'order'])
+          && section.keys().hasAll(['id', 'enabled', 'order'])
+          && section.id in [
+            'objectives-context', 'incident-form', 'theory-framework',
+            'peer-feedback', 'evaluation-rubric', 'prompt-bank'
+          ]
+          && section.enabled is bool
+          && section.order is int
+          && section.order >= 0
+          && section.order < 6;
+      }
+
+      function hasValidWorkshopConfiguration() {
+        return request.resource.data.keys().hasOnly([
+            'workshopId', 'sections', 'evaluationType', 'formSchema',
+            'updatedAt', 'updatedBy'
+          ])
+          && request.resource.data.keys().hasAll([
+            'workshopId', 'sections', 'evaluationType', 'formSchema',
+            'updatedAt', 'updatedBy'
+          ])
+          && request.resource.data.workshopId == workshopId
+          && workshopId in ['workshop-1', 'workshop-2', 'workshop-3', 'workshop-4']
+          && request.resource.data.sections is list
+          && request.resource.data.sections.size() == 6
+          && isValidSection(request.resource.data.sections[0])
+          && isValidSection(request.resource.data.sections[1])
+          && isValidSection(request.resource.data.sections[2])
+          && isValidSection(request.resource.data.sections[3])
+          && isValidSection(request.resource.data.sections[4])
+          && isValidSection(request.resource.data.sections[5])
+          && request.resource.data.evaluationType in [
+            'text', 'matrix', 'multiple-choice', 'file'
+          ]
+          && request.resource.data.formSchema is map
+          && request.resource.data.formSchema.keys().hasOnly([
+            'guidingQuestions', 'matrixRows', 'questions'
+          ])
+          && request.resource.data.formSchema.keys().hasAll([
+            'guidingQuestions', 'matrixRows', 'questions'
+          ])
+          && request.resource.data.formSchema.guidingQuestions is list
+          && request.resource.data.formSchema.guidingQuestions.size() <= 30
+          && request.resource.data.formSchema.matrixRows is list
+          && request.resource.data.formSchema.matrixRows.size() <= 30
+          && request.resource.data.formSchema.questions is list
+          && request.resource.data.formSchema.questions.size() <= 30
+          && request.resource.data.updatedAt is string
+          && request.resource.data.updatedBy == request.auth.token.email;
+      }
+
+      // Estudiantes y docentes activos pueden consultar la configuración.
+      allow get: if hasActiveRole('teacher') || hasActiveRole('student');
+      allow list: if hasActiveRole('teacher') || hasActiveRole('student');
+      // Solo docentes activos pueden editar o restablecer la plantilla.
+      allow create, update: if hasActiveRole('teacher')
+        && hasValidWorkshopConfiguration();
+      allow delete: if hasActiveRole('teacher');
+    }
   }
 }
