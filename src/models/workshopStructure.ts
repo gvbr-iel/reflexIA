@@ -70,12 +70,20 @@ export interface WorkshopFormSchema {
 
 export interface WorkshopStructureConfiguration {
   workshopId: WorkshopId;
+  /** Firestore students must never receive the private answer key. */
+  answerKeyPrivate: true;
   sections: WorkshopSectionSetting[];
   evaluationType: WorkshopEvaluationType;
   formSchema: WorkshopFormSchema;
   updatedAt: string | null;
   updatedBy: string | null;
 }
+
+export type WorkshopStudentConfiguration = Omit<WorkshopStructureConfiguration, 'formSchema'> & {
+  formSchema: Omit<WorkshopFormSchema, 'questions'> & {
+    questions: Omit<WorkshopChoiceQuestion, 'correctOptionIndex'>[];
+  };
+};
 
 export const WORKSHOP_EVALUATION_TYPES: {
   id: WorkshopEvaluationType;
@@ -121,6 +129,7 @@ export function createDefaultWorkshopConfiguration(
 ): WorkshopStructureConfiguration {
   return {
     workshopId,
+    answerKeyPrivate: true,
     sections: WORKSHOP_SECTIONS.map((section, order) => ({
       id: section.id,
       enabled: true,
@@ -141,6 +150,22 @@ export function isWorkshopId(value: string): value is WorkshopId {
   return WORKSHOP_IDS.some((id) => id === value);
 }
 
+export function toStudentWorkshopConfiguration(
+  configuration: WorkshopStructureConfiguration,
+): WorkshopStudentConfiguration {
+  return {
+    ...configuration,
+    formSchema: {
+      guidingQuestions: [...configuration.formSchema.guidingQuestions],
+      matrixRows: [...configuration.formSchema.matrixRows],
+      questions: configuration.formSchema.questions.map(({ correctOptionIndex: _, ...question }) => ({
+        ...question,
+        options: [...question.options],
+      })),
+    },
+  };
+}
+
 export function validateWorkshopConfiguration(
   value: unknown,
 ): string | null {
@@ -150,6 +175,7 @@ export function validateWorkshopConfiguration(
   const configuration = value as Partial<WorkshopStructureConfiguration>;
   const allowedKeys = [
     'workshopId',
+    'answerKeyPrivate',
     'sections',
     'evaluationType',
     'formSchema',
@@ -162,6 +188,9 @@ export function validateWorkshopConfiguration(
 
   if (typeof configuration.workshopId !== 'string' || !isWorkshopId(configuration.workshopId)) {
     return 'El identificador del taller no es válido.';
+  }
+  if (configuration.answerKeyPrivate !== true) {
+    return 'La pauta de respuestas debe mantenerse privada para estudiantes.';
   }
 
   if (
@@ -272,6 +301,9 @@ export function validateWorkshopConfiguration(
     ) {
       return 'Cada pregunta debe tener texto, entre dos y seis alternativas y una respuesta correcta.';
     }
+  }
+  if (new Set((questions as WorkshopChoiceQuestion[]).map((question) => question.id)).size !== questions.length) {
+    return 'Los identificadores de las preguntas deben ser únicos.';
   }
 
   return null;

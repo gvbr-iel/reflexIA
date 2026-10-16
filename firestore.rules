@@ -228,14 +228,15 @@ service cloud.firestore {
 
       function hasValidWorkshopConfiguration() {
         return request.resource.data.keys().hasOnly([
-            'workshopId', 'sections', 'evaluationType', 'formSchema',
+            'workshopId', 'answerKeyPrivate', 'sections', 'evaluationType', 'formSchema',
             'updatedAt', 'updatedBy'
           ])
           && request.resource.data.keys().hasAll([
-            'workshopId', 'sections', 'evaluationType', 'formSchema',
+            'workshopId', 'answerKeyPrivate', 'sections', 'evaluationType', 'formSchema',
             'updatedAt', 'updatedBy'
           ])
           && request.resource.data.workshopId == workshopId
+          && request.resource.data.answerKeyPrivate == true
           && workshopId in ['workshop-1', 'workshop-2', 'workshop-3', 'workshop-4']
           && request.resource.data.sections is list
           && request.resource.data.sections.size() == 6
@@ -266,12 +267,43 @@ service cloud.firestore {
       }
 
       // Estudiantes y docentes activos pueden consultar la configuración.
-      allow get: if hasActiveRole('teacher') || hasActiveRole('student');
-      allow list: if hasActiveRole('teacher') || hasActiveRole('student');
+      allow get: if hasActiveRole('teacher')
+        || (
+          hasActiveRole('student')
+          && (
+            !exists(/databases/$(database)/documents/workshopConfigurations/$(workshopId))
+            || resource.data.answerKeyPrivate == true
+          )
+        );
+      allow list: if hasActiveRole('teacher')
+        || (hasActiveRole('student') && resource.data.answerKeyPrivate == true);
       // Solo docentes activos pueden editar o restablecer la plantilla.
       allow create, update: if hasActiveRole('teacher')
         && hasValidWorkshopConfiguration();
       allow delete: if hasActiveRole('teacher');
+
+      match /private/{privateDocument} {
+        function hasValidAnswerKey() {
+          return request.resource.data.keys().hasOnly([
+              'workshopId', 'answers', 'updatedAt', 'updatedBy'
+            ])
+            && request.resource.data.keys().hasAll([
+              'workshopId', 'answers', 'updatedAt', 'updatedBy'
+            ])
+            && request.resource.data.workshopId == workshopId
+            && request.resource.data.answers is map
+            && request.resource.data.answers.size() <= 30
+            && request.resource.data.updatedAt is string
+            && request.resource.data.updatedBy == request.auth.token.email;
+        }
+
+        // La pauta con respuestas correctas no se expone a estudiantes.
+        allow get, list: if hasActiveRole('teacher');
+        allow create, update: if hasActiveRole('teacher')
+          && privateDocument == 'answerKey'
+          && hasValidAnswerKey();
+        allow delete: if hasActiveRole('teacher') && privateDocument == 'answerKey';
+      }
     }
   }
 }
