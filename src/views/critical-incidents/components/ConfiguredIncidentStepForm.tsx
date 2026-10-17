@@ -36,6 +36,18 @@ export default function ConfiguredIncidentStepForm({
       );
     }
 
+    if (question.type === 'open-ended') {
+      return (
+        <IncidentStepForm
+          step={step}
+          totalSteps={totalSteps}
+          value={value}
+          onChange={onChange}
+          error={error}
+        />
+      );
+    }
+
     return (
       <fieldset className="space-y-4 rounded-xl border border-border bg-surface p-4 md:p-6">
         <legend className="font-heading text-lg font-semibold text-texto">

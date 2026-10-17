@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   validateWorkshopConfiguration,
+  type ImportedWorkshopQuestion,
   type WorkshopChoiceQuestion,
   type WorkshopEvaluationType,
   type WorkshopId,
@@ -18,10 +19,11 @@ function cloneConfiguration(
     formSchema: {
       guidingQuestions: [...configuration.formSchema.guidingQuestions],
       matrixRows: [...configuration.formSchema.matrixRows],
-      questions: configuration.formSchema.questions.map((question) => ({
-        ...question,
-        options: [...question.options],
-      })),
+      questions: configuration.formSchema.questions.map((question) =>
+        question.type === 'multiple-choice'
+          ? { ...question, options: [...question.options] }
+          : { ...question },
+      ),
     },
   };
 }
@@ -179,6 +181,7 @@ export function useWorkshopStructure(workshopId: WorkshopId) {
             {
               id: `question-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
               prompt: '',
+              type: 'multiple-choice',
               options: ['', ''],
               correctOptionIndex: 0,
             },
@@ -186,6 +189,48 @@ export function useWorkshopStructure(workshopId: WorkshopId) {
         },
       })),
     [updateDraft],
+  );
+
+  const addOpenEndedQuestion = useCallback(
+    () =>
+      updateDraft((current) => ({
+        ...current,
+        formSchema: {
+          ...current.formSchema,
+          questions: [
+            ...current.formSchema.questions,
+            {
+              id: `question-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              prompt: '',
+              type: 'open-ended',
+            },
+          ],
+        },
+      })),
+    [updateDraft],
+  );
+
+  const importQuestions = useCallback(
+    (questions: ImportedWorkshopQuestion[]) =>
+      {
+        if (draft && draft.formSchema.questions.length + questions.length > 30) {
+          throw new Error('No se pueden agregar más de 30 preguntas en total.');
+        }
+        updateDraft((current) => ({
+          ...current,
+          formSchema: {
+            ...current.formSchema,
+            questions: [
+              ...current.formSchema.questions,
+              ...questions.map((question) => ({
+                ...question,
+                id: `question-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              })),
+            ],
+          },
+        }));
+      },
+    [draft, updateDraft],
   );
 
   const removeQuestion = useCallback(
@@ -271,6 +316,8 @@ export function useWorkshopStructure(workshopId: WorkshopId) {
     removeGuidingQuestion,
     updateQuestion,
     addQuestion,
+    addOpenEndedQuestion,
+    importQuestions,
     removeQuestion,
   };
 }

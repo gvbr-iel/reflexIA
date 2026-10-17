@@ -55,12 +55,25 @@ export interface WorkshopSectionSetting {
   order: number;
 }
 
-export interface WorkshopChoiceQuestion {
+export interface WorkshopMultipleChoiceQuestion {
   id: string;
   prompt: string;
+  type: 'multiple-choice';
   options: string[];
   correctOptionIndex: number;
 }
+
+export interface WorkshopOpenEndedQuestion {
+  id: string;
+  prompt: string;
+  type: 'open-ended';
+}
+
+export type WorkshopChoiceQuestion =
+  | WorkshopMultipleChoiceQuestion
+  | WorkshopOpenEndedQuestion;
+
+export type ImportedWorkshopQuestion = Omit<WorkshopMultipleChoiceQuestion, 'id'>;
 
 export interface WorkshopFormSchema {
   guidingQuestions: string[];
@@ -81,7 +94,10 @@ export interface WorkshopStructureConfiguration {
 
 export type WorkshopStudentConfiguration = Omit<WorkshopStructureConfiguration, 'formSchema'> & {
   formSchema: Omit<WorkshopFormSchema, 'questions'> & {
-    questions: Omit<WorkshopChoiceQuestion, 'correctOptionIndex'>[];
+    questions: (
+      | Omit<WorkshopMultipleChoiceQuestion, 'correctOptionIndex'>
+      | WorkshopOpenEndedQuestion
+    )[];
   };
 };
 
@@ -142,10 +158,16 @@ export function toStudentWorkshopConfiguration(
     formSchema: {
       guidingQuestions: [...configuration.formSchema.guidingQuestions],
       matrixRows: [...configuration.formSchema.matrixRows],
-      questions: configuration.formSchema.questions.map(({ correctOptionIndex: _, ...question }) => ({
-        ...question,
-        options: [...question.options],
-      })),
+      questions: configuration.formSchema.questions.map((question) =>
+        question.type === 'multiple-choice'
+          ? {
+              id: question.id,
+              prompt: question.prompt,
+              type: question.type,
+              options: [...question.options],
+            }
+          : { ...question },
+      ),
     },
   };
 }
@@ -264,10 +286,7 @@ export function validateWorkshopConfiguration(
     if (
       typeof question !== 'object' ||
       question === null ||
-      Array.isArray(question) ||
-      Object.keys(question).some(
-        (key) => !['id', 'prompt', 'options', 'correctOptionIndex'].includes(key),
-      )
+      Array.isArray(question)
     ) {
       return 'Cada pregunta debe tener un formato válido.';
     }
@@ -277,7 +296,21 @@ export function validateWorkshopConfiguration(
       item.id.length === 0 ||
       typeof item.prompt !== 'string' ||
       item.prompt.trim().length === 0 ||
-      item.prompt.length > 500 ||
+      item.prompt.length > 500
+    ) {
+      return 'Cada pregunta debe tener un identificador y un enunciado válido.';
+    }
+    if (item.type === 'open-ended') {
+      if (Object.keys(item).some((key) => !['id', 'prompt', 'type'].includes(key))) {
+        return 'Las preguntas abiertas no pueden contener alternativas ni respuestas correctas.';
+      }
+      continue;
+    }
+    if (
+      item.type !== 'multiple-choice' ||
+      Object.keys(item).some(
+        (key) => !['id', 'prompt', 'type', 'options', 'correctOptionIndex'].includes(key),
+      ) ||
       !Array.isArray(item.options) ||
       item.options.length < 2 ||
       item.options.length > 6 ||
@@ -286,7 +319,7 @@ export function validateWorkshopConfiguration(
       item.correctOptionIndex < 0 ||
       item.correctOptionIndex >= item.options.length
     ) {
-      return 'Cada pregunta debe tener texto, entre dos y seis alternativas y una respuesta correcta.';
+      return 'Cada pregunta de alternativas debe tener entre dos y seis opciones y una respuesta correcta.';
     }
   }
   if (new Set((questions as WorkshopChoiceQuestion[]).map((question) => question.id)).size !== questions.length) {

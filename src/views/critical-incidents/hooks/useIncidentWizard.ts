@@ -137,7 +137,10 @@ function buildConfiguredSteps(
     return questions.map((question, index) => ({
       id: `choice-${question.id}`,
       title: question.prompt,
-      instruction: 'Selecciona la alternativa que consideres correcta.',
+      instruction:
+        question.type === 'open-ended'
+          ? 'Desarrolla tu respuesta sin incluir nombres reales.'
+          : 'Selecciona la alternativa que consideres correcta.',
       placeholder: '',
       order: index + 1,
     }));

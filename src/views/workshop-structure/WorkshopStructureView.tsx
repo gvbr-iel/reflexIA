@@ -117,6 +117,8 @@ export default function WorkshopStructureView() {
               onRemoveGuidingQuestion={structure.removeGuidingQuestion}
               onQuestionChange={structure.updateQuestion}
               onAddQuestion={structure.addQuestion}
+              onAddOpenEndedQuestion={structure.addOpenEndedQuestion}
+              onImportQuestions={structure.importQuestions}
               onRemoveQuestion={structure.removeQuestion}
             />
           </div>

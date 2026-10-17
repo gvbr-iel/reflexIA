@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import Button from '../../../components/Button';
 import {
   WORKSHOP_EVALUATION_TYPES,
+  type ImportedWorkshopQuestion,
   type WorkshopChoiceQuestion,
   type WorkshopEvaluationType,
   type WorkshopFormSchema,
 } from '../../../models/workshopStructure';
+import { parseQuestionsCsv } from '../utils/parseQuestionsCsv';
 
 interface FormSchemaEditorProps {
   evaluationType: WorkshopEvaluationType;
@@ -21,6 +24,8 @@ interface FormSchemaEditorProps {
     updater: (question: WorkshopChoiceQuestion) => WorkshopChoiceQuestion,
   ) => void;
   onAddQuestion: () => void;
+  onAddOpenEndedQuestion: () => void;
+  onImportQuestions: (questions: ImportedWorkshopQuestion[]) => void;
   onRemoveQuestion: (questionId: string) => void;
 }
 
@@ -96,8 +101,32 @@ export default function FormSchemaEditor({
   onRemoveGuidingQuestion,
   onQuestionChange,
   onAddQuestion,
+  onAddOpenEndedQuestion,
+  onImportQuestions,
   onRemoveQuestion,
 }: FormSchemaEditorProps) {
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const handleCsvImport = async (file: File) => {
+    setImportMessage(null);
+    setImportError(null);
+    try {
+      if (file.size > 1_000_000) {
+        throw new Error('El CSV supera el límite de 1 MB.');
+      }
+      const questions = parseQuestionsCsv(await file.text());
+      onImportQuestions(questions);
+      setImportMessage(`Se agregaron ${questions.length} preguntas de alternativas.`);
+    } catch (cause) {
+      setImportError(
+        cause instanceof Error
+          ? cause.message
+          : 'No se pudo importar el CSV. Revisa el archivo e inténtalo nuevamente.',
+      );
+    }
+  };
+
   return (
     <section className="space-y-5" aria-labelledby="workshop-format-title">
       <div>
@@ -165,17 +194,54 @@ export default function FormSchemaEditor({
           ))}
           {formSchema.questions.length === 0 && (
             <p className="rounded-lg bg-bg p-4 text-sm text-texto/70">
-              Aún no hay preguntas. Agrega una para definir sus alternativas y respuesta correcta.
+              Aún no hay preguntas. Agrega una pregunta de alternativas o una de respuesta abierta.
             </p>
           )}
-          <Button
-            variant="outline"
-            icon={<Plus size={16} />}
-            disabled={disabled || formSchema.questions.length >= 30}
-            onClick={onAddQuestion}
-          >
-            Agregar pregunta
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              icon={<Plus size={16} />}
+              disabled={disabled || formSchema.questions.length >= 30}
+              onClick={onAddQuestion}
+            >
+              Agregar pregunta de alternativas
+            </Button>
+            <Button
+              variant="outline"
+              icon={<Plus size={16} />}
+              disabled={disabled || formSchema.questions.length >= 30}
+              onClick={onAddOpenEndedQuestion}
+            >
+              Agregar pregunta abierta
+            </Button>
+          </div>
+          <fieldset className="space-y-3 rounded-xl border border-border bg-surface p-4">
+            <legend className="px-1 font-heading font-semibold text-texto">
+              Importar preguntas de alternativas desde CSV
+            </legend>
+            <p className="text-sm text-texto/70">
+              El archivo debe incluir las columnas pregunta, alternativa1, alternativa2 y
+              respuestaCorrecta; puedes agregar alternativa3 hasta alternativa6. La respuesta
+              correcta debe coincidir exactamente con el texto de una alternativa. Las preguntas
+              importadas se agregan al final y son solo de alternativas.
+            </p>
+            <label className="block text-sm font-medium text-texto">
+              Archivo CSV
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                disabled={disabled || formSchema.questions.length >= 30}
+                className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-surface p-2 text-base"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleCsvImport(file);
+                  event.target.value = '';
+                }}
+              />
+            </label>
+            {importMessage && <p role="status" className="text-sm text-texto">{importMessage}</p>}
+            {importError && <p role="alert" className="text-sm text-texto">{importError}</p>}
+          </fieldset>
         </div>
       )}
     </section>
@@ -230,83 +296,127 @@ function QuestionEditor({
         />
       </div>
       <div className="space-y-2">
-        <p className="text-sm font-medium text-texto">
-          Alternativas <span className="font-normal text-texto/70">(marca la correcta)</span>
-        </p>
-        {question.options.map((option, optionIndex) => {
-          const optionId = `question-option-${question.id}-${optionIndex}`;
-          return (
-            <div key={optionId} className="flex items-center gap-2">
-              <input
-                id={`correct-${optionId}`}
-                type="radio"
-                name={`correct-${question.id}`}
-                checked={question.correctOptionIndex === optionIndex}
-                disabled={disabled}
-                onChange={() =>
-                  onChange((current) => ({ ...current, correctOptionIndex: optionIndex }))
-                }
-                className="h-5 w-5 shrink-0 text-primary focus:ring-primary"
-              />
-              <label className="sr-only" htmlFor={`correct-${optionId}`}>
-                Marcar alternativa {optionIndex + 1} como correcta
-              </label>
-              <label className="sr-only" htmlFor={optionId}>
-                Alternativa {optionIndex + 1}
-              </label>
-              <input
-                id={optionId}
-                className={inputClassName}
-                value={option}
-                maxLength={300}
-                disabled={disabled}
-                onChange={(event) =>
-                  onChange((current) => ({
-                    ...current,
-                    options: current.options.map((item, index) =>
-                      index === optionIndex ? event.target.value : item,
-                    ),
-                  }))
-                }
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label={`Eliminar alternativa ${optionIndex + 1}`}
-                disabled={disabled || question.options.length <= 2}
-                onClick={() =>
-                  onChange((current) => {
-                    const options = current.options.filter((_, index) => index !== optionIndex);
-                    const correctOptionIndex =
-                      current.correctOptionIndex === optionIndex
-                        ? 0
-                        : current.correctOptionIndex > optionIndex
-                          ? current.correctOptionIndex - 1
-                          : current.correctOptionIndex;
-                    return { ...current, options, correctOptionIndex };
-                  })
-                }
-              >
-                <Trash2 size={16} aria-hidden="true" />
-              </Button>
-            </div>
-          );
-        })}
-        <Button
-          variant="outline"
-          size="sm"
-          icon={<Plus size={16} />}
-          disabled={disabled || question.options.length >= 6}
-          onClick={() =>
-            onChange((current) => ({
-              ...current,
-              options: [...current.options, ''],
-            }))
+        <label htmlFor={`question-type-${question.id}`} className="block text-sm font-medium text-texto">
+          Tipo de respuesta
+        </label>
+        <select
+          id={`question-type-${question.id}`}
+          className={inputClassName}
+          value={question.type}
+          disabled={disabled}
+          onChange={(event) =>
+            onChange((current) =>
+              event.target.value === 'open-ended'
+                ? { id: current.id, prompt: current.prompt, type: 'open-ended' }
+                : {
+                    id: current.id,
+                    prompt: current.prompt,
+                    type: 'multiple-choice',
+                    options: ['', ''],
+                    correctOptionIndex: 0,
+                  },
+            )
           }
         >
-          Agregar alternativa
-        </Button>
+          <option value="multiple-choice">Alternativas</option>
+          <option value="open-ended">Respuesta abierta</option>
+        </select>
       </div>
+      {question.type === 'open-ended' ? (
+        <p className="rounded-lg bg-bg p-3 text-sm text-texto/70">
+          El estudiante responderá en texto libre. Esta pregunta no tiene alternativas ni respuesta
+          correcta predefinida.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-texto">
+            Alternativas <span className="font-normal text-texto/70">(marca la correcta)</span>
+          </p>
+          {question.options.map((option, optionIndex) => {
+            const optionId = `question-option-${question.id}-${optionIndex}`;
+            return (
+              <div key={optionId} className="flex items-center gap-2">
+                <input
+                  id={`correct-${optionId}`}
+                  type="radio"
+                  name={`correct-${question.id}`}
+                  checked={question.correctOptionIndex === optionIndex}
+                  disabled={disabled}
+                  onChange={() =>
+                    onChange((current) =>
+                      current.type === 'multiple-choice'
+                        ? { ...current, correctOptionIndex: optionIndex }
+                        : current,
+                    )
+                  }
+                  className="h-5 w-5 shrink-0 text-primary focus:ring-primary"
+                />
+                <label className="sr-only" htmlFor={`correct-${optionId}`}>
+                  Marcar alternativa {optionIndex + 1} como correcta
+                </label>
+                <label className="sr-only" htmlFor={optionId}>
+                  Alternativa {optionIndex + 1}
+                </label>
+                <input
+                  id={optionId}
+                  className={inputClassName}
+                  value={option}
+                  maxLength={300}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    onChange((current) =>
+                      current.type === 'multiple-choice'
+                        ? {
+                            ...current,
+                            options: current.options.map((item, index) =>
+                              index === optionIndex ? event.target.value : item,
+                            ),
+                          }
+                        : current,
+                    )
+                  }
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={`Eliminar alternativa ${optionIndex + 1}`}
+                  disabled={disabled || question.options.length <= 2}
+                  onClick={() =>
+                    onChange((current) => {
+                      if (current.type !== 'multiple-choice') return current;
+                      const options = current.options.filter((_, index) => index !== optionIndex);
+                      const correctOptionIndex =
+                        current.correctOptionIndex === optionIndex
+                          ? 0
+                          : current.correctOptionIndex > optionIndex
+                            ? current.correctOptionIndex - 1
+                            : current.correctOptionIndex;
+                      return { ...current, options, correctOptionIndex };
+                    })
+                  }
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                </Button>
+              </div>
+            );
+          })}
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<Plus size={16} />}
+            disabled={disabled || question.options.length >= 6}
+            onClick={() =>
+              onChange((current) =>
+                current.type === 'multiple-choice'
+                  ? { ...current, options: [...current.options, ''] }
+                  : current,
+              )
+            }
+          >
+            Agregar alternativa
+          </Button>
+        </div>
+      )}
     </fieldset>
   );
 }

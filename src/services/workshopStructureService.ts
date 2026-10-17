@@ -10,6 +10,7 @@ import {
   toStudentWorkshopConfiguration,
   validateWorkshopConfiguration,
   type WorkshopId,
+  type WorkshopOpenEndedQuestion,
   type WorkshopStudentConfiguration,
   type WorkshopStructureConfiguration,
 } from '../models/workshopStructure';
@@ -36,6 +37,16 @@ function normalizeEvaluationType(value: unknown): unknown {
   return value === 'matrix' || value === 'file' ? 'text' : value;
 }
 
+function normalizeQuestions(questions: unknown[]): unknown[] {
+  return questions.map((question) => {
+    if (typeof question !== 'object' || question === null || Array.isArray(question)) {
+      return question;
+    }
+    const record = question as Record<string, unknown>;
+    return { ...record, type: record.type ?? 'multiple-choice' };
+  });
+}
+
 function readStudentConfiguration(
   value: unknown,
   expectedWorkshopId: WorkshopId,
@@ -57,7 +68,7 @@ function readStudentConfiguration(
     evaluationType: normalizeEvaluationType(raw.evaluationType),
     formSchema: {
       ...formSchema,
-      questions: formSchema.questions.map((question) => {
+      questions: normalizeQuestions(formSchema.questions).map((question) => {
         if (typeof question !== 'object' || question === null || Array.isArray(question)) {
           throw new Error('Una pregunta del taller tiene un formato inválido.');
         }
@@ -71,10 +82,11 @@ function readStudentConfiguration(
     ...configuration,
     formSchema: {
       ...configuration.formSchema,
-      questions: configuration.formSchema.questions.map((question) => ({
-        ...question,
-        correctOptionIndex: 0,
-      })),
+      questions: configuration.formSchema.questions.map((question) =>
+        question.type === 'multiple-choice'
+          ? { ...question, correctOptionIndex: 0 }
+          : question as WorkshopOpenEndedQuestion,
+      ),
     },
   };
   const validationError = validateWorkshopConfiguration(validationConfiguration);
@@ -101,6 +113,12 @@ export const workshopStructureService = {
       const legacy = {
         ...rawConfiguration,
         evaluationType: normalizeEvaluationType(rawConfiguration.evaluationType),
+        formSchema: {
+          ...rawConfiguration.formSchema,
+          questions: Array.isArray(rawConfiguration.formSchema?.questions)
+            ? normalizeQuestions(rawConfiguration.formSchema.questions)
+            : rawConfiguration.formSchema?.questions,
+        },
         answerKeyPrivate: true,
         updatedAt: new Date().toISOString(),
         updatedBy: email,
@@ -111,7 +129,9 @@ export const workshopStructureService = {
       }
       const migrated = toStudentWorkshopConfiguration(legacy);
       const legacyAnswers = Object.fromEntries(
-        legacy.formSchema.questions.map((question) => [question.id, question.correctOptionIndex]),
+        legacy.formSchema.questions
+          .filter((question) => question.type === 'multiple-choice')
+          .map((question) => [question.id, question.correctOptionIndex]),
       );
       const migration = writeBatch(database);
       migration.set(
@@ -160,6 +180,7 @@ export const workshopStructureService = {
       formSchema: {
         ...publicConfiguration.formSchema,
         questions: publicConfiguration.formSchema.questions.map((question) => {
+          if (question.type === 'open-ended') return question;
           const correctOptionIndex = (answerKey as Record<string, unknown>)[question.id];
           if (
             !Number.isInteger(correctOptionIndex) ||
@@ -206,7 +227,9 @@ export const workshopStructureService = {
 
     const publicConfiguration = toStudentWorkshopConfiguration(saved);
     const answers = Object.fromEntries(
-      saved.formSchema.questions.map((question) => [question.id, question.correctOptionIndex]),
+      saved.formSchema.questions
+        .filter((question) => question.type === 'multiple-choice')
+        .map((question) => [question.id, question.correctOptionIndex]),
     );
     const batch = writeBatch(database);
     batch.set(

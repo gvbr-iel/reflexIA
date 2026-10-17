@@ -45,6 +45,10 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
   const sensitiveDetector = useSensitiveDataDetector()
   const configuration = wizard.configuration
   const evaluationType = configuration?.evaluationType ?? 'text'
+  const openEndedQuestions =
+    evaluationType === 'multiple-choice'
+      ? configuration?.formSchema.questions.filter((question) => question.type === 'open-ended') ?? []
+      : []
   const narrativeToCheck = [
     `Contexto:\n${(wizard.values.context ?? '').trim()}`,
     `Descripción del incidente:\n${(wizard.values.description ?? '').trim()}`,
@@ -53,6 +57,10 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
     ...Object.entries(wizard.answers)
       .filter(([key]) => key.startsWith('guiding-'))
       .map(([key, value]) => `${key}:\n${value}`),
+    ...openEndedQuestions.map(
+      (question) =>
+        `${question.prompt}:\n${(wizard.answers[`choice-${question.id}`] ?? '').trim()}`,
+    ),
   ].join('\n\n')
   // "El Impulso": pide orientaciones a la IA y lleva el contador de intentos.
   // Guarda el borrador antes de pedir (no descuenta intentos) y avisa al
@@ -73,7 +81,7 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
     .filter((section) => section.enabled)
     .sort((a, b) => a.order - b.order)
   const enabledSections = new Set(orderedSections.map((section) => section.id))
-  const supportsSensitiveCheck = evaluationType === 'text'
+  const supportsSensitiveCheck = evaluationType === 'text' || openEndedQuestions.length > 0
   const referenceStep = INCIDENT_STEPS.find((step) => step.id === wizard.currentStep.id)
     ?? INCIDENT_STEPS[Math.min(wizard.currentIndex, INCIDENT_STEPS.length - 1)]
   const {
@@ -191,15 +199,15 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
                   <Button
                     icon={
                       wizard.isLastStep
-                        ? evaluationType === 'text'
+                        ? supportsSensitiveCheck
                           ? <Shield size={18} />
                           : <Save size={18} />
                         : <ArrowRight size={18} />
                     }
-                    isLoading={wizard.isLastStep && evaluationType === 'text' && sensitiveDetector.isAnalyzing}
+                    isLoading={wizard.isLastStep && supportsSensitiveCheck && sensitiveDetector.isAnalyzing}
                     onClick={
                       wizard.isLastStep
-                        ? evaluationType === 'text'
+                        ? supportsSensitiveCheck
                           ? handleDetectSensitiveData
                           : () => void wizard.saveDraft()
                         : wizard.goNext
@@ -207,12 +215,12 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
                     disabled={
                       wizard.isLastStep
                         ? !wizard.allStepsCompleted ||
-                          (evaluationType === 'text' && sensitiveDetector.isAnalyzing)
+                          (supportsSensitiveCheck && sensitiveDetector.isAnalyzing)
                         : !wizard.stepCompletion[wizard.currentStep.id]
                     }
                   >
                     {wizard.isLastStep
-                      ? evaluationType === 'text'
+                      ? supportsSensitiveCheck
                         ? 'Detectar datos sensibles'
                         : 'Guardar respuestas'
                       : 'Siguiente'}

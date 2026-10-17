@@ -143,17 +143,26 @@ function FormPreview({
               <legend className="font-medium text-texto">
                 {question.prompt || `Pregunta ${index + 1}`}
               </legend>
-              {question.options.map((option, optionIndex) => (
-                <label key={`${question.id}-${optionIndex}`} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`preview-${question.id}`}
-                    disabled
-                    className="h-5 w-5 text-primary"
-                  />
-                  <span className="text-texto/80">{option || `Alternativa ${optionIndex + 1}`}</span>
-                </label>
-              ))}
+              {question.type === 'open-ended' ? (
+                <textarea
+                  disabled
+                  rows={3}
+                  aria-label={`Respuesta abierta a pregunta ${index + 1}`}
+                  className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-base"
+                />
+              ) : (
+                question.options.map((option, optionIndex) => (
+                  <label key={`${question.id}-${optionIndex}`} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name={`preview-${question.id}`}
+                      disabled
+                      className="h-5 w-5 text-primary"
+                    />
+                    <span className="text-texto/80">{option || `Alternativa ${optionIndex + 1}`}</span>
+                  </label>
+                ))
+              )}
             </fieldset>
           ))}
         </div>

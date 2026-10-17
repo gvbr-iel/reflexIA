@@ -18,9 +18,10 @@ estado entre talleres. La vista permite:
   ayudarán a resolver el taller → Retroalimentación con pares.
 - Reordenarlas con controles accesibles para mover arriba/abajo.
 - Elegir texto o relato descriptivo, o preguntas de alternativas.
-- Editar preguntas orientadoras del relato y preguntas de alternativas,
-  opciones y respuesta correcta.
-  El formato de alternativas requiere al menos una pregunta.
+- En el formato de alternativas, combinar preguntas de selección múltiple con
+  respuesta abierta, y editar enunciados, alternativas y respuesta correcta.
+- Importar preguntas de alternativas mediante un CSV; se agregan al final de
+  las preguntas ya configuradas. El CSV no crea preguntas abiertas.
 - Previsualizar las secciones activas y el formato seleccionado.
 - Guardar los cambios o borrar la configuración del taller para volver a la
   plantilla predeterminada.
@@ -66,10 +67,34 @@ anteriores con matriz o archivo se interpretan como texto para mantener el
 acceso a talleres ya configurados. Las preguntas y alternativas se guardan en
 el documento visible al estudiante; la respuesta correcta se mantiene aparte en
 `workshopConfigurations/{workshopId}/private/answerKey`, que solo pueden leer
-docentes activos. El estudiante recibe únicamente el enunciado y las opciones.
+docentes activos. Las preguntas abiertas solo guardan su enunciado y no tienen
+respuesta correcta. El estudiante recibe únicamente los enunciados y las
+opciones, nunca las respuestas correctas.
 La aplicación valida las longitudes y cardinalidades antes de escribir; las
 reglas de Firestore restringen los roles y los IDs de taller, además de impedir
 que una configuración sin la pauta privada se lea desde una cuenta de estudiante.
+
+### Importación CSV
+
+La importación está disponible únicamente mientras el tipo de entrada sea
+**Alternativas**. Cada fila crea una pregunta de selección múltiple; las
+preguntas existentes (incluidas las abiertas) se conservan y las nuevas se
+agregan al final. Se requiere una columna `pregunta`, al menos
+`alternativa1` y `alternativa2`, y `respuestaCorrecta`. Se pueden agregar
+`alternativa3` a `alternativa6`. La respuesta correcta debe coincidir exactamente
+con el texto de una alternativa. Se aceptan archivos CSV separados por coma o
+punto y coma, con celdas entre comillas cuando contengan el delimitador.
+
+Ejemplo:
+
+```csv
+pregunta,alternativa1,alternativa2,alternativa3,respuestaCorrecta
+"¿Qué promueve la reflexión pedagógica?","Analizar la práctica","Repetir la actividad","Evitar el diálogo","Analizar la práctica"
+```
+
+Se aceptan hasta 30 preguntas por taller entre las creadas manualmente y las
+importadas. Si una fila no es válida, el archivo completo se rechaza y se
+informa el número de fila que debe corregirse.
 
 Las reglas deben desplegarse en Firebase para habilitar la persistencia:
 
@@ -82,9 +107,11 @@ firebase deploy --only firestore:rules
 Al entrar a `/estudiante/talleres/:workshopId`, HU-03 carga la configuración del
 taller desde Firestore. La secuencia de secciones respeta el orden y los estados
 activados por el docente. El estudiante puede completar el relato o contestar
-las preguntas de alternativas; las respuestas dinámicas se guardan en el
-borrador local particionado por UID y se restauran al volver al taller. La clave
-correcta de alternativas no se envía al cliente.
+las preguntas de alternativas y responder las preguntas abiertas en texto
+libre; las respuestas dinámicas se guardan en el borrador local particionado
+por UID y se restauran al volver al taller. La clave correcta de alternativas
+no se envía al cliente. Las respuestas abiertas también pasan por el control
+de datos sensibles.
 
 El relato conserva el control de datos sensibles. El Impulso y el contador
 siguen ligados a la revisión del relato libre; el cuestionario no consume
