@@ -78,7 +78,7 @@ los hooks de feature con la interfaz.
 | `TheoryQuizView` | [`src/views/theory-verification/TheoryQuizView.tsx`](../../src/views/theory-verification/TheoryQuizView.tsx) | Pantalla del cuestionario diagnóstico y presentación de introducción, preguntas o resultado. |
 | `RepositoryView` | [`src/views/repository/RepositoryView.tsx`](../../src/views/repository/RepositoryView.tsx) | Lista de talleres, sus estados y acceso condicionado a cada taller. |
 | `CriticalIncidentView` | [`src/views/critical-incidents/CriticalIncidentView.tsx`](../../src/views/critical-incidents/CriticalIncidentView.tsx) | Entrada al asistente de incidentes; valida el parámetro de ruta, la aprobación teórica y el estado del taller. |
-| `InnovationsView` | [`src/views/innovations/InnovationsView.tsx`](../../src/views/innovations/InnovationsView.tsx) | Biblioteca de innovaciones con búsqueda, filtro de categoría y detalle del caso. |
+| `InnovationsView` | [`src/views/innovations/InnovationsView.tsx`](../../src/views/innovations/InnovationsView.tsx) | Biblioteca Firestore con búsqueda, filtros por taller y etiqueta, y publicación docente de trabajos anonimizados. |
 
 ## 5. Componentes por feature
 
@@ -135,6 +135,13 @@ Ubicación: `src/views/innovations/components/`.
 |---|---|
 | `InnovationCard` | Tarjeta de resumen de una innovación y acción para abrir su detalle. |
 | `InnovationDetailModal` | Presenta el contenido ampliado del caso seleccionado. |
+| `InnovationReviewPanel` | Permite al docente revisar una entrega real, asignar su nota cuando no existe y publicar productos elegibles anonimizados. |
+
+El servicio `innovationService` mantiene privadas las entregas en
+`workshopSubmissions` y expone al catálogo solo documentos de
+`publishedInnovations` aprobados con nota oficial igual o superior a 6,0.
+`useInnovationReview` administra la cola docente y la revisión previa a la
+publicación; `useInnovations` carga y filtra el catálogo compartido.
 
 ### 5.4 Revisión de reflexiones
 

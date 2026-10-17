@@ -14,8 +14,9 @@ ReflexIA es una aplicación web orientada a la práctica profesional docente de 
 | **RF-04** | [HU-04](./docs/historias-usuario/HU04_GUIA.md) | Estudiante | ✅ **Implementado** | Evaluación diagnóstica del marco teórico con banco de 30 preguntas, temporizador dinámico, calificación inmediata en Tailwind CSS y bloqueo automático de los talleres prácticos hasta aprobar. |
 | **RF-05** | [HU-05](./docs/historias-usuario/HU05_GUIA.md) | Asistente IA | ✅ **Implementado** | Detección automática en frontend de nombres propios, escuelas y datos sensibles en relatos mediante la API de OpenRouter con rotación de modelos gratuitos y destaque visual sin alterar el texto. |
 | **RF-06** | [HU-06](./docs/historias-usuario/HU06_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de control en `/docente/plazos` para definir fechas límite y límites de intentos de revisión por actividad (marco teórico y talleres 1 a 4). |
-| **RF-07** | [HU-07](./docs/historias-usuario/HU07_GUIA.md) | Estudiante y Docente | ✅ **Implementado** | Biblioteca ilustrativa categorizada, con búsqueda combinable y detalle de casos disponible para estudiantes y profesores. |
+| **RF-07** | [HU-07](./docs/historias-usuario/HU07_GUIA.md) | Estudiante y Docente | ✅ **Implementado** | Biblioteca de trabajos reales con nota oficial ≥ 6,0, revisión y anonimización docente, filtros por taller y etiquetas. |
 | **RF-08** | [HU-08](./docs/historias-usuario/HU08_GUIA.md) | Todos los roles | ✅ **Implementado** | Inicio de sesión seguro con Firebase Authentication y autorización activa en Firestore, con redirección inteligente por rol a `/estudiante`, `/docente` o `/admin`. |
+| **HU-09** | [HU-09](./docs/historias-usuario/HU09_GUIA.md) | Profesor guía y estudiante | 🟡 **Integración parcial** | Editor docente conectado al asistente del estudiante para texto o relato, preguntas de alternativas y respuestas abiertas; admite importar preguntas de alternativas desde CSV. |
 
 ---
 
@@ -54,6 +55,7 @@ src/
     ├── critical-incidents/  # HU-03: Asistente guiado de incidentes críticos
     ├── theory-verification/ # HU-04: Verificación diagnóstica del marco teórico
     ├── work-pacing/         # HU-06: Panel docente de plazos e intentos
+    ├── workshop-structure/  # HU-09: Configuración docente de la estructura de talleres
     ├── student-dashboard/   # Dashboard "Mi progreso" del estudiante
     ├── reflections/         # HU-02: Revisión docente de la retroalimentación de la IA
     ├── teacher-dashboard/   # Panel del profesor guía: seguimiento de estudiantes (datos de Firestore)
@@ -74,12 +76,13 @@ src/
 | `/docente/reflexiones` | TeacherLayout | ReflectionsView | ✅ Listo | Revisión, edición y validación de la retroalimentación de la IA |
 | `/docente` | TeacherLayout | TeacherDashboardView | ✅ Listo (datos de Firestore) | Seguimiento semanal de estudiantes: resumen, filtros por situación y avance en marco teórico y talleres. Ver [`PANEL_DOCENTE_GUIA.md`](./docs/historias-usuario/PANEL_DOCENTE_GUIA.md) |
 | `/docente/plazos` | TeacherLayout | DeadlinesView | ✅ Listo | Regulación del ritmo de trabajo: plazos e intentos |
-| `/docente/innovaciones` | TeacherLayout | InnovationsView | ✅ Listo | Biblioteca de consulta compartida con estudiantes |
+| `/docente/estructura-talleres` | TeacherLayout | WorkshopStructureView | 🟡 Configuración docente | Editor independiente, persistencia y vista previa de los talleres 1 a 4; la vista de estudiante aún usa el asistente HU-03 vigente |
+| `/docente/innovaciones` | TeacherLayout | InnovationsView | ✅ Listo | Revisión, evaluación, anonimización y publicación de trabajos elegibles; consulta compartida |
 | `/estudiante` | StudentLayout | StudentDashboardView | ✅ Listo | Dashboard "Mi progreso reflexivo" |
 | `/estudiante/marco-teorico` | StudentLayout | TheoryQuizView | ✅ Listo | Evaluación diagnóstica obligatoria del marco teórico |
 | `/estudiante/talleres` | StudentLayout | RepositoryView | ✅ Listo | Repositorio de talleres con bloqueo condicional |
 | `/estudiante/talleres/:workshopId` | StudentLayout | CriticalIncidentView | ✅ Listo | Asistente de incidentes críticos del taller seleccionado |
-| `/estudiante/innovaciones` | StudentLayout | InnovationsView | ✅ Listo | Biblioteca categorizada de actuaciones mejoradas e innovaciones |
+| `/estudiante/innovaciones` | StudentLayout | InnovationsView | ✅ Listo | Biblioteca de trabajos publicados, filtrable por taller y etiquetas |
 | `*` (fallback) | — | — | ✅ Listo | Redirección por defecto a la página de bienvenida `/` |
 
 ---
@@ -130,9 +133,9 @@ subas a Git) y repite allí estos pasos.
 2. En Firebase Console del proyecto configurado, habilita **Authentication →
    Sign-in method → Email/Password** y comprueba que **Firestore Database**
    esté creado. Publica las reglas de [`firestore.rules`](./firestore.rules)
-   desde **Firestore → Rules** (o con Firebase CLI:
-   `firebase deploy --only firestore:rules`, usando un usuario autorizado para
-   desplegar).
+   desde **Firestore → Rules** (o selecciona tu proyecto con `firebase use`
+   y despliega reglas e índices con
+   `firebase deploy --only firestore:rules,firestore:indexes`).
 3. En **Authentication → Users**, crea la cuenta institucional
    `admin@ucen.cl` con una contraseña única y segura. Las contraseñas se crean
    y entregan por un canal seguro; no se incluyen en este repositorio.

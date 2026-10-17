@@ -28,7 +28,7 @@ Este documento resume dónde se implementan los hooks principales del proyecto y
 | `/docente` | TeacherDashboardView | `useTeacherDashboard` | [src/views/teacher-dashboard/TeacherDashboardView.tsx](../../src/views/teacher-dashboard/TeacherDashboardView.tsx) |
 | `/docente/reflexiones` | ReflectionsView | `useReflections`, `useReflectionReview` | [src/views/reflections/ReflectionsView.tsx](../../src/views/reflections/ReflectionsView.tsx) |
 | `/docente/plazos` | DeadlinesView | `useWorkPacing` | [src/views/work-pacing/DeadlinesView.tsx](../../src/views/work-pacing/DeadlinesView.tsx) |
-| `/docente/innovaciones` | InnovationsView | `useInnovations` | [src/views/innovations/InnovationsView.tsx](../../src/views/innovations/InnovationsView.tsx) |
+| `/docente/innovaciones` | InnovationsView | `useInnovations`, `useInnovationReview` | [src/views/innovations/InnovationsView.tsx](../../src/views/innovations/InnovationsView.tsx) |
 
 ### Estudiante
 
@@ -57,6 +57,7 @@ Este documento resume dónde se implementan los hooks principales del proyecto y
 | `useReflections` | [src/views/reflections/hooks/useReflections.ts](../../src/views/reflections/hooks/useReflections.ts) | Listado y filtrado de reflexiones para revisión. |
 | `useReflectionReview` | [src/views/reflections/hooks/useReflectionReview.ts](../../src/views/reflections/hooks/useReflectionReview.ts) | Validación y edición de retroalimentación. |
 | `useInnovations` | [src/views/innovations/hooks/useInnovations.ts](../../src/views/innovations/hooks/useInnovations.ts) | Biblioteca compartida de innovaciones. |
+| `useInnovationReview` | [src/views/innovations/hooks/useInnovationReview.ts](../../src/views/innovations/hooks/useInnovationReview.ts) | Cola de trabajos enviados, nota oficial y anonimización/publicación docente. |
 | `useTeacherDashboard` | [src/views/teacher-dashboard/hooks/useTeacherDashboard.ts](../../src/views/teacher-dashboard/hooks/useTeacherDashboard.ts) | Panel de seguimiento del docente. |
 
 ## 4) Hooks nativos de React y React Router

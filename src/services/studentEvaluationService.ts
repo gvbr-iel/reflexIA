@@ -19,7 +19,14 @@
  * profesor guía activo puede escribir aquí.
  */
 
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  runTransaction,
+  setDoc,
+} from 'firebase/firestore';
 
 import {
   EVALUATIONS_COLLECTION,
@@ -44,6 +51,8 @@ export interface SaveWorkshopGradePayload {
   workshopId: string;
   /** Nota de 1.0 a 7.0. */
   grade: number;
+  /** Entrega concreta que respalda la nota, cuando se califica un envío compartido. */
+  sourceSubmissionId?: string;
 }
 
 // ─────────────────────────────────────────────
@@ -81,6 +90,8 @@ function parseWorkshopEvaluation(value: unknown): WorkshopEvaluation | null {
     grade: typeof value.grade === 'number' && Number.isFinite(value.grade) ? value.grade : null,
     outcome: value.outcome === 'approved' || value.outcome === 'failed' ? value.outcome : null,
     evaluatedAt: typeof value.evaluatedAt === 'string' ? value.evaluatedAt : null,
+    sourceSubmissionId:
+      typeof value.sourceSubmissionId === 'string' ? value.sourceSubmissionId : null,
   };
 }
 
@@ -90,6 +101,22 @@ function parseWorkshopEvaluation(value: unknown): WorkshopEvaluation | null {
 
 /** Operaciones de las evaluaciones de talleres. */
 export const studentEvaluationService = {
+  async fetchWorkshopEvaluation(
+    email: string,
+    workshopId: string,
+  ): Promise<WorkshopEvaluation | null> {
+    if (!isWorkshopId(workshopId)) {
+      throw new Error(`El taller "${workshopId}" no existe.`);
+    }
+    const snapshot = await getDoc(
+      doc(getDatabase(), EVALUATIONS_COLLECTION, email.trim().toLowerCase()),
+    );
+    if (!snapshot.exists()) return null;
+    const workshops: unknown = snapshot.data().workshops;
+    if (!isRecord(workshops)) return null;
+    return parseWorkshopEvaluation(workshops[workshopId]);
+  },
+
   /**
    * Devuelve las evaluaciones de todos los estudiantes, en un Map
    * (correo → evaluaciones por taller). Un estudiante sin documento, o un
@@ -140,6 +167,7 @@ export const studentEvaluationService = {
       grade,
       outcome: grade >= GRADE_THRESHOLDS.approved ? 'approved' : 'failed',
       evaluatedAt: now,
+      sourceSubmissionId: payload.sourceSubmissionId ?? null,
     };
 
     // `merge: true` une estos datos con el documento que ya exista: solo
@@ -150,6 +178,45 @@ export const studentEvaluationService = {
       { merge: true },
     );
 
+    return evaluation;
+  },
+
+  async saveWorkshopGradeIfUnscored(
+    payload: SaveWorkshopGradePayload,
+  ): Promise<WorkshopEvaluation> {
+    const email = payload.email.trim().toLowerCase();
+    const { workshopId, grade } = payload;
+    if (!isWorkshopId(workshopId)) {
+      throw new Error(`El taller "${workshopId}" no existe.`);
+    }
+    if (!Number.isFinite(grade) || grade < GRADE_THRESHOLDS.min || grade > GRADE_THRESHOLDS.max) {
+      throw new Error('La nota debe estar entre 1.0 y 7.0.');
+    }
+
+    const reference = doc(getDatabase(), EVALUATIONS_COLLECTION, email);
+    const now = new Date().toISOString();
+    const evaluation: WorkshopEvaluation = {
+      grade,
+      outcome: grade >= GRADE_THRESHOLDS.approved ? 'approved' : 'failed',
+      evaluatedAt: now,
+      sourceSubmissionId: payload.sourceSubmissionId ?? null,
+    };
+
+    await runTransaction(getDatabase(), async (transaction) => {
+      const snapshot = await transaction.get(reference);
+      const workshops: unknown = snapshot.data()?.workshops;
+      const current = isRecord(workshops)
+        ? parseWorkshopEvaluation(workshops[workshopId])
+        : null;
+      if (typeof current?.grade === 'number') {
+        throw new Error('Ya existe una nota oficial para este taller y no se reemplazó.');
+      }
+      transaction.set(
+        reference,
+        { email, updatedAt: now, workshops: { [workshopId]: evaluation } },
+        { merge: true },
+      );
+    });
     return evaluation;
   },
 };
