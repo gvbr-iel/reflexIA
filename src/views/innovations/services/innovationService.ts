@@ -108,6 +108,7 @@ function parseInnovation(id: string, value: unknown): InnovationCase | null {
     id,
     workshopId: value.workshopId,
     grade: value.grade,
+    isExample: false,
     title: value.title,
     summary: value.summary,
     productType: value.productType,

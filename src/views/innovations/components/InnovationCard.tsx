@@ -17,8 +17,14 @@ export default function InnovationCard({ innovation, onOpen }: InnovationCardPro
           <Lightbulb size={18} aria-hidden="true" />
           {WORKSHOP_TITLES[innovation.workshopId]}
         </span>
-        <span className="shrink-0 rounded-full bg-accent-ia/10 px-2.5 py-1 font-semibold text-accent-ia">
-          Nota {innovation.grade.toFixed(1).replace('.', ',')}
+        <span className={`shrink-0 rounded-full px-2.5 py-1 font-semibold ${
+          innovation.isExample
+            ? 'bg-primary/5 text-primary'
+            : 'bg-accent-ia/10 text-accent-ia'
+        }`}>
+          {innovation.isExample
+            ? 'Ejemplo'
+            : `Nota ${innovation.grade?.toFixed(1).replace('.', ',') ?? '—'}`}
         </span>
       </div>
       <h2 className="font-heading text-lg font-semibold leading-snug text-texto">
@@ -41,9 +47,9 @@ export default function InnovationCard({ innovation, onOpen }: InnovationCardPro
         className="mt-5 self-start"
         icon={<ArrowUpRight size={17} />}
         onClick={() => onOpen(innovation)}
-        aria-label={`Ver trabajo: ${innovation.title}`}
+        aria-label={`Ver ${innovation.isExample ? 'ejemplo' : 'trabajo'}: ${innovation.title}`}
       >
-        Ver trabajo
+        {innovation.isExample ? 'Ver ejemplo' : 'Ver trabajo'}
       </Button>
     </article>
   );

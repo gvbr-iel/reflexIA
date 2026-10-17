@@ -30,8 +30,14 @@ export default function InnovationDetailModal({
             <BookOpenCheck size={18} aria-hidden="true" />
             {WORKSHOP_TITLES[innovation.workshopId]}
           </span>
-          <span className="rounded-full bg-accent-ia/10 px-3 py-1 text-accent-ia">
-            Nota {innovation.grade.toFixed(1).replace('.', ',')}
+          <span className={`rounded-full px-3 py-1 ${
+            innovation.isExample
+              ? 'bg-primary/5 text-primary'
+              : 'bg-accent-ia/10 text-accent-ia'
+          }`}>
+            {innovation.isExample
+              ? 'Ejemplo pedagógico'
+              : `Nota ${innovation.grade?.toFixed(1).replace('.', ',') ?? '—'}`}
           </span>
         </div>
         <p className="text-base leading-relaxed text-texto/80">{innovation.summary}</p>
@@ -56,8 +62,9 @@ export default function InnovationDetailModal({
           </ul>
         </section>
         <p className="border-t border-border pt-4 text-sm leading-relaxed text-texto/60">
-          Trabajo de un taller con nota oficial igual o superior a 6,0, revisado y anonimizado
-          por un docente antes de su publicación.
+          {innovation.isExample
+            ? 'Ejemplo ficticio elaborado para mostrar el tipo de producto que podría surgir del taller. No representa una entrega de estudiante, una calificación ni un resultado observado.'
+            : 'Trabajo de un taller con nota oficial igual o superior a 6,0, revisado y anonimizado por un docente antes de su publicación.'}
         </p>
       </div>
     </Modal>

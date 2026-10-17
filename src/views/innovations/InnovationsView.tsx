@@ -17,6 +17,7 @@ export default function InnovationsView() {
   const {
     innovations,
     filteredCases,
+    filteredExamples,
     tags,
     query,
     selectedWorkshop,
@@ -46,8 +47,9 @@ export default function InnovationsView() {
         </h1>
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-texto/70">
           Explora trabajos auténticos realizados en los talleres, clasificados por etapa y estilo
-          de innovación. Cada publicación cuenta con nota oficial igual o superior a 6,0 y fue
-          revisada y anonimizada por un docente.
+          de innovación. Las publicaciones reales cuentan con nota oficial igual o superior a 6,0
+          y fueron revisadas y anonimizadas por un docente. Al final encontrarás ejemplos
+          demostrativos claramente diferenciados.
         </p>
         <p className="mt-4 inline-flex items-start gap-2 rounded-lg bg-primary/5 px-3 py-2 text-sm leading-relaxed text-primary">
           <BookOpen size={17} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -174,6 +176,34 @@ export default function InnovationsView() {
               </Button>
             )}
           </div>
+        )}
+      </section>
+
+      <section aria-labelledby="examples-heading" className="space-y-5">
+        <header className="rounded-xl border border-border bg-primary/5 p-5">
+          <h2 id="examples-heading" className="font-heading text-xl font-semibold text-texto">
+            Ejemplos pedagógicos demostrativos
+          </h2>
+          <p className="mt-2 text-base leading-relaxed text-texto/75">
+            Estos cuatro ejemplos son contenidos ficticios creados para ilustrar los productos de
+            Identificar, Analizar, Teorizar y Transformar. No son trabajos de estudiantes, no tienen
+            nota y no forman parte de las publicaciones reales.
+          </p>
+        </header>
+        {filteredExamples.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredExamples.map((innovation) => (
+              <InnovationCard
+                key={innovation.id}
+                innovation={innovation}
+                onOpen={setSelectedCase}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-border bg-surface p-5 text-base text-texto/70">
+            Ningún ejemplo coincide con los filtros actuales.
+          </p>
         )}
       </section>
 

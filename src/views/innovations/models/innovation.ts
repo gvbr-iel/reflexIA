@@ -3,7 +3,8 @@ import type { WorkshopId } from '../../../models/workshopStructure';
 export interface InnovationCase {
   id: string;
   workshopId: WorkshopId;
-  grade: number;
+  grade: number | null;
+  isExample: boolean;
   title: string;
   summary: string;
   productType: string;

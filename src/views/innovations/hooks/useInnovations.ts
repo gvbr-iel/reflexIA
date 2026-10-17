@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { innovationService } from '../services/innovationService';
 import type { InnovationCase } from '../models/innovation';
 import { WORKSHOP_TITLES } from '../models/innovation';
+import { innovationExamples } from '../data/innovationExamples';
 
 function normalizeSearchText(value: string): string {
   return value
@@ -38,7 +39,10 @@ export function useInnovations() {
   }, [load]);
 
   const tags = useMemo(
-    () => [...new Set(innovations.flatMap((innovation) => innovation.tags))].sort((a, b) =>
+    () => [...new Set([
+      ...innovations.flatMap((innovation) => innovation.tags),
+      ...innovationExamples.flatMap((innovation) => innovation.tags),
+    ])].sort((a, b) =>
       a.localeCompare(b, 'es'),
     ),
     [innovations],
@@ -62,6 +66,24 @@ export function useInnovations() {
     });
   }, [innovations, query, selectedTag, selectedWorkshop]);
 
+  const filteredExamples = useMemo(() => {
+    const normalizedQuery = normalizeSearchText(query.trim());
+    return innovationExamples.filter((item) => {
+      const matchesWorkshop = !selectedWorkshop || item.workshopId === selectedWorkshop;
+      const matchesTag = !selectedTag || item.tags.includes(selectedTag);
+      const searchableContent = normalizeSearchText([
+        item.title,
+        WORKSHOP_TITLES[item.workshopId],
+        item.summary,
+        item.productType,
+        item.work,
+        ...item.tags,
+      ].join(' '));
+      return matchesWorkshop && matchesTag &&
+        (!normalizedQuery || searchableContent.includes(normalizedQuery));
+    });
+  }, [query, selectedTag, selectedWorkshop]);
+
   const clearFilters = useCallback(() => {
     setQuery('');
     setSelectedWorkshop('');
@@ -71,6 +93,7 @@ export function useInnovations() {
   return {
     innovations,
     filteredCases,
+    filteredExamples,
     tags,
     query,
     selectedWorkshop,
