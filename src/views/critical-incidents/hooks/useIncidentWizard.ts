@@ -29,6 +29,8 @@ import {
 import type { WorkshopStudentConfiguration } from '../../../models/workshopStructure';
 import { criticalIncidentService } from '../../../services/criticalIncidentService';
 import { workshopStructureService } from '../../../services/workshopStructureService';
+import { innovationService } from '../../innovations/services/innovationService';
+import type { WorkshopWorkResponse } from '../../innovations/models/innovation';
 
 // ─────────────────────────────────────────────
 // Tipos del hook
@@ -105,6 +107,10 @@ export interface UseIncidentWizardReturn {
   saveDraft: () => Promise<void>;
   /** Elimina el borrador y limpia el formulario. */
   discardDraft: () => Promise<void>;
+  /** Envía el producto real al docente para revisión. */
+  submitWork: () => Promise<void>;
+  submissionStatus: 'idle' | 'sending' | 'sent' | 'error';
+  submissionError: string | null;
 }
 
 // ─────────────────────────────────────────────
@@ -202,6 +208,10 @@ export function useIncidentWizard(
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [lastSaveWasAuto, setLastSaveWasAuto] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<
+    'idle' | 'sending' | 'sent' | 'error'
+  >('idle');
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   // Referencia al último estado, para el temporizador y la salida de la
   // vista sin recrear los efectos en cada tecla.
@@ -395,6 +405,8 @@ export function useIncidentWizard(
   /** Actualiza el texto de un paso y marca que hay cambios sin guardar. */
   const setFieldValue = useCallback((step: string, text: string) => {
     editVersionRef.current += 1;
+    setSubmissionStatus('idle');
+    setSubmissionError(null);
     if (step in EMPTY_VALUES) {
       setValues((prev) => ({ ...prev, [step]: text }));
     } else {
@@ -475,6 +487,87 @@ export function useIncidentWizard(
     }
   }, [workshopId]);
 
+  const submitWork = useCallback(async () => {
+    if (!allStepsCompleted || !configuration) {
+      setSubmissionError('Completa todas las respuestas antes de enviar el trabajo.');
+      setSubmissionStatus('error');
+      return;
+    }
+    const snapshot = latestRef.current;
+    const versionAtStart = editVersionRef.current;
+    const content = {
+      context: snapshot.values.context ?? '',
+      description: snapshot.values.description ?? '',
+      actors: snapshot.values.actors ?? '',
+      relevance: snapshot.values.relevance ?? '',
+    };
+    let responses: WorkshopWorkResponse[];
+
+    if (configuration.evaluationType === 'multiple-choice') {
+      responses = configuration.formSchema.questions.map((question) => {
+        const answer = snapshot.answers[`choice-${question.id}`] ?? '';
+        return {
+          prompt: question.prompt,
+          response:
+            question.type === 'multiple-choice'
+              ? question.options[Number(answer)] ?? ''
+              : answer,
+          type: question.type,
+        };
+      });
+    } else {
+      responses = [
+        ...([
+          { field: 'context', label: 'Contexto' },
+          { field: 'description', label: 'Descripción del incidente' },
+          { field: 'actors', label: 'Actores e influencia' },
+          { field: 'relevance', label: 'Relevancia pedagógica' },
+        ] as const).map(({ field, label }, index) => ({
+          prompt: configuration.formSchema.guidingQuestions[index]?.trim() || label,
+          response: content[field],
+          type: 'open-ended' as const,
+        })),
+        ...configuration.formSchema.guidingQuestions.slice(INCIDENT_STEPS.length).map((prompt, index) => ({
+          prompt,
+          response: snapshot.answers[`guiding-${index + INCIDENT_STEPS.length}`] ?? '',
+          type: 'open-ended' as const,
+        })),
+      ];
+    }
+
+    setSubmissionStatus('sending');
+    setSubmissionError(null);
+    try {
+      if (snapshot.isDirty) {
+        const draft = await criticalIncidentService.saveDraft({
+          workshopId,
+          ...content,
+          answers: snapshot.answers,
+          currentStep: snapshot.currentStepId,
+        }, false);
+        setSavedAt(draft.savedAt);
+        setHasDraft(true);
+        if (editVersionRef.current === versionAtStart) setIsDirty(false);
+        setSaveStatus('saved');
+      }
+      await innovationService.submitWork(configuration.workshopId, content, responses);
+      if (editVersionRef.current === versionAtStart) {
+        setSubmissionStatus('sent');
+        onDraftChangeRef.current?.();
+      } else {
+        setSubmissionStatus('idle');
+      }
+    } catch (cause) {
+      console.error('No se pudo enviar el trabajo del taller:', cause);
+      setSubmissionStatus('error');
+      setSubmissionError(
+        cause instanceof Error
+          ? cause.message
+          : 'No se pudo enviar el trabajo. Revisa tu conexión y vuelve a intentarlo.',
+      );
+    }
+  }, [allStepsCompleted, configuration, workshopId]);
+
   // ── Retorno ───────────────────────────────
 
   return {
@@ -517,5 +610,8 @@ export function useIncidentWizard(
     isDirty,
     saveDraft,
     discardDraft,
+    submitWork,
+    submissionStatus,
+    submissionError,
   };
 }

@@ -32,6 +32,8 @@ export interface WorkshopEvaluation {
   outcome: WorkshopOutcome | null;
   /** Fecha de la evaluación en formato ISO 8601 (null si aún no se evalúa). */
   evaluatedAt: string | null;
+  /** Entrega compartida concreta que respalda esta nota, si existe. */
+  sourceSubmissionId?: string | null;
 }
 
 /**

@@ -204,25 +204,34 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
                           : <Save size={18} />
                         : <ArrowRight size={18} />
                     }
-                    isLoading={wizard.isLastStep && supportsSensitiveCheck && sensitiveDetector.isAnalyzing}
+                    isLoading={
+                      wizard.isLastStep &&
+                      (supportsSensitiveCheck
+                        ? sensitiveDetector.isAnalyzing
+                        : wizard.submissionStatus === 'sending')
+                    }
                     onClick={
                       wizard.isLastStep
                         ? supportsSensitiveCheck
                           ? handleDetectSensitiveData
-                          : () => void wizard.saveDraft()
+                          : () => void wizard.submitWork()
                         : wizard.goNext
                     }
                     disabled={
                       wizard.isLastStep
                         ? !wizard.allStepsCompleted ||
-                          (supportsSensitiveCheck && sensitiveDetector.isAnalyzing)
+                          sensitiveDetector.isAnalyzing ||
+                          wizard.submissionStatus === 'sending' ||
+                          wizard.submissionStatus === 'sent'
                         : !wizard.stepCompletion[wizard.currentStep.id]
                     }
                   >
                     {wizard.isLastStep
                       ? supportsSensitiveCheck
                         ? 'Detectar datos sensibles'
-                        : 'Guardar respuestas'
+                        : wizard.submissionStatus === 'sent'
+                          ? 'Trabajo enviado'
+                          : 'Enviar trabajo a revisión'
                       : 'Siguiente'}
                   </Button>
                 </div>
@@ -241,8 +250,22 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
                       onRetry={handleDetectSensitiveData}
                       onDismiss={sensitiveDetector.clearResults}
                       onCancel={sensitiveDetector.cancelAnalysis}
+                      onSubmit={wizard.submitWork}
+                      isSubmitting={wizard.submissionStatus === 'sending'}
+                      isSubmitted={wizard.submissionStatus === 'sent'}
+                      submitError={wizard.submissionError}
                     />
                   )}
+                {!supportsSensitiveCheck && wizard.submissionError && (
+                  <p role="alert" className="rounded-lg border border-border bg-surface p-3 text-sm text-primary">
+                    {wizard.submissionError}
+                  </p>
+                )}
+                {!supportsSensitiveCheck && wizard.submissionStatus === 'sent' && (
+                  <p role="status" className="rounded-lg border border-accent-ia/30 bg-accent-ia/5 p-3 text-sm text-texto">
+                    Trabajo enviado al docente para revisión y posible publicación anonimizada.
+                  </p>
+                )}
               </section>
             )
           case 'theory-framework':

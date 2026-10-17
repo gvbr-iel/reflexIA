@@ -1,27 +1,20 @@
-import { BookOpenCheck } from 'lucide-react'
-import Button from '../../../components/Button'
-import Modal from '../../../components/Modal'
-import type { InnovationCase } from '../models/innovation'
+import { BookOpenCheck } from 'lucide-react';
 
-/* ------------------------------------------------
-   InnovationDetailModal — HU-07
-   Ventana con el caso completo: contexto, desafío,
-   actuación mejorada, pasos para adaptarla y
-   resultados esperados. Usa el Modal global.
-   ------------------------------------------------ */
+import Button from '../../../components/Button';
+import Modal from '../../../components/Modal';
+import type { InnovationCase } from '../models/innovation';
+import { WORKSHOP_TITLES } from '../models/innovation';
 
 interface InnovationDetailModalProps {
-  /** Caso a mostrar. Con null la ventana no se dibuja. */
-  innovation: InnovationCase | null
-  onClose: () => void
+  innovation: InnovationCase | null;
+  onClose: () => void;
 }
 
 export default function InnovationDetailModal({
   innovation,
   onClose,
 }: InnovationDetailModalProps) {
-  // Sin caso elegido no hay nada que mostrar.
-  if (!innovation) return null
+  if (!innovation) return null;
 
   return (
     <Modal
@@ -29,72 +22,44 @@ export default function InnovationDetailModal({
       onClose={onClose}
       title={innovation.title}
       size="lg"
-      footer={
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onClose}
-        >
-          Cerrar
-        </Button>
-      }
+      footer={<Button type="button" variant="ghost" onClick={onClose}>Cerrar</Button>}
     >
       <div className="space-y-6">
-        <div className="flex items-center gap-2 text-sm font-semibold text-secondary">
-          <BookOpenCheck size={18} aria-hidden="true" />
-          <span>{innovation.category}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-secondary">
+          <span className="inline-flex items-center gap-2">
+            <BookOpenCheck size={18} aria-hidden="true" />
+            {WORKSHOP_TITLES[innovation.workshopId]}
+          </span>
+          <span className="rounded-full bg-accent-ia/10 px-3 py-1 text-accent-ia">
+            Nota {innovation.grade.toFixed(1).replace('.', ',')}
+          </span>
         </div>
-
         <p className="text-base leading-relaxed text-texto/80">{innovation.summary}</p>
-
         <section>
-          <h3 className="font-heading text-base font-semibold text-texto">
-            Contexto sugerido
-          </h3>
-          <p className="mt-2 text-base leading-relaxed text-texto/75">{innovation.context}</p>
+          <h3 className="font-heading text-base font-semibold text-texto">Tipo de producto</h3>
+          <p className="mt-2 text-base text-texto/75">{innovation.productType}</p>
         </section>
-
         <section>
-          <h3 className="font-heading text-base font-semibold text-texto">
-            Desafío pedagógico
-          </h3>
-          <p className="mt-2 text-base leading-relaxed text-texto/75">
-            {innovation.challenge}
-          </p>
+          <h3 className="font-heading text-base font-semibold text-texto">Trabajo anonimizado</h3>
+          <div className="mt-2 whitespace-pre-wrap rounded-lg border border-border bg-bg p-4 text-base leading-relaxed text-texto/80">
+            {innovation.work}
+          </div>
         </section>
-
         <section>
-          <h3 className="font-heading text-base font-semibold text-texto">
-            Actuación mejorada
-          </h3>
-          <p className="mt-2 text-base leading-relaxed text-texto/75">{innovation.action}</p>
-        </section>
-
-        <section>
-          <h3 className="font-heading text-base font-semibold text-texto">
-            Claves para adaptarla
-          </h3>
-          <ol className="mt-2 list-inside list-decimal space-y-2 text-base leading-relaxed text-texto/75">
-            {innovation.implementation.map((step) => (
-              <li key={step}>{step}</li>
+          <h3 className="font-heading text-base font-semibold text-texto">Estilo de innovación</h3>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {innovation.tags.map((tag) => (
+              <li key={tag} className="rounded-full bg-primary/5 px-3 py-1 text-sm text-primary">
+                {tag}
+              </li>
             ))}
-          </ol>
+          </ul>
         </section>
-
-        <section className="rounded-lg border-l-4 border-accent-ia bg-accent-ia/5 p-4">
-          <h3 className="font-heading text-base font-semibold text-texto">
-            Resultados esperados
-          </h3>
-          <p className="mt-2 text-base leading-relaxed text-texto/75">
-            {innovation.expectedImpact}
-          </p>
-        </section>
-
         <p className="border-t border-border pt-4 text-sm leading-relaxed text-texto/60">
-          Ejemplo ilustrativo para orientar la reflexión; no corresponde a un caso real
-          verificado ni a resultados medidos.
+          Trabajo de un taller con nota oficial igual o superior a 6,0, revisado y anonimizado
+          por un docente antes de su publicación.
         </p>
       </div>
     </Modal>
-  )
+  );
 }

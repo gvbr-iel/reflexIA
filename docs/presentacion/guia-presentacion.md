@@ -104,11 +104,11 @@ npm run dev
 | 7 | Estudiante | Talleres **desbloqueados**: abrir un taller, asistente de 4 pasos, referencias al costado, guardar borrador y autoguardado | HU-03 |
 | 8 | Estudiante | Escribir un nombre propio en el relato: se detecta como dato sensible y bloquea el impulso | HU-05 |
 | 9 | Estudiante | "El Impulso": pedir orientaciones y ver el contador de intentos restantes (3 por taller) | HU-02 |
-| 10 | Estudiante | `/estudiante/innovaciones`: buscar, filtrar por categoría y abrir un caso | HU-07 |
+| 10 | Estudiante | `/estudiante/innovaciones`: buscar trabajos publicados y filtrar por taller o etiqueta | HU-07 |
 | 11 | Profesor guía | `/docente`: panel de seguimiento (tarjetas, filtros, tabla; en móvil, tarjetas) | n/d |
 | 12 | Profesor guía | `/docente/plazos`: cambiar fecha e intentos, guardar, restablecer | HU-06 |
 | 13 | Profesor guía | `/docente/reflexiones`: ver la propuesta de la IA, editarla y validarla | HU-02 |
-| 14 | Profesor guía | `/docente/innovaciones`: misma biblioteca, compartida | HU-07 |
+| 14 | Profesor guía | `/docente/innovaciones`: evaluar entregas, anonimizar/publicar las elegibles y consultar la biblioteca compartida | HU-07 |
 
 **Truco de demo:** con `npm run dev` aparecen botones de simulación en los talleres (`DevTheoryToggle` y `DevWorkshopResultToggle`). Sirven para aprobar el marco teórico o simular el resultado de un taller sin repetir todo el flujo. No aparecen en producción (`import.meta.env.DEV`).
 
@@ -124,7 +124,7 @@ npm run dev
 | HU-04 Marco teórico | Cuestionario que desbloquea los talleres | `/estudiante/marco-teorico` | `models/theoryQuiz.ts` → `services/theoryQuizService.ts` → `views/theory-verification/hooks/useTheoryQuiz.ts` → `TheoryQuizView.tsx` |
 | HU-05 Datos sensibles | Detectar nombres y colegios en el relato | Dentro del asistente | `models/sensitiveData.ts` → `services/openRouterService.ts` (IA) → `hooks/useSensitiveDataDetector.ts` → `components/SensitiveDataPreview.tsx` |
 | HU-06 Plazos e intentos | El profesor regula el ritmo | `/docente/plazos` | `models/workPacing.ts` → `services/workPacingService.ts` → `views/work-pacing/hooks/useWorkPacing.ts` → `DeadlinesView.tsx` |
-| HU-07 Innovaciones | Biblioteca de casos | `/estudiante/innovaciones`, `/docente/innovaciones` | `views/innovations/data/innovations.ts` → `hooks/useInnovations.ts` → `InnovationsView.tsx` |
+| HU-07 Innovaciones | Entregas privadas, revisión docente y biblioteca pública anonimizada | `/estudiante/innovaciones`, `/docente/innovaciones` | `innovationService.ts` → `useInnovations.ts` / `useInnovationReview.ts` → `InnovationsView.tsx` |
 | HU-08 Autenticación | Login por rol | `/iniciar-sesion` | `services/firebase.ts`, `services/authService.ts` → `context/AuthContext.tsx` → `hooks/useAuth.ts` → `components/RequireStudent.tsx`, `views/auth/LoginView.tsx` |
 
 Cada HU tiene una guía detallada en [`../historias-usuario/`](../historias-usuario/):

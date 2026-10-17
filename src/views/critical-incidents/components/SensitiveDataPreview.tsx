@@ -48,6 +48,11 @@ export interface SensitiveDataPreviewProps {
   onDismiss: () => void;
   /** Callback para cancelar la petición de análisis en curso. */
   onCancel?: () => void;
+  /** Envía el trabajo después de confirmar que está anonimizado. */
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
+  isSubmitted?: boolean;
+  submitError?: string | null;
 }
 
 /**
@@ -91,6 +96,10 @@ export default function SensitiveDataPreview({
   onRetry,
   onDismiss,
   onCancel,
+  onSubmit,
+  isSubmitting = false,
+  isSubmitted = false,
+  submitError = null,
 }: SensitiveDataPreviewProps) {
   // 1. Si no se está analizando, no hay error y no se ha analizado, no renderizar nada
   if (!isAnalyzing && !analysisError && !hasAnalyzed) {
@@ -172,24 +181,30 @@ export default function SensitiveDataPreview({
   // 4. Estado limpio: ningún dato sensible encontrado
   if (!hasSensitiveData) {
     return (
-      <div
-        role="status"
-        className="rounded-xl border border-accent-ia/30 bg-accent-ia/5 p-4 md:p-5 flex items-center justify-between gap-3"
-      >
-        <div className="flex items-center gap-3">
-          <ShieldCheck size={22} className="text-accent-ia shrink-0" aria-hidden="true" />
-          <p className="text-sm font-medium text-texto">
-            No se detectaron datos sensibles en el relato.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label="Cerrar resultado"
-          className="rounded-lg p-1.5 text-texto/60 hover:text-texto hover:bg-accent-ia/10 transition-colors"
+      <div className="space-y-3">
+        <div
+          role={submitError ? 'alert' : 'status'}
+          className="rounded-xl border border-accent-ia/30 bg-accent-ia/5 p-4 md:p-5"
         >
-          <X size={18} />
-        </button>
+          <div className="flex items-center gap-3">
+            <ShieldCheck size={22} className="text-accent-ia shrink-0" aria-hidden="true" />
+            <p className="text-sm font-medium text-texto">
+              {isSubmitted
+                ? 'Trabajo enviado al docente para revisión y posible publicación anonimizada.'
+                : 'No se detectaron datos sensibles en el relato.'}
+            </p>
+          </div>
+          {submitError && <p className="mt-3 text-sm text-primary">{submitError}</p>}
+        </div>
+        {onSubmit && !isSubmitted && (
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Enviando trabajo…' : 'Enviar trabajo a revisión'}
+          </Button>
+        )}
       </div>
     );
   }
