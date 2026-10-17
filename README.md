@@ -16,7 +16,7 @@ ReflexIA es una aplicación web orientada a la práctica profesional docente de 
 | **RF-06** | [HU-06](./docs/historias-usuario/HU06_GUIA.md) | Profesor guía | ✅ **Implementado** | Panel de control en `/docente/plazos` para definir fechas límite y límites de intentos de revisión por actividad (marco teórico y talleres 1 a 4). |
 | **RF-07** | [HU-07](./docs/historias-usuario/HU07_GUIA.md) | Estudiante y Docente | ✅ **Implementado** | Biblioteca ilustrativa categorizada, con búsqueda combinable y detalle de casos disponible para estudiantes y profesores. |
 | **RF-08** | [HU-08](./docs/historias-usuario/HU08_GUIA.md) | Todos los roles | ✅ **Implementado** | Inicio de sesión seguro con Firebase Authentication y autorización activa en Firestore, con redirección inteligente por rol a `/estudiante`, `/docente` o `/admin`. |
-| **HU-09** | [HU-09](./docs/historias-usuario/HU09_GUIA.md) | Profesor guía y estudiante | 🟡 **Integración parcial** | Editor docente conectado al asistente del estudiante para formatos de texto, matriz y alternativas, con secciones y preguntas configurables. Los archivos permanecen deshabilitados hasta contar con almacenamiento y controles de privacidad seguros. |
+| **HU-09** | [HU-09](./docs/historias-usuario/HU09_GUIA.md) | Profesor guía y estudiante | 🟡 **Integración parcial** | Editor docente conectado al asistente del estudiante para formatos de texto o relato y alternativas, con secciones y preguntas configurables. |
 
 ---
 

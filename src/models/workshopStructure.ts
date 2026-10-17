@@ -16,23 +16,8 @@ export type WorkshopId = (typeof WORKSHOP_IDS)[number];
 export const WORKSHOP_SECTIONS = [
   {
     id: 'objectives-context',
-    label: 'Objetivos y contexto',
+    label: 'Objetivo y contexto',
     description: 'Propósito formativo y contexto del trabajo.',
-  },
-  {
-    id: 'incident-form',
-    label: 'Reconstrucción del incidente',
-    description: 'Formulario o mecanismo de entrada para el estudiante.',
-  },
-  {
-    id: 'theory-framework',
-    label: 'Marco teórico',
-    description: 'Referencias y conceptos para complementar el análisis.',
-  },
-  {
-    id: 'peer-feedback',
-    label: 'Retroalimentación de pares',
-    description: 'Espacio para recibir aportes de otros estudiantes.',
   },
   {
     id: 'evaluation-rubric',
@@ -40,14 +25,29 @@ export const WORKSHOP_SECTIONS = [
     description: 'Criterios y escala usados para evaluar el producto.',
   },
   {
+    id: 'incident-form',
+    label: 'Reconstrucción del incidente',
+    description: 'Formulario de entrada para el estudiante.',
+  },
+  {
     id: 'prompt-bank',
     label: 'Banco de prompts y análisis',
     description: 'Preguntas orientadoras para analizar la práctica.',
   },
+  {
+    id: 'theory-framework',
+    label: 'Marco teórico con lecturas que ayudarán a resolver el taller',
+    description: 'Referencias y conceptos para complementar el análisis.',
+  },
+  {
+    id: 'peer-feedback',
+    label: 'Retroalimentación con pares',
+    description: 'Espacio para recibir aportes de otros estudiantes.',
+  },
 ] as const;
 
 export type WorkshopSectionId = (typeof WORKSHOP_SECTIONS)[number]['id'];
-export type WorkshopEvaluationType = 'text' | 'matrix' | 'multiple-choice' | 'file';
+export type WorkshopEvaluationType = 'text' | 'multiple-choice';
 
 export interface WorkshopSectionSetting {
   id: WorkshopSectionId;
@@ -96,19 +96,9 @@ export const WORKSHOP_EVALUATION_TYPES: {
     description: 'Ficha del incidente o relato descriptivo en texto libre.',
   },
   {
-    id: 'matrix',
-    label: 'Matriz estructurada',
-    description: 'Tabla o matriz con filas orientadoras personalizables.',
-  },
-  {
     id: 'multiple-choice',
     label: 'Alternativas',
     description: 'Cuestionario con preguntas, opciones y respuesta correcta.',
-  },
-  {
-    id: 'file',
-    label: 'Archivo o diagrama',
-    description: 'Instrucciones para adjuntar documentos o elaborar un diagrama.',
   },
 ];
 
@@ -116,12 +106,6 @@ const DEFAULT_GUIDING_QUESTIONS = [
   '¿Qué ocurrió y en qué contexto?',
   '¿Qué elementos de la práctica consideras relevantes?',
   '¿Qué aprendizaje o pregunta te deja esta experiencia?',
-];
-
-const DEFAULT_MATRIX_ROWS = [
-  'Situación observada',
-  'Contradicción o dilema pedagógico',
-  'Interpretación y fundamento teórico',
 ];
 
 export function createDefaultWorkshopConfiguration(
@@ -138,7 +122,7 @@ export function createDefaultWorkshopConfiguration(
     evaluationType: 'text',
     formSchema: {
       guidingQuestions: [...DEFAULT_GUIDING_QUESTIONS],
-      matrixRows: [...DEFAULT_MATRIX_ROWS],
+      matrixRows: [],
       questions: [],
     },
     updatedAt: null,
@@ -264,6 +248,9 @@ export function validateWorkshopConfiguration(
     questions.length > 30
   ) {
     return 'El contenido del formulario excede los límites permitidos o no es válido.';
+  }
+  if (configuration.evaluationType === 'multiple-choice' && questions.length === 0) {
+    return 'Agrega al menos una pregunta para usar el formato de alternativas.';
   }
 
   if (

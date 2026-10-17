@@ -133,34 +133,6 @@ function FormPreview({
           ))}
         </div>
       )}
-      {configuration.evaluationType === 'matrix' && (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[32rem] border-collapse text-left">
-            <thead>
-              <tr>
-                <th className="border border-border bg-bg p-3 font-medium text-texto">Dimensión</th>
-                <th className="border border-border bg-bg p-3 font-medium text-texto">Tu análisis</th>
-              </tr>
-            </thead>
-            <tbody>
-              {schema.matrixRows.map((row, index) => (
-                <tr key={`${index}-${row}`}>
-                  <th className="border border-border p-3 font-medium text-texto">
-                    {row || `Fila ${index + 1}`}
-                  </th>
-                  <td className="border border-border p-3">
-                    <textarea
-                      disabled
-                      aria-label={`Respuesta: ${row || `Fila ${index + 1}`}`}
-                      className="min-h-16 w-full rounded-lg border border-border bg-bg p-2"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
       {configuration.evaluationType === 'multiple-choice' && (
         <div className="space-y-4">
           {schema.questions.length === 0 && (
@@ -184,23 +156,6 @@ function FormPreview({
               ))}
             </fieldset>
           ))}
-        </div>
-      )}
-      {configuration.evaluationType === 'file' && (
-        <div className="space-y-3">
-          {schema.guidingQuestions.map((instruction, index) => (
-            <p key={`${index}-${instruction}`} className="text-sm text-texto/80">
-              {instruction || `Instrucción ${index + 1}`}
-            </p>
-          ))}
-          <label className="block text-sm font-medium text-texto">
-            Adjunta tu archivo o diagrama
-            <input
-              type="file"
-              disabled
-              className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-bg p-2"
-            />
-          </label>
         </div>
       )}
     </div>

@@ -115,9 +115,6 @@ export default function WorkshopStructureView() {
               onGuidingQuestionChange={structure.setGuidingQuestion}
               onAddGuidingQuestion={structure.addGuidingQuestion}
               onRemoveGuidingQuestion={structure.removeGuidingQuestion}
-              onMatrixRowChange={structure.setMatrixRow}
-              onAddMatrixRow={structure.addMatrixRow}
-              onRemoveMatrixRow={structure.removeMatrixRow}
               onQuestionChange={structure.updateQuestion}
               onAddQuestion={structure.addQuestion}
               onRemoveQuestion={structure.removeQuestion}

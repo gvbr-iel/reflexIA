@@ -69,20 +69,6 @@ export default function ConfiguredIncidentStepForm({
     );
   }
 
-  if (evaluationType === 'file') {
-    return (
-      <section className="space-y-3 rounded-xl border border-border bg-surface p-4 md:p-6">
-        <h2 className="font-heading text-xl font-semibold text-texto">{step.title}</h2>
-        <p className="text-texto/70">{step.instruction}</p>
-        <p className="rounded-lg bg-bg p-3 text-sm text-texto/70">
-          No se habilita la selección de archivos hasta contar con almacenamiento seguro y una
-          revisión de datos sensibles para documentos. Así evitamos enviar información personal
-          sin protección.
-        </p>
-      </section>
-    );
-  }
-
   return (
     <IncidentStepForm
       step={step}

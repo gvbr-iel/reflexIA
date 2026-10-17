@@ -154,41 +154,6 @@ export function useWorkshopStructure(workshopId: WorkshopId) {
     [updateDraft],
   );
 
-  const setMatrixRow = useCallback(
-    (index: number, value: string) =>
-      updateDraft((current) => ({
-        ...current,
-        formSchema: {
-          ...current.formSchema,
-          matrixRows: current.formSchema.matrixRows.map((row, itemIndex) =>
-            itemIndex === index ? value : row,
-          ),
-        },
-      })),
-    [updateDraft],
-  );
-
-  const addMatrixRow = useCallback(
-    () =>
-      updateDraft((current) => ({
-        ...current,
-        formSchema: { ...current.formSchema, matrixRows: [...current.formSchema.matrixRows, ''] },
-      })),
-    [updateDraft],
-  );
-
-  const removeMatrixRow = useCallback(
-    (index: number) =>
-      updateDraft((current) => ({
-        ...current,
-        formSchema: {
-          ...current.formSchema,
-          matrixRows: current.formSchema.matrixRows.filter((_, itemIndex) => itemIndex !== index),
-        },
-      })),
-    [updateDraft],
-  );
-
   const updateQuestion = useCallback(
     (questionId: string, updater: (question: WorkshopChoiceQuestion) => WorkshopChoiceQuestion) =>
       updateDraft((current) => ({
@@ -304,9 +269,6 @@ export function useWorkshopStructure(workshopId: WorkshopId) {
     setGuidingQuestion,
     addGuidingQuestion,
     removeGuidingQuestion,
-    setMatrixRow,
-    addMatrixRow,
-    removeMatrixRow,
     updateQuestion,
     addQuestion,
     removeQuestion,

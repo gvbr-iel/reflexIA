@@ -123,25 +123,6 @@ function buildConfiguredSteps(
 ): WorkshopFormStep[] {
   if (!configuration) return INCIDENT_STEPS;
 
-  if (configuration.evaluationType === 'matrix') {
-    if (configuration.formSchema.matrixRows.length === 0) {
-      return [{
-        id: 'matrix-empty',
-        title: 'No hay filas de análisis',
-        instruction: 'El docente aún no ha agregado filas a esta matriz.',
-        placeholder: '',
-        order: 1,
-      }];
-    }
-    return configuration.formSchema.matrixRows.map((row, index) => ({
-      id: `matrix-${index}`,
-      title: row,
-      instruction: `Completa la fila «${row}» con tu análisis. No incluyas nombres reales.`,
-      placeholder: `Escribe aquí tu respuesta para: ${row}`,
-      order: index + 1,
-    }));
-  }
-
   if (configuration.evaluationType === 'multiple-choice') {
     const questions = configuration.formSchema.questions;
     if (questions.length === 0) {
@@ -160,18 +141,6 @@ function buildConfiguredSteps(
       placeholder: '',
       order: index + 1,
     }));
-  }
-
-  if (configuration.evaluationType === 'file') {
-    return [{
-      id: 'file-upload',
-      title: 'Archivo o diagrama',
-      instruction:
-        'La plataforma todavía no cuenta con almacenamiento seguro ni revisión de privacidad para archivos. ' +
-        'Solicita al docente cambiar el formato antes de continuar.',
-      placeholder: '',
-      order: 1,
-    }];
   }
 
   const steps: WorkshopFormStep[] = INCIDENT_STEPS.map((step, index) => {
@@ -269,13 +238,10 @@ export function useIncidentWizard(
   const stepCompletion = Object.fromEntries(
     steps.map((step) => [
       step.id,
-      configuration?.evaluationType === 'file'
-        ? false
-        : isFilled(getAnswer(step.id)),
+      isFilled(getAnswer(step.id)),
     ]),
   );
   const allStepsCompleted =
-    configuration?.evaluationType !== 'file' &&
     steps.length > 0 &&
     steps.every((step) => stepCompletion[step.id]);
   const canAdvance = stepCompletion[currentStepId];

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { ArrowLeft, ArrowRight, Lock, Shield } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Lock, Save, Shield } from 'lucide-react'
 
 import Button from '../../../components/Button'
 import { INCIDENT_STEPS } from '../../../models/criticalIncident'
@@ -13,7 +13,6 @@ import SensitiveDataPreview from './SensitiveDataPreview'
 import DraftManager from './DraftManager'
 import ImpulsePanel from './ImpulsePanel'
 import ConfiguredIncidentStepForm from './ConfiguredIncidentStepForm'
-import ConfiguredMatrixForm from './ConfiguredMatrixForm'
 
 /* ------------------------------------------------
    IncidentWizard — asistente paso a paso de un taller
@@ -46,20 +45,15 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
   const sensitiveDetector = useSensitiveDataDetector()
   const configuration = wizard.configuration
   const evaluationType = configuration?.evaluationType ?? 'text'
-  const isMatrix = evaluationType === 'matrix'
-  const narrativeToCheck = isMatrix
-    ? (configuration?.formSchema.matrixRows ?? [])
-        .map((row, index) => `${row}:\n${wizard.answers[`matrix-${index}`] ?? ''}`)
-        .join('\n\n')
-    : [
-        `Contexto:\n${(wizard.values.context ?? '').trim()}`,
-        `Descripción del incidente:\n${(wizard.values.description ?? '').trim()}`,
-        `Actores involucrados:\n${(wizard.values.actors ?? '').trim()}`,
-        `Relevancia pedagógica:\n${(wizard.values.relevance ?? '').trim()}`,
-        ...Object.entries(wizard.answers)
-          .filter(([key]) => key.startsWith('guiding-'))
-          .map(([key, value]) => `${key}:\n${value}`),
-      ].join('\n\n')
+  const narrativeToCheck = [
+    `Contexto:\n${(wizard.values.context ?? '').trim()}`,
+    `Descripción del incidente:\n${(wizard.values.description ?? '').trim()}`,
+    `Actores involucrados:\n${(wizard.values.actors ?? '').trim()}`,
+    `Relevancia pedagógica:\n${(wizard.values.relevance ?? '').trim()}`,
+    ...Object.entries(wizard.answers)
+      .filter(([key]) => key.startsWith('guiding-'))
+      .map(([key, value]) => `${key}:\n${value}`),
+  ].join('\n\n')
   // "El Impulso": pide orientaciones a la IA y lleva el contador de intentos.
   // Guarda el borrador antes de pedir (no descuenta intentos) y avisa al
   // selector de talleres cuando se registra un intento.
@@ -79,7 +73,7 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
     .filter((section) => section.enabled)
     .sort((a, b) => a.order - b.order)
   const enabledSections = new Set(orderedSections.map((section) => section.id))
-  const supportsSensitiveCheck = evaluationType === 'text' || isMatrix
+  const supportsSensitiveCheck = evaluationType === 'text'
   const referenceStep = INCIDENT_STEPS.find((step) => step.id === wizard.currentStep.id)
     ?? INCIDENT_STEPS[Math.min(wizard.currentIndex, INCIDENT_STEPS.length - 1)]
   const {
@@ -160,7 +154,7 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           case 'objectives-context':
             return (
               <section key={setting.id} className="space-y-2 rounded-xl border border-border bg-surface p-4 md:p-6">
-                <h2 className="font-heading text-lg font-semibold text-texto">Objetivos y contexto</h2>
+                <h2 className="font-heading text-lg font-semibold text-texto">Objetivo y contexto</h2>
                 <p className="text-texto/70">{wizard.workshop?.description}</p>
                 <p className="text-sm text-primary">{wizard.workshop?.topic}</p>
               </section>
@@ -168,79 +162,62 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           case 'incident-form':
             return (
               <section key={setting.id} aria-label="Formulario del taller" className="space-y-4">
-                {isMatrix ? (
-                  <ConfiguredMatrixForm
-                    configuration={configuration!}
-                    answers={wizard.answers}
-                    onChange={wizard.setFieldValue}
-                  />
-                ) : (
-                  <>
-                    {evaluationType !== 'file' && (
-                      <StepWizard
-                        steps={wizard.steps}
-                        currentStepId={wizard.currentStep.id}
-                        completion={wizard.stepCompletion}
-                        canGoToStep={wizard.canGoToStep}
-                        onGoToStep={wizard.goToStep}
-                      />
-                    )}
-                    <ConfiguredIncidentStepForm
-                      evaluationType={evaluationType}
-                      configuration={configuration!}
-                      step={wizard.currentStep}
-                      totalSteps={wizard.steps.length}
-                      value={wizard.currentValue}
-                      onChange={(answer) => wizard.setFieldValue(wizard.currentStep.id, answer)}
-                      error={wizard.stepError}
-                    />
-                    {evaluationType === 'file' && (
-                      <p role="status" className="rounded-lg border border-border bg-bg p-3 text-sm text-texto/70">
-                        El formulario de archivos no recibe envíos hasta disponer de almacenamiento
-                        seguro y controles de privacidad.
-                      </p>
-                    )}
-                  </>
-                )}
+                <StepWizard
+                  steps={wizard.steps}
+                  currentStepId={wizard.currentStep.id}
+                  completion={wizard.stepCompletion}
+                  canGoToStep={wizard.canGoToStep}
+                  onGoToStep={wizard.goToStep}
+                />
+                <ConfiguredIncidentStepForm
+                  evaluationType={evaluationType}
+                  configuration={configuration!}
+                  step={wizard.currentStep}
+                  totalSteps={wizard.steps.length}
+                  value={wizard.currentValue}
+                  onChange={(answer) => wizard.setFieldValue(wizard.currentStep.id, answer)}
+                  error={wizard.stepError}
+                />
 
-                {evaluationType !== 'file' && !isMatrix && (
-                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-                    <Button
-                      variant="outline"
-                      icon={<ArrowLeft size={18} />}
-                      onClick={wizard.goBack}
-                      disabled={wizard.isFirstStep}
-                    >
-                      Atrás
-                    </Button>
-                    <Button
-                      icon={wizard.isLastStep ? <Shield size={18} /> : <ArrowRight size={18} />}
-                      isLoading={wizard.isLastStep && sensitiveDetector.isAnalyzing}
-                      onClick={
-                        wizard.isLastStep
-                          ? handleDetectSensitiveData
-                          : wizard.goNext
-                      }
-                      disabled={
-                        wizard.isLastStep
-                          ? !wizard.allStepsCompleted || sensitiveDetector.isAnalyzing
-                          : !wizard.stepCompletion[wizard.currentStep.id]
-                      }
-                    >
-                      {wizard.isLastStep ? 'Detectar datos sensibles' : 'Siguiente'}
-                    </Button>
-                  </div>
-                )}
-                {isMatrix && (
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
                   <Button
-                    icon={<Shield size={18} />}
-                    isLoading={sensitiveDetector.isAnalyzing}
-                    onClick={handleDetectSensitiveData}
-                    disabled={!wizard.allStepsCompleted || sensitiveDetector.isAnalyzing}
+                    variant="outline"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={wizard.goBack}
+                    disabled={wizard.isFirstStep}
                   >
-                    Detectar datos sensibles
+                    Atrás
                   </Button>
-                )}
+                  <Button
+                    icon={
+                      wizard.isLastStep
+                        ? evaluationType === 'text'
+                          ? <Shield size={18} />
+                          : <Save size={18} />
+                        : <ArrowRight size={18} />
+                    }
+                    isLoading={wizard.isLastStep && evaluationType === 'text' && sensitiveDetector.isAnalyzing}
+                    onClick={
+                      wizard.isLastStep
+                        ? evaluationType === 'text'
+                          ? handleDetectSensitiveData
+                          : () => void wizard.saveDraft()
+                        : wizard.goNext
+                    }
+                    disabled={
+                      wizard.isLastStep
+                        ? !wizard.allStepsCompleted ||
+                          (evaluationType === 'text' && sensitiveDetector.isAnalyzing)
+                        : !wizard.stepCompletion[wizard.currentStep.id]
+                    }
+                  >
+                    {wizard.isLastStep
+                      ? evaluationType === 'text'
+                        ? 'Detectar datos sensibles'
+                        : 'Guardar respuestas'
+                      : 'Siguiente'}
+                  </Button>
+                </div>
 
                 {supportsSensitiveCheck &&
                   (sensitiveDetector.hasAnalyzed ||
@@ -262,7 +239,10 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
             )
           case 'theory-framework':
             return (
-              <div key={setting.id} className="xl:max-w-2xl">
+              <section key={setting.id} className="space-y-3 xl:max-w-2xl">
+                <h2 className="font-heading font-semibold text-texto">
+                  Marco teórico con lecturas que ayudarán a resolver el taller
+                </h2>
                 <TheoryReferenceSidebar
                   stepTitle={referenceStep.title}
                   references={references}
@@ -270,12 +250,12 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
                   error={referencesError}
                   onRetry={retryReferences}
                 />
-              </div>
+              </section>
             )
           case 'peer-feedback':
             return (
               <section key={setting.id} className="space-y-2 rounded-xl border border-border bg-surface p-4">
-                <h2 className="font-heading font-semibold text-texto">Retroalimentación de pares</h2>
+                <h2 className="font-heading font-semibold text-texto">Retroalimentación con pares</h2>
                 <p className="text-sm text-texto/70">
                   Esta sección está configurada, pero el intercambio de comentarios entre estudiantes
                   aún no está disponible en la plataforma.
@@ -286,7 +266,7 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
             return (
               <section key={setting.id} className="space-y-4 rounded-xl border border-border bg-surface p-4">
                 <div>
-                  <h2 className="font-heading font-semibold text-texto">Evaluación y escala de notas</h2>
+                  <h2 className="font-heading font-semibold text-texto">Rúbrica y escala de evaluación</h2>
                   <p className="mt-1 text-sm text-texto/70">
                     La revisión oficial corresponde al docente guía y utiliza la escala institucional
                     de 1,0 a 7,0. Los intentos se consumen solo al pedir un impulso.
@@ -298,7 +278,7 @@ export default function IncidentWizard({ workshopId, onDraftChange }: IncidentWi
           case 'prompt-bank':
             return (
               <section key={setting.id} className="space-y-2 rounded-xl border border-border bg-surface p-4">
-                <h2 className="font-heading font-semibold text-texto">Preguntas orientadoras</h2>
+                <h2 className="font-heading font-semibold text-texto">Banco de prompts y análisis</h2>
                 {configuration?.formSchema.guidingQuestions.length ? (
                   <ul className="list-inside list-disc space-y-1 text-texto/80">
                     {configuration.formSchema.guidingQuestions.map((question, index) => (

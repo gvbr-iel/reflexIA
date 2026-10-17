@@ -247,7 +247,7 @@ service cloud.firestore {
           && isValidSection(request.resource.data.sections[4])
           && isValidSection(request.resource.data.sections[5])
           && request.resource.data.evaluationType in [
-            'text', 'matrix', 'multiple-choice', 'file'
+            'text', 'multiple-choice'
           ]
           && request.resource.data.formSchema is map
           && request.resource.data.formSchema.keys().hasOnly([
@@ -262,6 +262,10 @@ service cloud.firestore {
           && request.resource.data.formSchema.matrixRows.size() <= 30
           && request.resource.data.formSchema.questions is list
           && request.resource.data.formSchema.questions.size() <= 30
+          && (
+            request.resource.data.evaluationType != 'multiple-choice'
+            || request.resource.data.formSchema.questions.size() > 0
+          )
           && request.resource.data.updatedAt is string
           && request.resource.data.updatedBy == request.auth.token.email;
       }

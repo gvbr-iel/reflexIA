@@ -12,14 +12,15 @@ La vista `/docente/estructura-talleres` vive dentro de `TeacherLayout`. El
 selector de talleres cambia el documento que se está editando sin compartir
 estado entre talleres. La vista permite:
 
-- Activar/desactivar las secciones de objetivos y contexto, formulario de
-  incidente, marco teórico, retroalimentación de pares, rúbrica y banco de
-  prompts.
+- Activar/desactivar y ordenar las secciones. La plantilla predeterminada es:
+  Objetivo y contexto → Rúbrica y escala de evaluación → Reconstrucción del
+  incidente → Banco de prompts y análisis → Marco teórico con lecturas que
+  ayudarán a resolver el taller → Retroalimentación con pares.
 - Reordenarlas con controles accesibles para mover arriba/abajo.
-- Elegir texto libre, matriz, selección múltiple o archivo/diagrama.
-- Editar preguntas orientadoras y filas de matriz.
-- Crear, modificar y eliminar preguntas de alternativas, opciones y respuesta
-  correcta.
+- Elegir texto o relato descriptivo, o preguntas de alternativas.
+- Editar preguntas orientadoras del relato y preguntas de alternativas,
+  opciones y respuesta correcta.
+  El formato de alternativas requiere al menos una pregunta.
 - Previsualizar las secciones activas y el formato seleccionado.
 - Guardar los cambios o borrar la configuración del taller para volver a la
   plantilla predeterminada.
@@ -40,28 +41,30 @@ Ejemplo del documento:
   "answerKeyPrivate": true,
   "sections": [
     { "id": "objectives-context", "enabled": true, "order": 0 },
-    { "id": "incident-form", "enabled": true, "order": 1 },
-    { "id": "theory-framework", "enabled": true, "order": 2 },
-    { "id": "peer-feedback", "enabled": false, "order": 3 },
-    { "id": "evaluation-rubric", "enabled": true, "order": 4 },
-    { "id": "prompt-bank", "enabled": true, "order": 5 }
+    { "id": "evaluation-rubric", "enabled": true, "order": 1 },
+    { "id": "incident-form", "enabled": true, "order": 2 },
+    { "id": "prompt-bank", "enabled": true, "order": 3 },
+    { "id": "theory-framework", "enabled": true, "order": 4 },
+    { "id": "peer-feedback", "enabled": true, "order": 5 }
   ],
-  "evaluationType": "matrix",
+  "evaluationType": "text",
   "formSchema": {
-    "guidingQuestions": [],
-    "matrixRows": ["Situación observada", "Interpretación pedagógica"],
-    "questions": [
-      { "id": "q1", "prompt": "Pregunta", "options": ["A", "B"] }
-    ]
+    "guidingQuestions": [
+      "¿Qué ocurrió y en qué contexto?",
+      "¿Qué elementos de la práctica consideras relevantes?"
+    ],
+    "matrixRows": [],
+    "questions": []
   },
   "updatedAt": "2026-10-16T18:00:00.000Z",
   "updatedBy": "docente@ucen.cl"
 }
 ```
 
-`evaluationType` admite `text`, `matrix`, `multiple-choice` y `file`. Las
-preguntas y alternativas se guardan en el documento visible al estudiante; la
-respuesta correcta se mantiene aparte en
+`evaluationType` admite `text` y `multiple-choice`. Las configuraciones
+anteriores con matriz o archivo se interpretan como texto para mantener el
+acceso a talleres ya configurados. Las preguntas y alternativas se guardan en
+el documento visible al estudiante; la respuesta correcta se mantiene aparte en
 `workshopConfigurations/{workshopId}/private/answerKey`, que solo pueden leer
 docentes activos. El estudiante recibe únicamente el enunciado y las opciones.
 La aplicación valida las longitudes y cardinalidades antes de escribir; las
@@ -78,21 +81,19 @@ firebase deploy --only firestore:rules
 
 Al entrar a `/estudiante/talleres/:workshopId`, HU-03 carga la configuración del
 taller desde Firestore. La secuencia de secciones respeta el orden y los estados
-activados por el docente. El estudiante puede completar el relato, responder la
-matriz en una tabla o contestar las preguntas de alternativas; las respuestas
-dinámicas se guardan en el borrador local particionado por UID y se restauran
-al volver al taller. La clave correcta de alternativas no se envía al cliente.
+activados por el docente. El estudiante puede completar el relato o contestar
+las preguntas de alternativas; las respuestas dinámicas se guardan en el
+borrador local particionado por UID y se restauran al volver al taller. La clave
+correcta de alternativas no se envía al cliente.
 
-Los formatos de texto y matriz conservan el control de datos sensibles. El
-Impulso y el contador siguen ligados a la revisión del relato libre; una matriz
-o cuestionario no consume intentos de IA.
+El relato conserva el control de datos sensibles. El Impulso y el contador
+siguen ligados a la revisión del relato libre; el cuestionario no consume
+intentos de IA.
 
 ## Estado y límites actuales
 
-El formato de archivo/diagrama no acepta archivos aún. Requiere definir
-almacenamiento seguro y revisión de privacidad del contenido antes de habilitar
-la recepción de documentos escolares. La sección de retroalimentación de pares
-se muestra como no disponible hasta implementar el flujo compartido.
+La sección de retroalimentación con pares se muestra como no disponible hasta
+implementar el flujo compartido.
 
 Si había una configuración previa a la separación de la pauta, la pantalla
 docente la migra al abrirla; entretanto, las reglas no permiten que estudiantes

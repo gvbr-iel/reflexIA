@@ -16,9 +16,6 @@ interface FormSchemaEditorProps {
   onGuidingQuestionChange: (index: number, value: string) => void;
   onAddGuidingQuestion: () => void;
   onRemoveGuidingQuestion: (index: number) => void;
-  onMatrixRowChange: (index: number, value: string) => void;
-  onAddMatrixRow: () => void;
-  onRemoveMatrixRow: (index: number) => void;
   onQuestionChange: (
     questionId: string,
     updater: (question: WorkshopChoiceQuestion) => WorkshopChoiceQuestion,
@@ -97,9 +94,6 @@ export default function FormSchemaEditor({
   onGuidingQuestionChange,
   onAddGuidingQuestion,
   onRemoveGuidingQuestion,
-  onMatrixRowChange,
-  onAddMatrixRow,
-  onRemoveMatrixRow,
   onQuestionChange,
   onAddQuestion,
   onRemoveQuestion,
@@ -154,39 +148,6 @@ export default function FormSchemaEditor({
           onChange={onGuidingQuestionChange}
           onAdd={onAddGuidingQuestion}
           onRemove={onRemoveGuidingQuestion}
-        />
-      )}
-
-      {evaluationType === 'file' && (
-        <div className="space-y-3">
-          <p className="text-sm text-texto/70">
-            Define las instrucciones que acompañarán la carga de archivo o diagrama.
-          </p>
-          <p className="rounded-lg border border-border bg-bg p-3 text-sm text-texto/70">
-            La recepción de archivos en el asistente del estudiante está deshabilitada hasta contar
-            con almacenamiento seguro y revisión de privacidad.
-          </p>
-          <EditableList
-            label="Instrucción"
-            items={formSchema.guidingQuestions}
-            placeholder="Ej.: Adjunta un mapa conceptual anonimizado"
-            disabled={disabled}
-            onChange={onGuidingQuestionChange}
-            onAdd={onAddGuidingQuestion}
-            onRemove={onRemoveGuidingQuestion}
-          />
-        </div>
-      )}
-
-      {evaluationType === 'matrix' && (
-        <EditableList
-          label="Fila de la matriz"
-          items={formSchema.matrixRows}
-          placeholder="Escribe una fila o dimensión de análisis"
-          disabled={disabled}
-          onChange={onMatrixRowChange}
-          onAdd={onAddMatrixRow}
-          onRemove={onRemoveMatrixRow}
         />
       )}
 

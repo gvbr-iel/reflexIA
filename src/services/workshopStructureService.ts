@@ -32,6 +32,10 @@ function requireWorkshopId(workshopId: string): asserts workshopId is WorkshopId
   }
 }
 
+function normalizeEvaluationType(value: unknown): unknown {
+  return value === 'matrix' || value === 'file' ? 'text' : value;
+}
+
 function readStudentConfiguration(
   value: unknown,
   expectedWorkshopId: WorkshopId,
@@ -50,6 +54,7 @@ function readStudentConfiguration(
   }
   const configuration = {
     ...raw,
+    evaluationType: normalizeEvaluationType(raw.evaluationType),
     formSchema: {
       ...formSchema,
       questions: formSchema.questions.map((question) => {
@@ -95,6 +100,7 @@ export const workshopStructureService = {
       if (!email) throw new Error('No se pudo identificar al docente para migrar la configuración.');
       const legacy = {
         ...rawConfiguration,
+        evaluationType: normalizeEvaluationType(rawConfiguration.evaluationType),
         answerKeyPrivate: true,
         updatedAt: new Date().toISOString(),
         updatedBy: email,
