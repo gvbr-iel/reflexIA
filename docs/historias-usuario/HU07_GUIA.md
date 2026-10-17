@@ -14,6 +14,7 @@
 4. Los trabajos se pueden buscar y filtrar por taller y por etiquetas del estilo de innovación.
 5. El catálogo público no incluye correo, UID ni nombre del autor.
 6. Las entregas sin nota vinculada, con nota inferior a 6,0 o ya publicadas no pueden volver a publicarse.
+7. La interfaz puede ofrecer ejemplos demostrativos, siempre en una sección separada y señalados como ficticios; no deben confundirse con publicaciones auténticas ni mostrar notas.
 
 ## Flujo implementado
 
@@ -27,6 +28,17 @@
 Las notas antiguas o provenientes de una evaluación que no identifica esta entrega no se reutilizan como evidencia de elegibilidad. Tampoco se sobrescribe una nota oficial existente desde este flujo. Esto evita convertir las reflexiones de ejemplo del panel docente en trabajos auténticos.
 
 El campo `sourceSubmissionId` vincula la evaluación oficial con el documento de entrega. Las reflexiones revisadas por el flujo de ejemplos no contienen ese vínculo y, por ello, no habilitan automáticamente su publicación como innovación.
+
+### Ejemplos pedagógicos
+
+La biblioteca incluye cuatro ejemplos demostrativos, uno por etapa del ciclo:
+
+- **Identificar:** observar distintas oportunidades de participación y formular una pregunta de indagación.
+- **Analizar:** contrastar lo planificado con lo ocurrido y explorar factores pedagógicos.
+- **Teorizar:** vincular retroalimentación, evaluación formativa y autorregulación.
+- **Transformar:** proponer opciones para demostrar aprendizajes y recoger evidencias para mejorar la intervención.
+
+Son textos ficticios creados para orientar la navegación y mostrar formatos posibles. Aparecen en una sección aparte, con la etiqueta **Ejemplo**, sin nota ni afirmaciones de resultados reales; no se almacenan en Firestore ni cuentan como publicaciones.
 
 ## Modelo de datos
 
