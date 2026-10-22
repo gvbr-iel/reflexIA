@@ -5,6 +5,7 @@ mantenimiento:
 
 | Carpeta | Contenido |
 |---|---|
+| [`especificacion/`](./especificacion/) | Especificación formal: visión, glosario, actores, requisitos, reglas de negocio, decisiones, trazabilidad y plan de casos de uso. |
 | [`historias-usuario/`](./historias-usuario/) | Guías de implementación HU-01 a HU-08 y del panel docente. |
 | [`tecnica/`](./tecnica/) | Inventario técnico de componentes y hooks. |
 | [`configuracion/`](./configuracion/) | Referencias para configurar usuarios de demostración en la whitelist y cargar los datos del panel docente. |
