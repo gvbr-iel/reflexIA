@@ -14,12 +14,12 @@ Este documento define **cómo** se documentarán los casos de uso. El orden de t
 | Reglas de negocio numeradas | ✅ Documento 05 |
 | Línea base de requisitos con decisiones aplicadas | ✅ Documento 04 |
 | Diagramas de casos de uso por módulo | ✅ Documento 09 |
-| Pendientes que cambian flujos resueltos (PEND-01, 03, 06, 07) | ⏳ Abiertos |
+| Pendientes que cambian flujos resueltos (PEND-03, 06, 07 por DEC-12 a DEC-14) | ✅ Resueltos. PEND-01 (nota del cuestionario) sigue abierto y solo afecta a CU-08. |
 | Revisión del equipo de esta especificación | ⏳ Pendiente |
 
 ## 2. Convenciones
 
-- Identificador: `CU-xx`, con una ficha por caso en `docs/casos-de-uso/CU-xx-nombre.md`.
+- Identificador: `CU-xx`, con todas las fichas en `docs/especificacion/10-casos-de-uso.md`.
 - Nivel: casos de uso de **objetivo de usuario** (un actor, una meta, una sesión).
 - Alcance: el sistema implementado (DEC-06). Si un paso depende de una brecha, se anota el comportamiento objetivo y el actual.
 - Las reglas de negocio aplicables se citan por código (RN-xx) en **Comentarios**.
@@ -28,31 +28,19 @@ Este documento define **cómo** se documentarán los casos de uso. El orden de t
 
 ## 3. Plantilla de ficha
 
-Formato solicitado en la asignatura: encabezado, secuencia normal, postcondición, excepciones y comentarios.
+Estructura de la asignatura (ejemplo "CU-016 Registrar préstamo"). Todas las fichas de `10-casos-de-uso.md` la siguen, en una tabla por caso:
 
-| Campo | Contenido |
+| Fila | Contenido |
 |---|---|
-| **Identificador y nombre** | CU-xx. Verbo en infinitivo + objeto. |
-| **Actores** | Principal y secundarios. |
-| **Descripción** | Qué logra el actor y cuándo ocurre. |
-| **Requisitos** | RF, RNF y HU relacionadas. |
-| **Precondición** | Estado necesario antes de iniciar. |
-| **Secuencia normal** | Tabla de dos columnas: **Paso** y **Acción**. Las acciones alternan lo que hace el actor y lo que responde el sistema. Los subpasos (n.1) indican casos incluidos. |
-| **Postcondición** | Estado en que queda el sistema y datos persistidos. |
-| **Excepciones** | Tabla con **Paso** y **Acción**: se indica el paso donde ocurre la excepción y sus respuestas (E.1, E.2…). |
-| **Comentarios** | Reglas de negocio (RN-xx), brechas (GAP-xx) y pendientes (PEND-xx) que afectan al caso. |
-
-Ejemplo de estructura:
-
-| | |
-|---|---|
-| Postcondición | El estudiante queda… y el sistema ha registrado… |
-
-| Excepciones | Paso | Acción |
-|---|---|---|
-| | 3 | Si la condición no se cumple, |
-| | E.1 | El sistema informa la situación. |
-| | E.2 | Se cancela el caso de uso. |
+| **Encabezado** | Identificador (CU-xx) y nombre del caso: verbo en infinitivo + objeto. |
+| **Versión** | Número y fecha, por ejemplo 1.0 (23/10/2026). |
+| **Dependencias** | Lista con los requisitos (RF, RNF, HU) y las reglas de negocio (RN-xx), cada uno con su identificador y nombre. |
+| **Precondición** | Estado necesario antes de iniciar, en cursiva. |
+| **Descripción** | "El sistema deberá comportarse como se describe en el siguiente caso de uso cuando el *actor* solicite…". |
+| **Secuencia normal** | Tabla **Paso** y **Acción**. Alterna lo que hace el actor y lo que responde el sistema. Los actores van en cursiva. Los casos incluidos se indican como subpaso (por ejemplo, 9.1: "Se realiza el caso de uso *Nombre*"). |
+| **Postcondición** | Estado en que queda el sistema, en cursiva. |
+| **Excepciones** | Tabla **Paso** y **Acción**: el paso donde ocurre, la condición ("Si…,") y sus respuestas (E.1, E.2…). |
+| **Comentarios** | Reglas de negocio, brechas (GAP-xx) y pendientes (PEND-xx) que afectan al caso. |
 
 ## 4. Catálogo de casos de uso
 
@@ -70,9 +58,9 @@ Agrupado por los diagramas del documento [09](./09-diagramas-casos-de-uso.md).
 | D3 | CU-08 | Rendir la evaluación diagnóstica | Estudiante | RF-04 |
 | D5 | CU-09 | Consultar el progreso en el panel | Estudiante | RF-P01 |
 | D4 | CU-10 | Redactar el relato de un taller y guardar borrador | Estudiante | RF-03 |
-| D4 | CU-11 | Anonimizar datos sensibles del relato | Estudiante, servicio de detección | RF-05 |
-| D4 | CU-12 | Solicitar un impulso a "El Impulso" | Estudiante, Sistema de IA | RF-02 |
-| D4 | CU-13 | Cerrar un taller por intentos agotados o plazo vencido | Estudiante, Planificador | RF-06 |
+| D4 | CU-11 | Anonimizar datos sensibles del relato | Estudiante, OpenRouter | RF-05 |
+| D4 | CU-12 | Solicitar un impulso a "El Impulso" | Estudiante, OpenRouter | RF-02 |
+| D4 | CU-13 | Cerrar un taller por intentos agotados o plazo vencido | Estudiante | RF-06 |
 | D6 | CU-14 | Revisar y validar una reflexión con nota oficial | Profesor guía | RF-02 |
 | D6 | CU-15 | Configurar plazos e intentos | Profesor guía | RF-06 |
 | D6 | CU-16 | Configurar la estructura de un taller | Profesor guía | RF-P02 |
@@ -80,7 +68,7 @@ Agrupado por los diagramas del documento [09](./09-diagramas-casos-de-uso.md).
 | D7 | CU-18 | Revisar, anonimizar y publicar una innovación | Profesor guía | RF-07 |
 | D7 | CU-19 | Consultar la biblioteca de innovaciones | Estudiante, Profesor guía | RF-07 |
 
-CU-13 depende de PEND-06 y PEND-07; CU-15, de PEND-06; CU-18, de PEND-03.
+Las fichas de CU-13, CU-15 y CU-18 ya están redactadas con DEC-12, DEC-13 y DEC-14. El cierre automático de CU-13 aún no está implementado (GAP-05).
 
 ## 5. Precedente
 

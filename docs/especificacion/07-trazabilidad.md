@@ -38,7 +38,7 @@ Las historias de back-end de los laboratorios describen el sistema objetivo (API
 | Estudiante | RF-02, RF-03, RF-04, RF-05, RF-06, RF-07, RF-08 |
 | Profesor guía | RF-02, RF-03 (estructura), RF-06, RF-07, RF-P01, RF-P02 |
 | Administrador | RF-01, RF-08 |
-| Sistema de IA | RF-02, RF-05 |
+| OpenRouter (API de IA) | RF-02, RF-05 |
 
 ## 4. Fuentes por documento
 

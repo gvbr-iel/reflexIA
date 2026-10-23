@@ -17,6 +17,9 @@ Registro vivo de lo acordado, de lo que el código aún no cumple y de lo que fa
 | DEC-09 | La estructura de talleres configurable (HU-09) es un **acuerdo del equipo**, posterior a la validación con la stakeholder. | Equipo | Se registra como RF-P02. |
 | DEC-10 | El Laboratorio 5 prevalece sobre documentos anteriores y sobre `AI_GUIDELINES.md` cuando se contradicen. | Equipo | Orden de precedencia del README de esta carpeta. |
 | DEC-11 | Cada taller tiene **3 intentos de revisión** por defecto y la profesora guía puede modificarlos (hoy, de 1 a 3). | Equipo (Christian), 22-oct-2026 | Cierra PEND-02. RN-11, RF-06. Desbloquea parcialmente CU-13 y CU-15. |
+| DEC-12 | En los talleres la IA conoce la pauta y **sugiere** una nota; la nota final la pone el profesor guía. Para pasar al taller siguiente la nota debe ser **7,0**. Al agotar los intentos queda como nota la **más alta obtenida** (por ahora). | Equipo (Christian), 23-oct-2026 | Cierra PEND-07. RN-14, RN-16. Cuestionario: PEND-01 sigue abierto. |
+| DEC-13 | El **plazo de cada taller lo configura el profesor guía** y el taller **se cierra solo** al vencer. | Equipo (Christian), 23-oct-2026 | Cierra PEND-06. RN-15, CU-13, CU-15. El cierre automático no está implementado (GAP-05). |
+| DEC-14 | La publicación de una innovación la hace el **profesor guía**, y el sistema le muestra un **aviso para confirmar**. | Equipo (Christian), 23-oct-2026 | Cierra PEND-03. RN-18, CU-18. |
 
 ## 2. Brechas entre la línea base y el código
 
@@ -42,11 +45,11 @@ Estado revisado sobre `origin/main`.
 |---|---|---|---|
 | PEND-01 | Cómo se calcula la nota del cuestionario a partir de los aciertos y cuál es el tope desde el intento 10 en adelante. | RN-06, casos de uso del marco teórico | Equipo / stakeholder |
 | ~~PEND-02~~ | ~~Número de intentos de revisión por taller.~~ **Resuelto por DEC-11**: 3 por defecto, modificables por la profesora guía. | RN-11, RN-14 | — |
-| PEND-03 | Publicación en el repositorio: Lab 5 dice automática con nota ≥ 6,0; el código exige revisión, anonimización y publicación del docente. ¿Cuál rige? | RN-18, casos del repositorio | Stakeholder |
+| ~~PEND-03~~ | ~~Publicación en el repositorio: Lab 5 dice automática con nota ≥ 6,0; el código exige revisión, anonimización y publicación del docente. ¿Cuál rige?~~ **Resuelto por DEC-14**: la publica el profesor guía con aviso de confirmación. | RN-18, casos del repositorio | Stakeholder |
 | PEND-04 | Lineamientos legales sobre dónde y cuánto tiempo se almacenan los relatos (Ley 21.719). Duda de Lab 2 sin respuesta. | RNF-02, RNF-07 | Stakeholder / Universidad |
 | PEND-05 | Cómo se carga la whitelist cada semestre: archivo masivo manual o enrolamiento automático. | RF-01 | Stakeholder |
-| PEND-06 | Plazo semanal: ¿día y hora fijos para todo el curso o configurables por taller y por docente (como hoy)? | RN-15 | Stakeholder |
-| PEND-07 | Qué ocurre con el avance de un estudiante que agota los intentos de un taller sin cumplir la rúbrica: qué nota queda registrada y quién la define. | RN-14, RN-16 | Stakeholder |
+| ~~PEND-06~~ | ~~Plazo semanal: ¿día y hora fijos para todo el curso o configurables por taller y por docente (como hoy)?~~ **Resuelto por DEC-13**: lo configura el profesor guía y el taller se cierra solo. | RN-15 | Stakeholder |
+| ~~PEND-07~~ | ~~Qué ocurre con el avance de un estudiante que agota los intentos de un taller sin cumplir la rúbrica: qué nota queda registrada y quién la define.~~ **Resuelto por DEC-12**: queda la nota más alta obtenida. | RN-14, RN-16 | Stakeholder |
 | PEND-08 | Inclusión formal de RNF-06 a RNF-08 en la tabla consolidada de la línea base. | Documento 04 | Equipo |
 | PEND-09 | Correspondencia entre las fases del método R5 y los pasos del asistente, incluida la instrucción de redacción de la fase "Comprende". | Glosario, RN-09 | Stakeholder |
 | PEND-10 | Validar con la stakeholder RF-P01 (seguimiento docente) y RF-P02 (estructura de talleres) para incorporarlos a la línea base. | Documento 04 | Equipo / stakeholder |

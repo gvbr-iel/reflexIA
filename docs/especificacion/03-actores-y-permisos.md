@@ -12,11 +12,10 @@
 
 | Actor | Descripción | Responsabilidad |
 |---|---|---|
-| **Sistema de IA ("El Impulso")** | Componente que analiza el relato según la rúbrica del taller. Hoy es una simulación local (`impulseGenerator`); la integración con un modelo real es evolución prevista. | Generar orientaciones sin redactar ni corregir el texto. |
-| **Servicio de detección de datos sensibles** | Detección de nombres de personas, colegios y lugares mediante OpenRouter, con rotación de modelos gratuitos. | Bloquear el envío mientras haya datos sin anonimizar. |
-| **Firebase Authentication** | Proveedor de identidad. | Autenticar al usuario con correo y contraseña. |
-| **Cloud Firestore** | Base de datos documental. | Guardar la whitelist, el progreso, los perfiles, las evaluaciones y la estructura de talleres. |
-| **Planificador de cierre de plazos** | Proceso que cierra el taller vencido, asigna 1,0 y abre el siguiente. Previsto en la línea base; no implementado (GAP-05). | Cumplir la regla RN-15. |
+| **OpenRouter (API de IA)** | Servicio externo de modelos de lenguaje. Hoy se usa para detectar nombres de personas, colegios y lugares, con rotación de modelos gratuitos. Los impulsos de "El Impulso" son aún una simulación local (`impulseGenerator`); pasar a un modelo real es evolución prevista (GAP-07). | Detectar datos sensibles (RF-05) y, a futuro, generar las orientaciones sin redactar ni corregir el texto (RF-02). |
+| **Firebase (base de datos)** | Plataforma que ofrece Firebase Authentication y Cloud Firestore. | Autenticar al usuario con correo y contraseña, y guardar la whitelist, el progreso, los perfiles, las evaluaciones y la estructura de talleres. |
+
+El cierre automático de plazos (cierre del taller vencido con nota 1,0 y apertura del siguiente, RN-15) es una función del propio sistema y no un actor; no está implementado (GAP-05).
 
 No existen usuarios externos en la versión 1.0.
 

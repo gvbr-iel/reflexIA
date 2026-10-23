@@ -31,16 +31,16 @@ Estado: ✅ Cumple · 🟡 Cumple parcialmente · ❌ No implementada · ❔ Por
 | RN-11 | Cada solicitud de impulso a la IA descuenta 1 intento del taller. Al llegar a cero se bloquea la edición y la entrega se registra con su estado actual. El límite por taller es 3 por defecto y lo puede modificar el profesor guía (DEC-11). | HU-02, HU-06, DEC-11 | ✅ |
 | RN-12 | La IA evalúa según la rúbrica del taller, responde en ≤ 10 s y **nunca redacta ni corrige** el texto del estudiante: solo señala criterios omitidos mediante orientaciones. | Lab 5 (RF-02) | 🟡 IA simulada (GAP-07) |
 | RN-13 | Si el relato contiene nombres de personas, colegios o ubicaciones sin anonimizar, se resaltan, se muestra la norma y se deshabilita el envío a la IA hasta corregirlos. | Lab 5 (RF-05) | 🟡 (GAP-06) |
-| RN-14 | Se avanza al taller siguiente al obtener el 100% de cumplimiento de la rúbrica (nota 7,0) o al agotar los intentos del taller. | Lab 5 (RF-06) | ❔ |
-| RN-15 | Al vencer el plazo sin entrega, el taller se cierra con nota 1,0 (gris) y se abre el siguiente. | Lab 5 (RF-06) | ❌ (GAP-05) |
+| RN-14 | Se avanza al taller siguiente cuando la nota del taller es 7,0 (100% de la rúbrica) o cuando el taller se cierra por intentos agotados. Al agotar los intentos queda como nota la más alta obtenida (DEC-12). | Lab 5 (RF-06), DEC-12 | 🟡 Cierre por intentos agotados sin implementar (GAP-05) |
+| RN-15 | El plazo de cada taller lo configura el profesor guía. Al vencer, el taller se cierra automáticamente: queda la nota más alta obtenida, o 1,0 (gris) si no hubo ninguna revisión, y se abre el siguiente (DEC-13). | Lab 5 (RF-06), DEC-13 | ❌ (GAP-05) |
 
 ## Evaluación y visualización
 
 | ID | Regla | Fuente | Estado |
 |---|---|---|---|
-| RN-16 | La IA es formativa. La **nota oficial** (1,0 a 7,0) la asigna el profesor guía al validar la reflexión. Solo existe como validada si está guardada en Firestore, y la propuesta original de la IA no se modifica. | Lab 5, HU-02 | ✅ |
+| RN-16 | La IA es formativa: conoce la pauta del taller y **sugiere** una nota. La **nota oficial** (1,0 a 7,0) la asigna el profesor guía al validar la reflexión (DEC-12). Solo existe como validada si está guardada en Firestore, y la propuesta original de la IA no se modifica. | Lab 5, HU-02 | ✅ |
 | RN-17 | Colores de desempeño: gris para no entregado (1,0), rojo para reprobado (menor que 4,0), azul para 4,0 a 4,9 y verde esmeralda para 5,0 a 7,0. El rojo se usa solo con este sentido. | Lab 5 (RNF-04), AI_GUIDELINES §4 | ✅ |
-| RN-18 | El repositorio muestra solo propuestas con nota ≥ 6,0, anonimizadas, para lectura de estudiantes y profesores. | Lab 5 (RF-07) | ✅ (ver PEND-03) |
+| RN-18 | El repositorio muestra solo propuestas con nota ≥ 6,0, anonimizadas, para lectura de estudiantes y profesores. La publicación la hace el profesor guía y el sistema le pide confirmarla con un aviso (DEC-14). | Lab 5 (RF-07), DEC-14 | ✅ |
 
 ## Privacidad y datos
 
