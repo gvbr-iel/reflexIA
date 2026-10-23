@@ -19,7 +19,7 @@ Línea base de requisitos de la versión 1.0, tomada del Laboratorio 5 y ajustad
 ### RF-02. Retroalimentación orientadora por IA alineada a la rúbrica
 | | |
 |---|---|
-| **Actor** | Estudiante, Profesor guía, Sistema de IA |
+| **Actor** | Estudiante, Profesor guía, OpenRouter |
 | **Prioridad** | Alta |
 | **Necesidad** | N-02 |
 | **Descripción** | El sistema deberá analizar el relato según la rúbrica del taller y entregar, en un tiempo menor o igual a 10 segundos por intento, orientaciones para profundizar la reflexión profesional ("El Impulso") sobre los criterios omitidos, sin redactar ni corregir el texto. El profesor guía revisa la propuesta de la IA antes de validarla y registra la nota oficial. |
@@ -63,7 +63,7 @@ Línea base de requisitos de la versión 1.0, tomada del Laboratorio 5 y ajustad
 | **Prioridad** | Media |
 | **Necesidad** | N-06 |
 | **Descripción** | El sistema deberá permitir al profesor guía definir plazos e intentos de revisión por actividad, y mostrar al estudiante el contador de intentos y el plazo de cierre. El avance al taller siguiente exige obtener el 100% de cumplimiento de la rúbrica (nota 7,0) o agotar los intentos del taller. Al vencer el plazo sin entrega, el taller queda con nota 1,0 y se abre el siguiente. |
-| **Estado** | 🟡 Plazos, límite de intentos (1 a 3) y contadores implementados. No hay cierre automático con nota 1,0 ni apertura forzada (GAP-05). Intentos por taller: 3 por defecto, modificables por el profesor guía (DEC-11). |
+| **Estado** | 🟡 Plazos, límite de intentos (1 a 3) y contadores implementados. No hay cierre automático con nota 1,0 ni apertura forzada (GAP-05). Intentos por taller: 3 por defecto, modificables por el profesor guía (DEC-11). El plazo lo configura el profesor guía y el taller se cierra solo al vencer (DEC-13); al agotar intentos queda la nota más alta (DEC-12). |
 | **Reglas** | RN-10, RN-11, RN-14, RN-15 |
 
 ### RF-07. Espacio de consulta de innovaciones
@@ -73,7 +73,7 @@ Línea base de requisitos de la versión 1.0, tomada del Laboratorio 5 y ajustad
 | **Prioridad** | Media |
 | **Necesidad** | N-07 |
 | **Descripción** | El sistema deberá ofrecer una biblioteca de consulta con las propuestas de innovación con nota igual o superior a 6,0, anonimizadas, con búsqueda libre y filtros por categoría y detalle de lectura. |
-| **Estado** | ✅ Implementado, con revisión, anonimización y publicación a cargo del docente. Ver PEND-03 sobre publicación automática. |
+| **Estado** | ✅ Implementado, con revisión, anonimización y publicación a cargo del docente. La publicación la hace siempre el profesor guía, con aviso de confirmación (DEC-14). |
 | **Reglas** | RN-18 |
 
 ### RF-08. Autenticación institucional segura

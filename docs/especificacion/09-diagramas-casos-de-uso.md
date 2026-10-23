@@ -37,16 +37,22 @@ Puerta de entrada común a los tres roles. Aplica la regla de acceso por whiteli
 ```mermaid
 %%{init: {"theme":"neutral","flowchart":{"curve":"linear"}}}%%
 flowchart LR
-  usu["Usuario<br/>(Estudiante, Profesor guía<br/>o Administrador)"]:::actor
-  fb["Firebase Authentication<br/>y Cloud Firestore"]:::ext
+  est["Estudiante"]:::actor
+  doc["Profesor guía"]:::actor
+  adm["Administrador"]:::actor
+  fb["Firebase<br/>(base de datos)"]:::ext
 
   subgraph SIS["ReflexIA: Acceso y sesión"]
     CU01(["CU-01<br/>Iniciar sesión"]):::uc
     CU02(["CU-02<br/>Cerrar sesión"]):::uc
   end
 
-  usu --- CU01
-  usu --- CU02
+  est --- CU01
+  doc --- CU01
+  adm --- CU01
+  est --- CU02
+  doc --- CU02
+  adm --- CU02
   CU01 --- fb
 
   style SIS fill:none,stroke:#1E5AA8,stroke-width:2px
@@ -70,7 +76,7 @@ Gestión del acceso a cargo del administrador.
 %%{init: {"theme":"neutral","flowchart":{"curve":"linear"}}}%%
 flowchart LR
   adm["Administrador"]:::actor
-  fs["Cloud Firestore"]:::ext
+  fs["Firebase<br/>(base de datos)"]:::ext
 
   subgraph SIS["ReflexIA: Administración de la whitelist"]
     CU03(["CU-03<br/>Registrar un correo<br/>en la whitelist"]):::uc
@@ -111,7 +117,7 @@ Preparación conceptual del estudiante. Su aprobación desbloquea el Taller 1 (R
 %%{init: {"theme":"neutral","flowchart":{"curve":"linear"}}}%%
 flowchart LR
   est["Estudiante"]:::actor
-  fs["Cloud Firestore<br/>(resumen de progreso)"]:::ext
+  fs["Firebase<br/>(base de datos)"]:::ext
 
   subgraph SIS["ReflexIA: Marco teórico"]
     CU07(["CU-07<br/>Estudiar el marco teórico"]):::uc
@@ -143,9 +149,7 @@ Núcleo del sistema: redacción del relato, resguardo de la privacidad y retroal
 %%{init: {"theme":"neutral","flowchart":{"curve":"linear"}}}%%
 flowchart LR
   est["Estudiante"]:::actor
-  ia["Sistema de IA<br/>El Impulso"]:::ext
-  det["Servicio de detección<br/>de datos sensibles"]:::ext
-  plan["Planificador de cierre<br/>de plazos (previsto)"]:::ext
+  ia["OpenRouter<br/>(API de IA)"]:::ext
 
   subgraph SIS["ReflexIA: Talleres y reflexión"]
     CU10(["CU-10<br/>Redactar el relato<br/>y guardar borrador"]):::uc
@@ -159,9 +163,8 @@ flowchart LR
   est --- CU13
   CU12 -. "«include»" .-> CU11
   CU13 -. "«extend»" .-> CU12
-  CU11 --- det
+  CU11 --- ia
   CU12 --- ia
-  CU13 --- plan
 
   style SIS fill:none,stroke:#1E5AA8,stroke-width:2px
   classDef actor fill:#1E5AA8,stroke:#1E5AA8,color:#ffffff;
@@ -172,9 +175,9 @@ flowchart LR
 | Caso | Actores | Requisito | Reglas | Notas |
 |---|---|---|---|---|
 | CU-10 Redactar el relato y guardar borrador | Estudiante | RF-03 | RN-08, RN-09, RN-10 | Guardar un borrador no descuenta intentos. |
-| CU-11 Anonimizar datos sensibles del relato | Estudiante; servicio de detección | RF-05 | RN-13, RN-19 | Siempre se ejecuta antes de pedir un impulso (`include` desde CU-12). GAP-06. |
-| CU-12 Solicitar un impulso a "El Impulso" | Estudiante; Sistema de IA | RF-02 | RN-11, RN-12 | IA simulada (GAP-07). |
-| CU-13 Cerrar un taller por intentos agotados o plazo vencido | Estudiante; Planificador | RF-06 | RN-11, RN-14, RN-15 | Extiende CU-12 cuando se agotan los intentos. Cierre por plazo no implementado (GAP-05). Depende de PEND-06 y PEND-07. |
+| CU-11 Anonimizar datos sensibles del relato | Estudiante; OpenRouter | RF-05 | RN-13, RN-19 | Siempre se ejecuta antes de pedir un impulso (`include` desde CU-12). GAP-06. |
+| CU-12 Solicitar un impulso a "El Impulso" | Estudiante; OpenRouter | RF-02 | RN-11, RN-12 | Hoy los impulsos son una simulación local (GAP-07); OpenRouter es la API de IA prevista. |
+| CU-13 Cerrar un taller por intentos agotados o plazo vencido | Estudiante | RF-06 | RN-11, RN-14, RN-15 | Extiende CU-12 cuando se agotan los intentos. El cierre automático por plazo es una función del sistema, aún no implementada (GAP-05). Depende de PEND-06 y PEND-07. |
 
 ---
 
@@ -187,7 +190,7 @@ Consulta del progreso: el estudiante ve el suyo y el profesor guía ve el de su 
 flowchart LR
   est["Estudiante"]:::actor
   doc["Profesor guía"]:::actor
-  fs["Cloud Firestore<br/>(progress, profiles, evaluations)"]:::ext
+  fs["Firebase<br/>(base de datos)"]:::ext
 
   subgraph SIS["ReflexIA: Seguimiento del avance"]
     CU09(["CU-09<br/>Consultar el progreso<br/>en el panel"]):::uc
@@ -220,7 +223,7 @@ Revisión de la retroalimentación, nota oficial y configuración del curso.
 %%{init: {"theme":"neutral","flowchart":{"curve":"linear"}}}%%
 flowchart LR
   doc["Profesor guía"]:::actor
-  fs["Cloud Firestore<br/>(evaluations, estructura de talleres)"]:::ext
+  fs["Firebase<br/>(base de datos)"]:::ext
 
   subgraph SIS["ReflexIA: Gestión docente"]
     CU14(["CU-14<br/>Revisar y validar una<br/>reflexión con nota oficial"]):::uc
