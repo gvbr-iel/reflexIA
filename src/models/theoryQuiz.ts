@@ -61,7 +61,7 @@ export type AttemptStatus = 'in-progress' | 'completed' | 'timed-out';
 
 /** Registro completo de un intento de evaluación. */
 export interface QuizAttempt {
-  /** Número de intento (1, 2 o 3). */
+  /** Número de intento (1 a 9, DEC-15). */
   attemptNumber: number;
   /** Preguntas seleccionadas aleatoriamente para este intento. */
   questions: QuizQuestion[];
@@ -134,19 +134,16 @@ export interface TheoryApprovalStatus {
 export interface QuizConfig {
   /** Cantidad de preguntas por intento (de las 30 del banco). */
   questionsPerAttempt: number;
-  /** Intentos máximos permitidos. */
+  /** Intentos máximos permitidos antes de bloquear la evaluación. */
   maxAttempts: number;
   /** Tiempo límite por intento en segundos. */
   timeLimitSeconds: number;
-  /**
-   * Puntaje mínimo para aprobar (cantidad de respuestas correctas).
-   *
-   * Nota: el README habla de "puntaje mínimo aprobatorio" y las reuniones
-   * mencionaron 100% de aciertos. Por ahora se usa 7/10 (70%) como valor
-   * por defecto. Se mantiene configurable para ajustar tras confirmación
-   * con la cliente (ver AI_GUIDELINES.md §10).
-   */
+  /** Puntaje mínimo para aprobar (cantidad de respuestas correctas). */
   passingScore: number;
+  /** Cantidad de intentos de cada bloque; el tope de nota cambia por bloque. */
+  attemptsPerBlock: number;
+  /** Nota máxima de cada bloque, en orden (bloque 1, 2, 3). */
+  gradeCaps: number[];
 }
 
 /**
@@ -154,12 +151,17 @@ export interface QuizConfig {
  *
  * Centralizados aquí para que tanto el hook como el service
  * usen los mismos valores sin duplicación.
+ *
+ * DEC-15 (validación con la profesora, 24-oct-2026): máximo 9 intentos en
+ * 3 bloques de 3, con nota máxima 7,0, 5,0 y 4,0; se aprueba con 8 de 10.
  */
 export const DEFAULT_QUIZ_CONFIG: QuizConfig = {
   questionsPerAttempt: 10,
-  maxAttempts: 3,
+  maxAttempts: 9,
   timeLimitSeconds: 15 * 60, // 15 minutos
-  passingScore: 7,           // 7 de 10 (70%)
+  passingScore: 8,           // 8 de 10 (RN-05)
+  attemptsPerBlock: 3,
+  gradeCaps: [7.0, 5.0, 4.0],
 };
 
 // ─────────────────────────────────────────────
