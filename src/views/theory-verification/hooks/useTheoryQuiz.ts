@@ -25,7 +25,10 @@ import type {
   SubmitAttemptPayload,
 } from '../../../models/theoryQuiz';
 import { DEFAULT_QUIZ_CONFIG } from '../../../models/theoryQuiz';
-import { theoryQuizService } from '../../../services/theoryQuizService';
+import {
+  theoryQuizService,
+  TheoryQuizSubmitError,
+} from '../../../services/theoryQuizService';
 
 // ─────────────────────────────────────────────
 // Tipos del hook
@@ -225,12 +228,20 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
       setApproval(newApproval);
       setAttemptHistory((prev) => [...prev, attempt]);
       setPhase('result');
-    } catch {
-      setError(
-        timedOut
-          ? 'El tiempo se agotó y no se pudieron enviar las respuestas. Intenta nuevamente.'
-          : 'No se pudieron enviar las respuestas. Verifica tu conexión e intenta nuevamente.',
-      );
+    } catch (err) {
+      if (err instanceof TheoryQuizSubmitError) {
+        // T3: la evaluación ya está aprobada o bloqueada. Se recarga el estado
+        // real y se vuelve a la intro, que muestra el mensaje y el aviso.
+        setApproval(await theoryQuizService.getApprovalStatus());
+        setError(err.message);
+        setPhase('intro');
+      } else {
+        setError(
+          timedOut
+            ? 'El tiempo se agotó y no se pudieron enviar las respuestas. Intenta nuevamente.'
+            : 'No se pudieron enviar las respuestas. Verifica tu conexión e intenta nuevamente.',
+        );
+      }
     } finally {
       setIsLoading(false);
     }
