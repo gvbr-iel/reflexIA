@@ -131,6 +131,9 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
   const questionsRef = useRef<QuizQuestion[]>([]);
   questionsRef.current = questions;
 
+  // Evita el doble envío si el botón y el fin del tiempo coinciden (T5).
+  const isSubmittingRef = useRef(false);
+
   // Número de intento actual derivado del historial.
   const currentAttemptNumber = attemptHistory.length + 1;
 
@@ -204,6 +207,10 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
    * recientes, también cuando lo llama el temporizador.
    */
   const sendAttempt = useCallback(async (timedOut: boolean) => {
+    // Si el botón y el fin del tiempo coinciden, el segundo envío se ignora.
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     stopTimer();
     setIsLoading(true);
     setError(null);
@@ -244,6 +251,7 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
       }
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   }, [currentAttemptNumber, stopTimer]);
 
