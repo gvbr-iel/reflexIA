@@ -103,7 +103,7 @@ export default function TheoryQuizView() {
         {error && (
           <div
             role="alert"
-            className="rounded-xl border border-perf-fail bg-perf-fail/10 p-4 text-sm leading-relaxed text-texto"
+            className="rounded-xl border border-primary/30 bg-primary/10 p-4 text-sm leading-relaxed text-texto"
           >
             {error}
           </div>
@@ -211,7 +211,7 @@ export default function TheoryQuizView() {
         {error && (
           <div
             role="alert"
-            className="mx-auto my-4 max-w-3xl rounded-xl border border-perf-fail bg-perf-fail/10 p-3 text-sm text-texto"
+            className="mx-auto my-4 max-w-3xl rounded-xl border border-primary/30 bg-primary/10 p-3 text-sm text-texto"
           >
             {error}
           </div>
