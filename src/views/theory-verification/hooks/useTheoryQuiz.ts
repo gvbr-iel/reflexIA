@@ -223,13 +223,12 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
         })),
         attemptNumber: currentAttemptNumber,
         durationSeconds: Math.floor((Date.now() - startTimeRef.current) / 1000),
+        // El servicio fija el estado timed-out antes de guardar (D-01).
+        timedOut,
       };
 
       const { attempt, approval: newApproval } =
         await theoryQuizService.submitAttempt(payload);
-
-      // Marcar el intento como expirado por tiempo
-      if (timedOut) attempt.status = 'timed-out';
 
       setLastAttempt(attempt);
       setApproval(newApproval);
