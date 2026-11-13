@@ -6,7 +6,9 @@
  *
  * Responsabilidades:
  * - Obtener las preguntas para un intento (selección aleatoria).
- * - Enviar las respuestas de un intento y recibir el resultado.
+ * - Enviar las respuestas de un intento y recibir el resultado: guarda la
+ *   nota con el tope del bloque y rechaza el envío si la evaluación ya está
+ *   aprobada o bloqueada (CU-08, T3 del Lab 9).
  * - Consultar el estado de aprobación del estudiante.
  * - Consultar el historial de intentos.
  *
@@ -27,10 +29,12 @@ import type {
   FetchQuestionsResponse,
   SubmitAttemptPayload,
   SubmitAttemptResponse,
+  QuizSubmitRejection,
 } from '../models/theoryQuiz';
 
 import { DEFAULT_QUIZ_CONFIG } from '../models/theoryQuiz';
 import { readUserStorage, writeUserStorage } from '../utils/userStorage';
+import { calculateGrade, getGradeCap, getQuizStatus } from '../utils/theoryQuizGrading';
 import { studentProgressService } from './studentProgressService';
 
 // ─────────────────────────────────────────────
@@ -413,6 +417,35 @@ const QUESTION_BANK: QuizQuestion[] = [
 ];
 
 // ─────────────────────────────────────────────
+// Errores del servicio
+// ─────────────────────────────────────────────
+
+/** Mensajes que ve el estudiante cuando se rechaza un envío (R10). */
+const REJECTION_MESSAGES: Record<QuizSubmitRejection, string> = {
+  'already-approved':
+    'Ya aprobaste la evaluación diagnóstica, así que no se registró un nuevo intento.',
+  blocked:
+    'Usaste los 9 intentos sin aprobar y la evaluación quedó bloqueada. ' +
+    'Reúnete con tu profesor guía para que te habilite un nuevo intento.',
+};
+
+/**
+ * Error que lanza `submitAttempt` cuando la evaluación no admite más
+ * intentos. El hook lo distingue de un fallo de red por su clase y
+ * muestra `message` tal cual.
+ */
+export class TheoryQuizSubmitError extends Error {
+  /** Motivo del rechazo. */
+  readonly reason: QuizSubmitRejection;
+
+  constructor(reason: QuizSubmitRejection) {
+    super(REJECTION_MESSAGES[reason]);
+    this.name = 'TheoryQuizSubmitError';
+    this.reason = reason;
+  }
+}
+
+// ─────────────────────────────────────────────
 // Utilidades internas
 // ─────────────────────────────────────────────
 
@@ -427,6 +460,71 @@ function pickRandom<T>(array: T[], count: number): T[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled.slice(0, count);
+}
+
+/**
+ * Lee el historial guardado y lo deja listo para las reglas del CU-08.
+ *
+ * Los intentos guardados antes del Lab 9 no tienen nota y pueden traer un
+ * número de intento que ya no calza con las reglas (riesgo R4, defecto D-03).
+ * Por eso cada intento se numera según su posición en el historial, que es
+ * el orden real en que se rindió, y la nota que falta se calcula con el
+ * puntaje. Se conservan como máximo `maxAttempts` intentos para que
+ * `getGradeCap` nunca reciba un número fuera de rango.
+ */
+function readHistory(config: QuizConfig): QuizAttempt[] {
+  const stored = readUserStorage<QuizAttempt[]>(STORAGE_KEYS.ATTEMPTS) ?? [];
+
+  return stored.slice(0, config.maxAttempts).map((attempt, index) => {
+    const attemptNumber = index + 1;
+    return {
+      ...attempt,
+      attemptNumber,
+      grade: attempt.grade ?? calculateGrade(attempt.score, attemptNumber, config),
+      maxGrade: attempt.maxGrade ?? getGradeCap(attemptNumber, config),
+    };
+  });
+}
+
+/**
+ * Arma el estado de aprobación a partir del historial.
+ *
+ * `previous` es la aprobación guardada. Un estudiante que aprobó con las
+ * reglas anteriores (7 de 10) sigue aprobado: no se le vuelven a bloquear
+ * los talleres que ya tenía abiertos.
+ */
+function buildApproval(
+  history: QuizAttempt[],
+  config: QuizConfig,
+  previous: TheoryApprovalStatus | null,
+  now: string,
+): TheoryApprovalStatus {
+  const status = getQuizStatus(history, config);
+  const wasApproved = previous?.isApproved === true;
+  const isApproved = status.isApproved || wasApproved;
+
+  if (history.length === 0) {
+    return { isApproved, result: null, approvedAt: wasApproved ? previous.approvedAt : null };
+  }
+
+  const bestScore = status.bestScore ?? 0;
+
+  return {
+    isApproved,
+    result: {
+      passed: isApproved,
+      bestScore,
+      totalQuestions: config.questionsPerAttempt,
+      bestScorePercentage: Math.round((bestScore / config.questionsPerAttempt) * 100),
+      attemptsUsed: status.attemptsUsed,
+      maxAttempts: config.maxAttempts,
+      hasAttemptsRemaining: !isApproved && status.attemptsRemaining > 0,
+      bestGrade: status.bestGrade ?? 0,
+      isBlocked: !isApproved && status.isBlocked,
+    },
+    // La fecha de aprobación se fija una sola vez, con el intento que aprueba.
+    approvedAt: isApproved ? previous?.approvedAt ?? now : null,
+  };
 }
 
 // ─────────────────────────────────────────────
@@ -458,7 +556,12 @@ export const theoryQuizService = {
   },
 
   /**
-   * Envía las respuestas de un intento y recibe el resultado evaluado.
+   * Envía las respuestas de un intento y recibe el resultado evaluado (T3).
+   *
+   * Primero revisa si la evaluación admite otro intento: si ya está aprobada
+   * o bloqueada, lanza `TheoryQuizSubmitError` sin guardar nada. Si lo
+   * admite, corrige, calcula la nota con el tope del bloque y guarda el
+   * intento en el historial.
    *
    * Mock: evalúa localmente contra el banco y persiste en localStorage.
    * Producción: POST /api/theory-quiz/attempts
@@ -468,6 +571,16 @@ export const theoryQuizService = {
     // return axios.post<SubmitAttemptResponse>('/api/theory-quiz/attempts', payload);
 
     const config = DEFAULT_QUIZ_CONFIG;
+    const history = readHistory(config);
+    const previous = readUserStorage<TheoryApprovalStatus>(STORAGE_KEYS.APPROVAL);
+    const before = buildApproval(history, config, previous, new Date().toISOString());
+
+    // Rechazar ANTES de corregir o guardar: un envío rechazado no deja rastro.
+    if (before.isApproved) throw new TheoryQuizSubmitError('already-approved');
+    if (before.result?.isBlocked) throw new TheoryQuizSubmitError('blocked');
+
+    // El número lo decide el historial, no el payload (evita números repetidos).
+    const attemptNumber = history.length + 1;
 
     // Evaluar cada respuesta contra el banco
     const answers: QuizAnswer[] = payload.answers.map((a) => {
@@ -482,43 +595,27 @@ export const theoryQuizService = {
     const score = answers.filter((a) => a.isCorrect).length;
     const now = new Date().toISOString();
 
-    // Construir el registro del intento
     const attempt: QuizAttempt = {
-      attemptNumber: payload.attemptNumber,
+      attemptNumber,
       questions: payload.answers.map((a) =>
         QUESTION_BANK.find((q) => q.id === a.questionId)!,
       ),
       answers,
       score,
       totalQuestions: config.questionsPerAttempt,
-      status: 'completed',
+      grade: calculateGrade(score, attemptNumber, config),
+      maxGrade: getGradeCap(attemptNumber, config),
+      // El estado se fija aquí, antes de guardar (D-01, criterio de REF-44).
+      status: payload.timedOut ? 'timed-out' : 'completed',
       startedAt: new Date(Date.now() - payload.durationSeconds * 1000).toISOString(),
       completedAt: now,
     };
 
-    // Persistir el intento en el historial
-    const history = readUserStorage<QuizAttempt[]>(STORAGE_KEYS.ATTEMPTS) ?? [];
     history.push(attempt);
     writeUserStorage(STORAGE_KEYS.ATTEMPTS, history);
 
-    // Calcular estado de aprobación
-    const bestScore = Math.max(...history.map((h) => h.score));
-    const passed = bestScore >= config.passingScore;
-
-    const approval: TheoryApprovalStatus = {
-      isApproved: passed,
-      result: {
-        passed,
-        bestScore,
-        totalQuestions: config.questionsPerAttempt,
-        bestScorePercentage: Math.round((bestScore / config.questionsPerAttempt) * 100),
-        attemptsUsed: history.length,
-        maxAttempts: config.maxAttempts,
-        hasAttemptsRemaining: history.length < config.maxAttempts,
-      },
-      approvedAt: passed ? now : null,
-    };
-
+    // Estado después de guardar: con este intento puede quedar aprobado o bloqueado.
+    const approval = buildApproval(history, config, previous, now);
     writeUserStorage(STORAGE_KEYS.APPROVAL, approval);
 
     // Avisa al panel docente del nuevo avance (no espera ni interrumpe al estudiante).
@@ -530,6 +627,10 @@ export const theoryQuizService = {
   /**
    * Consulta el estado de aprobación del estudiante.
    *
+   * Se recalcula desde el historial con las reglas vigentes, así un estado
+   * guardado con las reglas anteriores (3 intentos) no deja al estudiante
+   * sin intentos por error.
+   *
    * Mock: lee de localStorage.
    * Producción: GET /api/theory-quiz/approval
    */
@@ -537,17 +638,13 @@ export const theoryQuizService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.get<TheoryApprovalStatus>('/api/theory-quiz/approval');
 
-    const stored = readUserStorage<TheoryApprovalStatus>(STORAGE_KEYS.APPROVAL);
-
-    return stored ?? {
-      isApproved: false,
-      result: null,
-      approvedAt: null,
-    };
+    const config = DEFAULT_QUIZ_CONFIG;
+    const previous = readUserStorage<TheoryApprovalStatus>(STORAGE_KEYS.APPROVAL);
+    return buildApproval(readHistory(config), config, previous, new Date().toISOString());
   },
 
   /**
-   * Consulta el historial de intentos del estudiante.
+   * Consulta el historial de intentos del estudiante, con la nota de cada uno.
    *
    * Mock: lee de localStorage.
    * Producción: GET /api/theory-quiz/attempts
@@ -556,7 +653,7 @@ export const theoryQuizService = {
     // TODO: Reemplazar por llamada Axios al backend
     // return axios.get<QuizAttempt[]>('/api/theory-quiz/attempts');
 
-    return readUserStorage<QuizAttempt[]>(STORAGE_KEYS.ATTEMPTS) ?? [];
+    return readHistory(DEFAULT_QUIZ_CONFIG);
   },
 
   /**

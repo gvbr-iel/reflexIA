@@ -12,7 +12,7 @@
  * no depende de él.
  */
 
-import type { TheoryApprovalStatus } from '../../../models/theoryQuiz';
+import { DEFAULT_QUIZ_CONFIG, type TheoryApprovalStatus } from '../../../models/theoryQuiz';
 import { studentProgressService } from '../../../services/studentProgressService';
 import { getUserStorageKey } from '../../../utils/userStorage';
 
@@ -41,8 +41,10 @@ export function setSimulatedTheoryApproval(approved: boolean): void {
       totalQuestions: 10,
       bestScorePercentage: 100,
       attemptsUsed: 1,
-      maxAttempts: 3,
-      hasAttemptsRemaining: true,
+      maxAttempts: DEFAULT_QUIZ_CONFIG.maxAttempts,
+      hasAttemptsRemaining: false,
+      bestGrade: 7.0,
+      isBlocked: false,
     },
     approvedAt: new Date().toISOString(),
   };

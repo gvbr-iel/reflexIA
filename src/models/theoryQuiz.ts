@@ -71,6 +71,10 @@ export interface QuizAttempt {
   score: number;
   /** Total de preguntas en el intento. */
   totalQuestions: number;
+  /** Nota del intento (1,0 a 7,0), ya limitada por el tope del bloque. */
+  grade: number;
+  /** Nota máxima que se podía obtener en este intento: 7,0, 5,0 o 4,0. */
+  maxGrade: number;
   /** Estado del intento. */
   status: AttemptStatus;
   /** Marca temporal ISO 8601 de inicio del intento. */
@@ -103,6 +107,13 @@ export interface QuizResult {
   maxAttempts: number;
   /** Si quedan intentos disponibles. */
   hasAttemptsRemaining: boolean;
+  /** Mejor nota obtenida entre todos los intentos. */
+  bestGrade: number;
+  /**
+   * Si usó los 9 intentos sin aprobar. La evaluación queda bloqueada hasta
+   * que el profesor guía lo habilite (CU-20).
+   */
+  isBlocked: boolean;
 }
 
 /**
@@ -175,11 +186,23 @@ export const DEFAULT_QUIZ_CONFIG: QuizConfig = {
 export interface SubmitAttemptPayload {
   /** Respuestas del estudiante en orden. */
   answers: Pick<QuizAnswer, 'questionId' | 'selectedOptionId'>[];
-  /** Número de intento (1–3). */
+  /**
+   * Número de intento (1 a 9). Es informativo: el servicio usa el número que
+   * corresponde según el historial guardado, no el que llega aquí.
+   */
   attemptNumber: number;
   /** Duración del intento en segundos. */
   durationSeconds: number;
+  /** Si el intento se envió solo porque se agotó el tiempo. */
+  timedOut?: boolean;
 }
+
+/**
+ * Motivo por el que el servicio rechaza el envío de un intento:
+ * - `already-approved`: el estudiante ya aprobó la evaluación.
+ * - `blocked`: usó los 9 intentos sin aprobar.
+ */
+export type QuizSubmitRejection = 'already-approved' | 'blocked';
 
 /**
  * Respuesta del backend al enviar un intento.
