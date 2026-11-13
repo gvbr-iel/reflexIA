@@ -88,6 +88,8 @@ function buildSummary(): Omit<StudentProgressSummary, 'email' | 'updatedAt'> {
       attemptsUsed: approval?.result?.attemptsUsed ?? theoryAttempts.length,
       bestScorePercentage: approval?.result?.bestScorePercentage ?? null,
       approvedAt: approval?.approvedAt ?? null,
+      bestGrade: approval?.result?.bestGrade ?? null,
+      isBlocked: approval?.result?.isBlocked ?? false,
     },
     workshops,
   };

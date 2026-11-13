@@ -54,8 +54,8 @@ export interface StudentActivityProgress {
   title: string;
   status: PerformanceStatus;
   /**
-   * Nota de 1.0 a 7.0. Es null si no se entregó, y también en el marco
-   * teórico, que solo se marca como aprobado o no.
+   * Nota de 1.0 a 7.0. Es null si no se entregó. En el marco teórico es la
+   * mejor nota del cuestionario (null en resúmenes anteriores al Lab 9).
    */
   grade: number | null;
   /** Intentos de revisión que el estudiante ya usó. */

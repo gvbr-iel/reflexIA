@@ -53,6 +53,10 @@ export interface TheoryProgressSummary {
   bestScorePercentage: number | null;
   /** Fecha de aprobación en formato ISO 8601 (null si no ha aprobado). */
   approvedAt: string | null;
+  /** Mejor nota del cuestionario, de 1,0 a 7,0 (null si no ha intentado). */
+  bestGrade: number | null;
+  /** Si usó los 9 intentos sin aprobar y espera que el profesor guía lo habilite. */
+  isBlocked: boolean;
 }
 
 /** Avance del estudiante en un taller de incidentes críticos (HU-03). */
