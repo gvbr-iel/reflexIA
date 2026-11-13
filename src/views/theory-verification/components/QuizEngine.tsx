@@ -14,6 +14,7 @@
 import type { QuizQuestion } from '../../../models/theoryQuiz';
 import type { AnswerMap } from '../hooks/useTheoryQuiz';
 import QuizTimer from './QuizTimer';
+import { formatGrade } from '../../../utils/formatGrade';
 
 interface QuizEngineProps {
   /** Preguntas del intento actual. */
@@ -30,6 +31,8 @@ interface QuizEngineProps {
   attemptNumber: number;
   /** Máximo de intentos permitidos. */
   maxAttempts: number;
+  /** Nota máxima de este intento según su bloque (7,0, 5,0 o 4,0). */
+  maxGrade: number | null;
   /** Si se está enviando el cuestionario. */
   isSubmitting: boolean;
   /** Callback al seleccionar una opción. */
@@ -52,6 +55,7 @@ export default function QuizEngine({
   timeLimitSeconds,
   attemptNumber,
   maxAttempts,
+  maxGrade,
   isSubmitting,
   onSelectAnswer,
   onNext,
@@ -98,6 +102,7 @@ export default function QuizEngine({
             opacity: 0.7,
           }}>
             Intento {attemptNumber} de {maxAttempts}
+            {maxGrade !== null && ` · Nota máxima ${formatGrade(maxGrade)}`}
           </span>
           <span style={{
             fontFamily: 'var(--font-body)',

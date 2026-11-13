@@ -78,8 +78,11 @@ service cloud.firestore {
           && theory.keys().hasAll([
             'isApproved', 'attemptsUsed', 'bestScorePercentage', 'approvedAt'
           ])
+          // bestGrade e isBlocked (Lab 9, CU-08) son opcionales para que los
+          // resúmenes publicados antes del cambio sigan siendo válidos.
           && theory.keys().hasOnly([
-            'isApproved', 'attemptsUsed', 'bestScorePercentage', 'approvedAt'
+            'isApproved', 'attemptsUsed', 'bestScorePercentage', 'approvedAt',
+            'bestGrade', 'isBlocked'
           ])
           && theory.isApproved is bool
           && theory.attemptsUsed is int
@@ -92,7 +95,17 @@ service cloud.firestore {
               && theory.bestScorePercentage <= 100
             )
           )
-          && (theory.approvedAt == null || theory.approvedAt is string);
+          && (theory.approvedAt == null || theory.approvedAt is string)
+          && (
+            !('bestGrade' in theory)
+            || theory.bestGrade == null
+            || (
+              theory.bestGrade is number
+              && theory.bestGrade >= 1
+              && theory.bestGrade <= 7
+            )
+          )
+          && (!('isBlocked' in theory) || theory.isBlocked is bool);
       }
 
       // Avance en un taller.

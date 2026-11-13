@@ -8,22 +8,30 @@
  * - Selección y navegación de preguntas
  * - Temporizador regresivo con auto-envío al expirar
  * - Registro de respuestas y cálculo de puntaje
- * - Gestión de intentos (máximo 3)
+ * - Gestión de intentos: 9 en 3 bloques con nota máxima 7,0, 5,0 y 4,0 (CU-08)
+ * - Un solo punto de envío para el botón y el fin del tiempo (T5 del Lab 9)
  * - Estados de carga, error y vacío (R9)
  *
  * Los componentes consumen este hook sin mezclar lógica con JSX.
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type {
   QuizQuestion,
   QuizConfig,
   TheoryApprovalStatus,
   QuizAttempt,
+  SubmitAttemptPayload,
 } from '../../../models/theoryQuiz';
+import type { PerformanceStatus } from '../../../models/teacherDashboard';
 import { DEFAULT_QUIZ_CONFIG } from '../../../models/theoryQuiz';
-import { theoryQuizService } from '../../../services/theoryQuizService';
+import {
+  theoryQuizService,
+  TheoryQuizSubmitError,
+} from '../../../services/theoryQuizService';
+import { getQuizStatus } from '../../../utils/theoryQuizGrading';
+import { getPerformanceStatus } from '../../../utils/performanceStatus';
 
 // ─────────────────────────────────────────────
 // Tipos del hook
@@ -63,6 +71,20 @@ export interface UseTheoryQuizState {
   error: string | null;
   /** Si el temporizador está activo. */
   isTimerRunning: boolean;
+  /** Bloque del próximo intento: 1 (intentos 1 a 3), 2 (4 a 6) o 3 (7 a 9). */
+  currentBlock: number;
+  /** Nota máxima del próximo intento (7,0, 5,0 o 4,0); null si ya no puede rendir. */
+  currentMaxGrade: number | null;
+  /** true si el próximo intento empieza un bloque con nota máxima menor. */
+  startsLowerBlock: boolean;
+  /** Si usó los 9 intentos sin aprobar: solo el profesor guía lo habilita. */
+  isBlocked: boolean;
+  /** Mejor nota obtenida (null si no ha rendido). */
+  bestGrade: number | null;
+  /** Notas máximas de cada bloque, para explicar las reglas en la intro. */
+  gradeCaps: number[];
+  /** Desempeño de una nota según la rueda (AI_GUIDELINES §4), para su color. */
+  getGradePerformance: (grade: number) => PerformanceStatus;
 }
 
 /** Acciones expuestas por el hook. */
@@ -126,8 +148,29 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
   const questionsRef = useRef<QuizQuestion[]>([]);
   questionsRef.current = questions;
 
+  // Evita el doble envío si el botón y el fin del tiempo coinciden (T5).
+  const isSubmittingRef = useRef(false);
+
   // Número de intento actual derivado del historial.
   const currentAttemptNumber = attemptHistory.length + 1;
+
+  // Estado del cuestionario según las reglas de la T2 (sin recalcular a mano).
+  const quizStatus = useMemo(
+    () => getQuizStatus(attemptHistory, config),
+    [attemptHistory, config],
+  );
+  const attemptsPerBlock = config.attemptsPerBlock;
+  const currentBlock = Math.min(
+    config.gradeCaps.length,
+    Math.ceil(currentAttemptNumber / attemptsPerBlock),
+  );
+  const currentMaxGrade = quizStatus.nextGradeCap;
+  const startsLowerBlock =
+    quizStatus.nextAttemptNumber !== null &&
+    quizStatus.nextAttemptNumber > 1 &&
+    (quizStatus.nextAttemptNumber - 1) % attemptsPerBlock === 0;
+  // Un estado guardado puede marcar bloqueo aunque el historial local no lo muestre.
+  const isBlocked = quizStatus.isBlocked || approval.result?.isBlocked === true;
 
   // ── Limpieza del timer al desmontar ───────
   useEffect(() => {
@@ -192,48 +235,62 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
   }, []);
 
   /**
-   * Se ejecuta cuando el tiempo llega a cero: envía automáticamente las
-   * respuestas marcadas hasta ese momento (las vacías cuentan como incorrectas).
-   * Usa las referencias answersRef y questionsRef para leer los valores más
-   * recientes desde dentro del temporizador.
+   * Único punto de envío del intento (T5). Lo usan el botón "Finalizar"
+   * (timedOut = false) y el fin del tiempo (timedOut = true). Lee las
+   * respuestas desde las referencias para tener siempre los valores más
+   * recientes, también cuando lo llama el temporizador.
    */
-  const handleTimeUp = useCallback(async () => {
+  const sendAttempt = useCallback(async (timedOut: boolean) => {
+    // Si el botón y el fin del tiempo coinciden, el segundo envío se ignora.
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     stopTimer();
+    setIsLoading(true);
+    setError(null);
 
-    // Auto-enviar con las respuestas que haya hasta el momento
     try {
-      setIsLoading(true);
-
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-
-      const payload = {
+      const payload: SubmitAttemptPayload = {
         answers: questionsRef.current.map((q) => ({
           questionId: q.id,
           selectedOptionId: answersRef.current[q.id] ?? '',
         })),
         attemptNumber: currentAttemptNumber,
-        durationSeconds: elapsed,
+        durationSeconds: Math.floor((Date.now() - startTimeRef.current) / 1000),
+        // El servicio fija el estado timed-out antes de guardar (D-01).
+        timedOut,
       };
 
       const { attempt, approval: newApproval } =
         await theoryQuizService.submitAttempt(payload);
 
-      // Marcar el intento como expirado por tiempo
-      attempt.status = 'timed-out';
-
       setLastAttempt(attempt);
       setApproval(newApproval);
       setAttemptHistory((prev) => [...prev, attempt]);
       setPhase('result');
-    } catch {
-      setError(
-        'El tiempo se agotó y no se pudieron enviar las respuestas. ' +
-        'Intenta nuevamente.',
-      );
+    } catch (err) {
+      if (err instanceof TheoryQuizSubmitError) {
+        // T3: la evaluación ya está aprobada o bloqueada. Se recarga el estado
+        // real y se vuelve a la intro, que muestra el mensaje y el aviso.
+        setApproval(await theoryQuizService.getApprovalStatus());
+        // Si quedó bloqueada, la intro ya muestra el aviso de bloqueo.
+        setError(err.reason === 'blocked' ? null : err.message);
+        setPhase('intro');
+      } else {
+        setError(
+          timedOut
+            ? 'El tiempo se agotó y no se pudieron enviar las respuestas. Intenta nuevamente.'
+            : 'No se pudieron enviar las respuestas. Verifica tu conexión e intenta nuevamente.',
+        );
+      }
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   }, [currentAttemptNumber, stopTimer]);
+
+  /** Se ejecuta cuando el tiempo llega a cero: envía lo respondido hasta ese momento. */
+  const handleTimeUp = useCallback(() => sendAttempt(true), [sendAttempt]);
 
   /**
    * Inicia la cuenta regresiva: cada 1 segundo (setInterval) resta 1 a
@@ -321,43 +378,8 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     [questions.length],
   );
 
-  /**
-   * Envía las respuestas al servicio, que corrige, guarda el intento y
-   * actualiza la aprobación. Después muestra la fase de resultado.
-   */
-  const submitQuiz = useCallback(async () => {
-    try {
-      stopTimer();
-      setIsLoading(true);
-      setError(null);
-
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-
-      const payload = {
-        answers: questions.map((q) => ({
-          questionId: q.id,
-          selectedOptionId: answers[q.id] ?? '',
-        })),
-        attemptNumber: currentAttemptNumber,
-        durationSeconds: elapsed,
-      };
-
-      const { attempt, approval: newApproval } =
-        await theoryQuizService.submitAttempt(payload);
-
-      setLastAttempt(attempt);
-      setApproval(newApproval);
-      setAttemptHistory((prev) => [...prev, attempt]);
-      setPhase('result');
-    } catch {
-      setError(
-        'No se pudieron enviar las respuestas. ' +
-        'Verifica tu conexión e intenta nuevamente.',
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [questions, answers, currentAttemptNumber, stopTimer]);
+  /** Envía las respuestas al pulsar "Finalizar evaluación". */
+  const submitQuiz = useCallback(() => sendAttempt(false), [sendAttempt]);
 
   /** Vuelve a la pantalla de introducción (por ejemplo, para un nuevo intento). */
   const resetToIntro = useCallback(() => {
@@ -387,6 +409,13 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     isLoading,
     error,
     isTimerRunning,
+    currentBlock,
+    currentMaxGrade,
+    startsLowerBlock,
+    isBlocked,
+    bestGrade: quizStatus.bestGrade,
+    gradeCaps: config.gradeCaps,
+    getGradePerformance: getPerformanceStatus,
 
     // Acciones
     startQuiz,

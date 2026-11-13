@@ -77,6 +77,10 @@ async function readCollection(name: string): Promise<Map<string, RawDocument>> {
 interface TheoryProgress {
   isApproved: boolean;
   attemptsUsed: number;
+  /** Mejor nota del cuestionario (null si no ha intentado o el resumen es anterior al Lab 9). */
+  bestGrade: number | null;
+  /** Si usó todos los intentos sin aprobar. */
+  isBlocked: boolean;
 }
 
 /** Devuelve el valor si es un número, y si no, el valor de respaldo. */
@@ -87,11 +91,16 @@ function readNumber(value: unknown, fallback: number): number {
 /** Marco teórico del documento `progress` (sin avance si no existe). */
 function readTheoryProgress(progress: RawDocument | undefined): TheoryProgress {
   const theory = progress?.theory;
-  if (!isRecord(theory)) return { isApproved: false, attemptsUsed: 0 };
+  if (!isRecord(theory)) {
+    return { isApproved: false, attemptsUsed: 0, bestGrade: null, isBlocked: false };
+  }
 
+  const bestGrade = readNumber(theory.bestGrade, Number.NaN);
   return {
     isApproved: theory.isApproved === true,
     attemptsUsed: readNumber(theory.attemptsUsed, 0),
+    bestGrade: Number.isNaN(bestGrade) ? null : bestGrade,
+    isBlocked: theory.isBlocked === true,
   };
 }
 
@@ -125,10 +134,15 @@ function getWorkshopStatus(evaluation: WorkshopEvaluation | undefined): Performa
   return getPerformanceStatus(evaluation.grade);
 }
 
-/** Estado del marco teórico, que no tiene nota: solo aprobado, reprobado o sin entregar. */
+/**
+ * Estado del marco teórico: aprobado, reprobado o sin entregar. Se aprueba
+ * por aciertos (8 de 10), no por nota, así que no usa los colores por nota.
+ */
 function getTheoryStatus(theory: TheoryProgress): PerformanceStatus {
   if (theory.isApproved) return 'approved';
-  // Sin intentos disponibles y sin aprobar: reprobó el marco teórico.
+  // Bloqueado: usó los 9 intentos sin aprobar (CU-08).
+  if (theory.isBlocked) return 'failed';
+  // Respaldo para resúmenes anteriores al Lab 9, que no traen isBlocked.
   if (theory.attemptsUsed >= DEFAULT_QUIZ_CONFIG.maxAttempts) return 'failed';
   return 'not-submitted';
 }
@@ -153,7 +167,8 @@ function buildActivities(
     activityId: THEORY_ACTIVITY_ID,
     title: 'Marco teórico',
     status: getTheoryStatus(theory),
-    grade: null,
+    // Mejor nota del cuestionario, con el tope de cada bloque (T4 del Lab 9).
+    grade: theory.bestGrade,
     attemptsUsed: theory.attemptsUsed,
     maxAttempts: DEFAULT_QUIZ_CONFIG.maxAttempts,
     // El marco teórico no tiene plazo por defecto.

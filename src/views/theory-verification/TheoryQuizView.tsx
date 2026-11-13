@@ -17,9 +17,11 @@
 
 import { BookOpen } from 'lucide-react'
 import Button from '../../components/Button'
+import { formatGrade } from '../../utils/formatGrade'
 import { useTheoryQuiz } from './hooks/useTheoryQuiz'
 import QuizEngine from './components/QuizEngine'
 import ScoreCard from './components/ScoreCard'
+import BlockedNotice from './components/BlockedNotice'
 
 export default function TheoryQuizView() {
   const {
@@ -35,6 +37,13 @@ export default function TheoryQuizView() {
     currentAttemptNumber,
     isLoading,
     error,
+    currentBlock,
+    currentMaxGrade,
+    startsLowerBlock,
+    isBlocked,
+    bestGrade,
+    gradeCaps,
+    getGradePerformance,
 
     // Acciones
     startQuiz,
@@ -65,9 +74,9 @@ export default function TheoryQuizView() {
 
   // ── Fase: Introducción ────────────────────
   if (phase === 'intro') {
-    const hasAttempts = approval.result
-      ? approval.result.hasAttemptsRemaining
-      : true
+    // Puede rendir si no está bloqueado y le quedan intentos (CU-08).
+    const hasAttempts =
+      !isBlocked && (approval.result ? approval.result.hasAttemptsRemaining : true)
     const attemptsUsed = approval.result?.attemptsUsed ?? 0
     const isRetry = attemptsUsed > 0
 
@@ -94,7 +103,7 @@ export default function TheoryQuizView() {
         {error && (
           <div
             role="alert"
-            className="rounded-xl border border-perf-fail bg-perf-fail/10 p-4 text-sm leading-relaxed text-texto"
+            className="rounded-xl border border-primary/30 bg-primary/10 p-4 text-sm leading-relaxed text-texto"
           >
             {error}
           </div>
@@ -117,12 +126,43 @@ export default function TheoryQuizView() {
               Para aprobar necesitas al menos <strong>{config.passingScore} respuestas correctas</strong> de {config.questionsPerAttempt}.
             </li>
             <li>
-              Tienes un máximo de <strong>{config.maxAttempts} intentos</strong> en total.
+              Tienes un máximo de <strong>{config.maxAttempts} intentos</strong> en{' '}
+              {gradeCaps.length} bloques de {config.attemptsPerBlock}. La nota máxima es{' '}
+              {gradeCaps.map((cap, index) => {
+                const first = index * config.attemptsPerBlock + 1
+                const last = first + config.attemptsPerBlock - 1
+                const separator =
+                  index === gradeCaps.length - 1 ? '.' : index === gradeCaps.length - 2 ? ' y ' : '; '
+                return (
+                  <span key={cap}>
+                    <strong>{formatGrade(cap)}</strong> del intento {first} al {last}
+                    {separator}
+                  </span>
+                )
+              })}
             </li>
             <li>Puedes navegar libremente entre las preguntas antes de finalizar.</li>
             <li>Si el tiempo se agota, se enviarán automáticamente las respuestas registradas.</li>
           </ul>
         </div>
+
+        {/* Próximo intento: número, bloque y nota máxima (T4) */}
+        {hasAttempts && currentMaxGrade !== null && (
+          <div className="flex flex-wrap justify-center gap-3">
+            <div className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm text-texto">
+              Próximo intento: <strong>{currentAttemptNumber} de {config.maxAttempts}</strong>
+              {' · '}Bloque {currentBlock}
+              {' · '}Nota máxima <strong>{formatGrade(currentMaxGrade)}</strong>
+            </div>
+          </div>
+        )}
+
+        {/* Aviso cuando el próximo intento baja de bloque (intentos 4 y 7) */}
+        {hasAttempts && startsLowerBlock && currentMaxGrade !== null && (
+          <p className="text-center text-sm leading-relaxed text-texto/80">
+            Desde este intento la nota máxima baja a <strong>{formatGrade(currentMaxGrade)}</strong>.
+          </p>
+        )}
 
         {/* Estado de intentos (solo si ya intentó) */}
         {isRetry && (
@@ -133,6 +173,11 @@ export default function TheoryQuizView() {
             {approval.result && (
               <div className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm text-texto">
                 Mejor puntaje: <strong>{approval.result.bestScore}/{approval.result.totalQuestions}</strong>
+              </div>
+            )}
+            {bestGrade !== null && (
+              <div className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm text-texto">
+                Mejor nota: <strong>{formatGrade(bestGrade)}</strong>
               </div>
             )}
           </div>
@@ -151,9 +196,7 @@ export default function TheoryQuizView() {
               {isRetry ? 'Reintentar evaluación' : 'Comenzar evaluación'}
             </Button>
           ) : (
-            <div className="rounded-xl border border-perf-fail bg-perf-fail/10 p-4 text-sm leading-relaxed text-texto">
-              Has agotado tus {config.maxAttempts} intentos. Contacta a tu profesor guía para recibir orientación.
-            </div>
+            <BlockedNotice maxAttempts={config.maxAttempts} />
           )}
         </div>
       </div>
@@ -168,7 +211,7 @@ export default function TheoryQuizView() {
         {error && (
           <div
             role="alert"
-            className="mx-auto my-4 max-w-3xl rounded-xl border border-perf-fail bg-perf-fail/10 p-3 text-sm text-texto"
+            className="mx-auto my-4 max-w-3xl rounded-xl border border-primary/30 bg-primary/10 p-3 text-sm text-texto"
           >
             {error}
           </div>
@@ -182,6 +225,7 @@ export default function TheoryQuizView() {
           timeLimitSeconds={config.timeLimitSeconds}
           attemptNumber={currentAttemptNumber}
           maxAttempts={config.maxAttempts}
+          maxGrade={currentMaxGrade}
           isSubmitting={isLoading}
           onSelectAnswer={selectAnswer}
           onNext={goToNext}
@@ -200,6 +244,10 @@ export default function TheoryQuizView() {
         attempt={lastAttempt}
         approval={approval}
         config={config}
+        isBlocked={isBlocked}
+        nextMaxGrade={currentMaxGrade}
+        startsLowerBlock={startsLowerBlock}
+        getGradePerformance={getGradePerformance}
         onRetry={resetToIntro}
       />
     )
