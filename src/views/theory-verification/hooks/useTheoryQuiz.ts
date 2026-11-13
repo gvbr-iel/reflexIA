@@ -273,7 +273,8 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
         // T3: la evaluación ya está aprobada o bloqueada. Se recarga el estado
         // real y se vuelve a la intro, que muestra el mensaje y el aviso.
         setApproval(await theoryQuizService.getApprovalStatus());
-        setError(err.message);
+        // Si quedó bloqueada, la intro ya muestra el aviso de bloqueo.
+        setError(err.reason === 'blocked' ? null : err.message);
         setPhase('intro');
       } else {
         setError(
