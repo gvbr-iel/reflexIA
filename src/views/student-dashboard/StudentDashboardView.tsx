@@ -29,7 +29,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { theoryQuizService } from '../../services/theoryQuizService'
-import type { TheoryApprovalStatus, QuizConfig } from '../../models/theoryQuiz'
+import { DEFAULT_QUIZ_CONFIG, type TheoryApprovalStatus, type QuizConfig } from '../../models/theoryQuiz'
 import Button from '../../components/Button'
 
 export default function StudentDashboardView() {
@@ -63,9 +63,13 @@ export default function StudentDashboardView() {
   // y "??" pone un valor por defecto mientras tanto.
   const isApproved = approval?.isApproved ?? false
   const attemptsUsed = approval?.result?.attemptsUsed ?? 0
-  const maxAttempts = config?.maxAttempts ?? 3
+  // Las reglas salen de la configuración, sin números fijos (riesgo R3 del Lab 9).
+  const quizConfig = config ?? DEFAULT_QUIZ_CONFIG
+  const maxAttempts = quizConfig.maxAttempts
+  const timeLimitMinutes = Math.floor(quizConfig.timeLimitSeconds / 60)
+  const passingPercentage = Math.round((quizConfig.passingScore / quizConfig.questionsPerAttempt) * 100)
   const bestScore = approval?.result?.bestScore ?? 0
-  const totalQuestions = approval?.result?.totalQuestions ?? 10
+  const totalQuestions = approval?.result?.totalQuestions ?? quizConfig.questionsPerAttempt
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -204,15 +208,15 @@ export default function StudentDashboardView() {
                   <p className="text-sm text-texto/70 max-w-2xl">
                     {isApproved
                       ? `Has demostrado dominio de los conceptos fundamentales sobre reflexión docente y Schön (${bestScore}/${totalQuestions} respuestas correctas). Los talleres prácticos han sido desbloqueados.`
-                      : 'Evaluación diagnóstica aleatoria de 10 preguntas sobre marcos teóricos de la reflexión docente. Dispones de 15 minutos y hasta 3 intentos.'}
+                      : `Evaluación diagnóstica aleatoria de ${quizConfig.questionsPerAttempt} preguntas sobre marcos teóricos de la reflexión docente. Dispones de ${timeLimitMinutes} minutos por intento y hasta ${maxAttempts} intentos, con una nota máxima que baja cada ${quizConfig.attemptsPerBlock}.`}
                   </p>
 
                   <div className="flex items-center gap-4 text-xs text-texto/60 pt-1">
                     <span className="inline-flex items-center gap-1">
-                      <Clock size={13} /> 15 minutos
+                      <Clock size={13} /> {timeLimitMinutes} minutos
                     </span>
-                    <span>10 preguntas</span>
-                    <span>Mínimo 70% para aprobar</span>
+                    <span>{quizConfig.questionsPerAttempt} preguntas</span>
+                    <span>Mínimo {passingPercentage}% para aprobar</span>
                   </div>
                 </div>
               </div>

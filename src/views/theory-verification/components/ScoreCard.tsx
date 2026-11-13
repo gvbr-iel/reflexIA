@@ -16,6 +16,20 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, Minus, RotateCcw, X } from 'lucide-react'
 import Button from '../../../components/Button'
 import type { QuizAttempt, TheoryApprovalStatus, QuizConfig } from '../../../models/theoryQuiz'
+import type { PerformanceStatus } from '../../../models/teacherDashboard'
+import { formatGrade } from '../../../utils/formatGrade'
+import BlockedNotice from './BlockedNotice'
+
+/**
+ * Color de la nota según la rueda de desempeño (AI_GUIDELINES §4). Un
+ * intento rendido nunca es "no entregado": la nota 1,0 también es reprobada.
+ */
+const GRADE_TEXT_CLASS: Record<PerformanceStatus, string> = {
+  'not-submitted': 'text-perf-fail',
+  failed: 'text-perf-fail',
+  approved: 'text-perf-pass',
+  excellent: 'text-perf-excellent',
+}
 
 interface ScoreCardProps {
   /** Último intento completado. */
@@ -24,6 +38,14 @@ interface ScoreCardProps {
   approval: TheoryApprovalStatus
   /** Configuración del cuestionario. */
   config: QuizConfig
+  /** Si usó todos los intentos sin aprobar (muestra el aviso de bloqueo). */
+  isBlocked: boolean
+  /** Nota máxima del próximo intento (null si ya no puede rendir). */
+  nextMaxGrade: number | null
+  /** Si el próximo intento empieza un bloque con nota máxima menor. */
+  startsLowerBlock: boolean
+  /** Desempeño de una nota según la rueda, para elegir su color. */
+  getGradePerformance: (grade: number) => PerformanceStatus
   /** Callback para volver a la intro y reintentar. */
   onRetry: () => void
 }
@@ -32,17 +54,23 @@ export default function ScoreCard({
   attempt,
   approval,
   config,
+  isBlocked,
+  nextMaxGrade,
+  startsLowerBlock,
+  getGradePerformance,
   onRetry,
 }: ScoreCardProps) {
   const navigate = useNavigate()
-  const { score, totalQuestions, answers, questions, status } = attempt
+  const { score, totalQuestions, answers, questions, status, attemptNumber, grade, maxGrade } = attempt
   const percentage = Math.round((score / totalQuestions) * 100)
   const passed = score >= config.passingScore
   const hasAttemptsRemaining = approval.result
     ? approval.result.hasAttemptsRemaining
     : false
-  const attemptsUsed = approval.result?.attemptsUsed ?? attempt.attemptNumber
+  const attemptsUsed = approval.result?.attemptsUsed ?? attemptNumber
   const timedOut = status === 'timed-out'
+  const block = Math.ceil(attemptNumber / config.attemptsPerBlock)
+  const gradeClass = GRADE_TEXT_CLASS[getGradePerformance(grade)]
 
   // Ángulo para el indicador circular SVG
   const circumference = 2 * Math.PI * 54 // radio = 54
@@ -105,6 +133,14 @@ export default function ScoreCard({
           </div>
         </div>
 
+        {/* Nota del intento con el color de la rueda (T4) */}
+        <p className="font-heading text-lg font-semibold text-texto">
+          Nota <span className={gradeClass}>{formatGrade(grade)}</span>
+          <span className="ml-2 text-sm font-normal text-texto/70">
+            (máxima de este intento: {formatGrade(maxGrade)})
+          </span>
+        </p>
+
         {/* Estado y mensaje */}
         <div>
           <h2
@@ -130,7 +166,7 @@ export default function ScoreCard({
         {/* Información de intentos */}
         <div className="flex flex-wrap justify-center gap-3">
           <div className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-texto">
-            Intento {attemptsUsed} de {config.maxAttempts}
+            Intento {attemptNumber} de {config.maxAttempts} · Bloque {block} · Nota máxima {formatGrade(maxGrade)}
           </div>
           <div className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-texto">
             Mínimo para aprobar: {config.passingScore}/{totalQuestions}
@@ -149,20 +185,25 @@ export default function ScoreCard({
             >
               Continuar a los talleres
             </Button>
-          ) : hasAttemptsRemaining ? (
-            <Button
-              variant="primary"
-              size="lg"
-              icon={<RotateCcw size={18} />}
-              onClick={onRetry}
-            >
-              Reintentar evaluación ({config.maxAttempts - attemptsUsed} restante
-              {config.maxAttempts - attemptsUsed !== 1 ? 's' : ''})
-            </Button>
-          ) : (
-            <div className="rounded-xl border border-perf-fail bg-perf-fail/10 p-4 text-center text-sm leading-relaxed text-texto">
-              Has agotado tus {config.maxAttempts} intentos. Contacta a tu profesor guía para recibir orientación.
+          ) : hasAttemptsRemaining && !isBlocked ? (
+            <div className="flex flex-col items-center gap-2">
+              <Button
+                variant="primary"
+                size="lg"
+                icon={<RotateCcw size={18} />}
+                onClick={onRetry}
+              >
+                Reintentar evaluación ({config.maxAttempts - attemptsUsed} restante
+                {config.maxAttempts - attemptsUsed !== 1 ? 's' : ''})
+              </Button>
+              {startsLowerBlock && nextMaxGrade !== null && (
+                <p className="text-sm text-texto/80">
+                  El próximo intento tiene nota máxima <strong>{formatGrade(nextMaxGrade)}</strong>.
+                </p>
+              )}
             </div>
+          ) : (
+            <BlockedNotice maxAttempts={config.maxAttempts} />
           )}
         </div>
       </div>

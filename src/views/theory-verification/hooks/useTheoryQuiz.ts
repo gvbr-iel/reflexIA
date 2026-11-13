@@ -8,14 +8,14 @@
  * - Selección y navegación de preguntas
  * - Temporizador regresivo con auto-envío al expirar
  * - Registro de respuestas y cálculo de puntaje
- * - Gestión de intentos (máximo 9, DEC-15)
+ * - Gestión de intentos: 9 en 3 bloques con nota máxima 7,0, 5,0 y 4,0 (CU-08)
  * - Un solo punto de envío para el botón y el fin del tiempo (T5 del Lab 9)
  * - Estados de carga, error y vacío (R9)
  *
  * Los componentes consumen este hook sin mezclar lógica con JSX.
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type {
   QuizQuestion,
@@ -24,11 +24,14 @@ import type {
   QuizAttempt,
   SubmitAttemptPayload,
 } from '../../../models/theoryQuiz';
+import type { PerformanceStatus } from '../../../models/teacherDashboard';
 import { DEFAULT_QUIZ_CONFIG } from '../../../models/theoryQuiz';
 import {
   theoryQuizService,
   TheoryQuizSubmitError,
 } from '../../../services/theoryQuizService';
+import { getQuizStatus } from '../../../utils/theoryQuizGrading';
+import { getPerformanceStatus } from '../../../utils/performanceStatus';
 
 // ─────────────────────────────────────────────
 // Tipos del hook
@@ -68,6 +71,20 @@ export interface UseTheoryQuizState {
   error: string | null;
   /** Si el temporizador está activo. */
   isTimerRunning: boolean;
+  /** Bloque del próximo intento: 1 (intentos 1 a 3), 2 (4 a 6) o 3 (7 a 9). */
+  currentBlock: number;
+  /** Nota máxima del próximo intento (7,0, 5,0 o 4,0); null si ya no puede rendir. */
+  currentMaxGrade: number | null;
+  /** true si el próximo intento empieza un bloque con nota máxima menor. */
+  startsLowerBlock: boolean;
+  /** Si usó los 9 intentos sin aprobar: solo el profesor guía lo habilita. */
+  isBlocked: boolean;
+  /** Mejor nota obtenida (null si no ha rendido). */
+  bestGrade: number | null;
+  /** Notas máximas de cada bloque, para explicar las reglas en la intro. */
+  gradeCaps: number[];
+  /** Desempeño de una nota según la rueda (AI_GUIDELINES §4), para su color. */
+  getGradePerformance: (grade: number) => PerformanceStatus;
 }
 
 /** Acciones expuestas por el hook. */
@@ -137,6 +154,23 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
   // Número de intento actual derivado del historial.
   const currentAttemptNumber = attemptHistory.length + 1;
 
+  // Estado del cuestionario según las reglas de la T2 (sin recalcular a mano).
+  const quizStatus = useMemo(
+    () => getQuizStatus(attemptHistory, config),
+    [attemptHistory, config],
+  );
+  const attemptsPerBlock = config.attemptsPerBlock;
+  const currentBlock = Math.min(
+    config.gradeCaps.length,
+    Math.ceil(currentAttemptNumber / attemptsPerBlock),
+  );
+  const currentMaxGrade = quizStatus.nextGradeCap;
+  const startsLowerBlock =
+    quizStatus.nextAttemptNumber !== null &&
+    quizStatus.nextAttemptNumber > 1 &&
+    (quizStatus.nextAttemptNumber - 1) % attemptsPerBlock === 0;
+  // Un estado guardado puede marcar bloqueo aunque el historial local no lo muestre.
+  const isBlocked = quizStatus.isBlocked || approval.result?.isBlocked === true;
 
   // ── Limpieza del timer al desmontar ───────
   useEffect(() => {
@@ -374,6 +408,13 @@ export function useTheoryQuiz(): UseTheoryQuizReturn {
     isLoading,
     error,
     isTimerRunning,
+    currentBlock,
+    currentMaxGrade,
+    startsLowerBlock,
+    isBlocked,
+    bestGrade: quizStatus.bestGrade,
+    gradeCaps: config.gradeCaps,
+    getGradePerformance: getPerformanceStatus,
 
     // Acciones
     startQuiz,
